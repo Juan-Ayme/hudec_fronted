@@ -434,8 +434,8 @@ export function AppShell({ children }: { children: React.ReactNode }) {
           >
             <Menu className="h-5 w-5" aria-hidden="true" />
           </button>
-          <h1 className="text-h3 font-semibold text-fg">
-            {current?.label ?? "Dashboard"}
+          <h1 className="text-h3 font-heading font-semibold tracking-tight text-fg">
+            {current?.label ?? "Resumen Ejecutivo"}
           </h1>
           <div className="ml-auto flex items-center gap-3">
             <CompanySelector />

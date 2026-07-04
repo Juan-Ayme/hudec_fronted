@@ -34,36 +34,36 @@ export const NAV_GROUPS: NavGroup[] = [
   {
     title: "Análisis",
     items: [
-      { href: "/", label: "Dashboard", icon: LayoutDashboard },
+      { href: "/", label: "Resumen Ejecutivo", icon: LayoutDashboard },
       // ENLACES COMENTADOS (2026-06-20) — apuntan a páginas que no existen en src/app/.
       // Reactivar cuando se creen las páginas correspondientes.
       // { href: "/stock", label: "Stock", icon: Boxes },
       // { href: "/ventas", label: "Ventas", icon: Receipt },
-      { href: "/ventas-jerarquicas", label: "Ventas & Catálogo", icon: LayoutGrid },
+      { href: "/ventas-jerarquicas", label: "Análisis de Ventas", icon: LayoutGrid },
       // { href: "/matrices", label: "Matrices KAWII", icon: Table2 },
     ],
   },
   {
     title: "Reportes",
     items: [
-      { href: "/compras-catalogo", label: "Compras & Catálogo", icon: ShoppingCart },
-      { href: "/rotacion-historica", label: "Rotación Histórica", icon: History },
+      { href: "/compras-catalogo", label: "Gestión de Compras", icon: ShoppingCart },
+      { href: "/rotacion-historica", label: "Análisis de Rotación", icon: History },
     ],
   },
   {
     title: "Catálogo",
     items: [
-      { href: "/taxonomia", label: "Taxonomía", icon: FolderTree },
-      { href: "/product-types", label: "Product Types", icon: Tags },
+      { href: "/taxonomia", label: "Estructura de Catálogo", icon: FolderTree },
+      { href: "/product-types", label: "Tipologías de Producto", icon: Tags },
     ],
   },
   {
     title: "BI",
     items: [
-      { href: "/pulso", label: "Pulso", icon: Activity },
-      { href: "/diagnostico", label: "Diagnóstico", icon: Gauge },
-      { href: "/salud-catalogo", label: "Salud del Catálogo", icon: ShieldCheck },
-      { href: "/plan-mes", label: "Plan del Mes", icon: CalendarClock },
+      { href: "/pulso", label: "Pulso Operativo", icon: Activity },
+      { href: "/diagnostico", label: "Diagnóstico Inteligente", icon: Gauge },
+      { href: "/salud-catalogo", label: "Auditoría de Salud", icon: ShieldCheck },
+      { href: "/plan-mes", label: "Planificación Estratégica", icon: CalendarClock },
     ],
   },
   {

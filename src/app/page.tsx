@@ -150,8 +150,8 @@ export default function DashboardPage() {
           <Card className="h-full flex flex-col group overflow-hidden relative">
             <div className="pointer-events-none absolute -left-10 top-10 h-40 w-40 rounded-full bg-primary/10 blur-3xl" />
             <CardHeader
-              title={<span className="flex items-center gap-2"><TrendingUp className="h-5 w-5 text-primary" /> Dinámica de Ventas</span>}
-              subtitle={`Flujo de ingresos de los últimos ${days} días`}
+              title={<span className="flex items-center gap-2"><TrendingUp className="h-5 w-5 text-primary" /> Evolución de Ingresos</span>}
+              subtitle={`Flujo de ingresos en los últimos ${days} días`}
             />
             <CardBody className="flex-1 relative z-10 pt-0 pb-6 flex flex-col">
               <div className="flex-1 w-full min-h-[300px]">
@@ -183,8 +183,8 @@ export default function DashboardPage() {
           <Card className="h-full flex flex-col group relative overflow-hidden">
             <div className="pointer-events-none absolute -bottom-20 -right-10 h-48 w-48 rounded-full bg-accent/10 blur-3xl" />
             <CardHeader 
-               title={<span className="flex items-center gap-2"><BarChart3 className="h-5 w-5 text-accent" /> Desempeño por Depto</span>} 
-               subtitle={`Ranking departamental en ${days} días`} 
+               title={<span className="flex items-center gap-2"><BarChart3 className="h-5 w-5 text-accent" /> Rendimiento Departamental</span>} 
+               subtitle={`Ranking de ventas por departamento en ${days} días`} 
             />
             <CardBody className="flex-1 relative z-10">
               {byDept.isLoading ? (
@@ -212,7 +212,7 @@ export default function DashboardPage() {
         <div className="md:col-span-5">
           <Card className="h-full flex flex-col group overflow-hidden relative">
             <CardHeader
-              title={<span className="flex items-center gap-2"><PieChart className="h-5 w-5 text-warning" /> Capital por Sucursal</span>}
+              title={<span className="flex items-center gap-2"><PieChart className="h-5 w-5 text-warning" /> Distribución de Capital</span>}
               subtitle={valuation.data ? `Total: ${money(valuation.data.total_soles)}` : "—"}
             />
             <CardBody className="flex-1 flex items-center justify-center relative z-10">
@@ -238,8 +238,8 @@ export default function DashboardPage() {
         <div className="md:col-span-7">
           <Card className="h-full">
             <CardHeader
-              title={<span className="flex items-center gap-2"><Trophy className="h-5 w-5 text-yellow-500" /> Leaderboard de Productos</span>}
-              subtitle={`Items más calientes (${days} días)`}
+              title={<span className="flex items-center gap-2"><Trophy className="h-5 w-5 text-yellow-500" /> Top Rendimiento de Productos</span>}
+              subtitle={`Los artículos con mayor impacto (${days} días)`}
             />
             <CardBody className="pt-0 pb-2 px-2 sm:px-4 min-h-[200px]">
               {top.isLoading ? (
@@ -270,7 +270,7 @@ export default function DashboardPage() {
            />
            <Card className="flex-1 overflow-hidden relative group">
               <div className="pointer-events-none absolute -top-10 -left-10 h-32 w-32 rounded-full bg-primary/10 blur-3xl" />
-              <CardHeader title={<span className="flex items-center gap-2"><Store className="h-5 w-5 text-primary" /> Rendimiento Sucursales</span>} subtitle={`Facturación en ${days} días`} />
+              <CardHeader title={<span className="flex items-center gap-2"><Store className="h-5 w-5 text-primary" /> Desempeño Operativo de Sucursales</span>} subtitle={`Facturación comparativa en ${days} días`} />
               <CardBody className="space-y-4 pt-2 relative z-10">
                 {byOffice.isLoading ? (
                   <BarChartLoader />

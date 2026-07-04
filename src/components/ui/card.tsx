@@ -60,7 +60,7 @@ export function CardHeader({
           </p>
         )}
         {title && (
-          <h3 className="truncate text-h3 font-semibold text-fg">{title}</h3>
+          <h3 className="truncate text-h3 font-heading font-semibold tracking-tight text-fg">{title}</h3>
         )}
         {subtitle && (
           <p className="mt-1 text-caption font-normal tracking-normal text-muted">

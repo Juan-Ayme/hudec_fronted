@@ -45,7 +45,7 @@ export function DiagnosticoView() {
       <div className="flex flex-wrap items-center justify-between gap-3">
         <div className="flex items-center gap-2">
           <LineChart className="h-5 w-5 text-info" aria-hidden="true" />
-          <h1 className="text-h2 font-bold text-fg">Diagnóstico</h1>
+          <h1 className="text-h2 font-heading font-bold tracking-tight text-fg">Análisis Diagnóstico</h1>
           <span className="text-caption text-faint">
             · {d.meta.current.from} → {d.meta.current.to}
           </span>

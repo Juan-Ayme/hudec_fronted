@@ -37,6 +37,7 @@
 
   /* ── Typography ───────────────────────────────────────────────── */
   --font-sans: var(--font-geist-sans), ui-sans-serif, system-ui, sans-serif;
+  --font-heading: var(--font-outfit), ui-sans-serif, system-ui, sans-serif;
   --font-mono: var(--font-geist-mono), ui-monospace, monospace;
 
   /* Escala tipográfica nombrada. Cada token = font-size con line-height
