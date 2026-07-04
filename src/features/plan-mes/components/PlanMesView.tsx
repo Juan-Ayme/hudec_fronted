@@ -31,12 +31,18 @@ export function PlanMesView() {
   const handleSave = (_nivel: string, monto: number) => {
     // El plan del /plan endpoint no incluye por_sucursal para el mes objetivo;
     // usamos office_scope para armar la meta con distribución equitativa.
+    // La última sucursal absorbe el resto del redondeo para que la suma dé
+    // exactamente el monto elegido.
     const offices: Record<string, number> = {};
-    if (p.meta.office_scope.length > 0) {
-      const equal = monto / p.meta.office_scope.length;
-      for (const id of p.meta.office_scope) {
-        offices[String(id)] = Math.round(equal);
-      }
+    const scope = p.meta.office_scope;
+    if (scope.length > 0) {
+      const equal = Math.round(monto / scope.length);
+      let asignado = 0;
+      scope.forEach((id, i) => {
+        const parte = i === scope.length - 1 ? monto - asignado : equal;
+        offices[String(id)] = parte;
+        asignado += parte;
+      });
     }
     saveGoal.mutate({
       month: p.sugerencia_proximo_mes.mes_objetivo,

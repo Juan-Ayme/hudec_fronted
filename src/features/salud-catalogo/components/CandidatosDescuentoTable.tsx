@@ -4,10 +4,15 @@ import { Percent } from "lucide-react";
 import { Card, CardBody, CardHeader } from "@/components/ui/card";
 import { money, num } from "@/lib/format";
 import type { CandidatosDescuento } from "@/lib/bi-types";
+import { HelpTip } from "@/features/bi/shared";
 
 /**
  * SKUs sin movimiento en X días — candidatos naturales a promo/descuento.
  * KPI grande arriba con el valor de inventario expuesto.
+ *
+ * Nota de contrato: el backend manda `stock` (no `stock_actual`) y NO manda
+ * días sin venta por SKU — el umbral de días vive en el `criterio` global.
+ * Antes esas dos columnas se renderizaban siempre en "—".
  */
 export function CandidatosDescuentoTable({
   data,
@@ -25,9 +30,10 @@ export function CandidatosDescuentoTable({
             <span className="text-caption text-faint">
               en {num(data.skus_count_total)} SKUs
             </span>
+            <HelpTip text="Stock que no se mueve: candidatos naturales a promoción o descuento para liberar plata y espacio." />
           </span>
         }
-        subtitle={data.criterio}
+        subtitle={`Criterio: ${data.criterio}`}
       />
       <CardBody className="p-0">
         {data.top_skus.length === 0 ? (
@@ -40,10 +46,15 @@ export function CandidatosDescuentoTable({
               <thead className="sticky top-0 bg-surface-2/95 backdrop-blur-md">
                 <tr className="border-b border-border-soft text-[0.65rem] uppercase tracking-wider text-faint">
                   <th className="px-4 py-2 text-left font-semibold">SKU · Producto</th>
+                  <th className="px-4 py-2 text-left font-semibold">Categoría</th>
                   <th className="px-4 py-2 text-right font-semibold">Stock</th>
-                  <th className="px-4 py-2 text-right font-semibold">Días s/venta</th>
-                  <th className="px-4 py-2 text-right font-semibold">Costo unit</th>
-                  <th className="px-4 py-2 text-right font-semibold">Valor inv.</th>
+                  <th className="px-4 py-2 text-right font-semibold">Costo unit.</th>
+                  <th
+                    className="cursor-help px-4 py-2 text-right font-semibold"
+                    title="Plata parada en este producto: stock × costo unitario"
+                  >
+                    Valor inventario
+                  </th>
                 </tr>
               </thead>
               <tbody>
@@ -58,11 +69,16 @@ export function CandidatosDescuentoTable({
                         {s.sku} · {s.sucursal}
                       </p>
                     </td>
-                    <td className="px-4 py-2 text-right font-mono tabular-nums text-fg">
-                      {num(s.stock_actual)}
+                    <td className="px-4 py-2">
+                      <p className="truncate text-fg">{s.categoria ?? "—"}</p>
+                      {s.departamento && (
+                        <p className="truncate text-[0.6rem] text-faint">
+                          {s.departamento}
+                        </p>
+                      )}
                     </td>
-                    <td className="px-4 py-2 text-right font-mono tabular-nums text-warning font-semibold">
-                      {num(s.dias_sin_venta)}
+                    <td className="px-4 py-2 text-right font-mono tabular-nums text-fg">
+                      {num(s.stock)}
                     </td>
                     <td className="px-4 py-2 text-right font-mono tabular-nums text-muted">
                       {money(s.costo_unit)}

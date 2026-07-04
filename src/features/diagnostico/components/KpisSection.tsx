@@ -10,6 +10,7 @@ import type {
   DiagnosisKpisComparativa,
 } from "@/lib/bi-types";
 import {
+  HelpTip,
   TotalRecurrentePair,
   deltaTone,
   formatDeltaMoney,
@@ -35,7 +36,7 @@ function KpisActual({ kpis }: { kpis: DiagnosisKpis }) {
   return (
     <Card>
       <CardHeader
-        eyebrow="Ventana actual"
+        eyebrow="Período analizado"
         title={
           <span className="flex items-center gap-2">
             <BarChart3 className="h-5 w-5 text-primary" />
@@ -50,15 +51,20 @@ function KpisActual({ kpis }: { kpis: DiagnosisKpis }) {
           recurrente={a.ventas_recurrente}
           size="md"
         />
-        <KpiLine label="Tickets" value={num(a.tickets)} sub={`${num(a.unds)} unds`} />
+        <KpiLine
+          label="Tickets"
+          value={num(a.tickets)}
+          sub={`${num(a.unds)} unidades vendidas`}
+        />
         <KpiLine
           label="Ticket promedio"
           value={money(a.ticket_promedio)}
-          sub={`Descuento ${pct(a.descuento_pct)}`}
+          sub={`Descuento promedio ${pct(a.descuento_pct)}`}
         />
         <div className="flex flex-col gap-0.5">
-          <p className="text-caption font-semibold uppercase tracking-[0.08em] text-muted">
+          <p className="flex items-center gap-1 text-caption font-semibold uppercase tracking-[0.08em] text-muted">
             Margen
+            <HelpTip text="Ganancia bruta: (venta − costo del producto) ÷ venta. Sólo es confiable si la cobertura de costos es alta." />
           </p>
           <p className="text-lg font-bold tabular-nums tracking-tight text-fg">
             {pct(a.margen_pct_total)}
@@ -97,9 +103,9 @@ function KpiLine({
 
 type TabKey = "semana" | "cuatro" | "yoy";
 const TABS: { id: TabKey; label: string; short: string; getData: (k: DiagnosisKpis) => DiagnosisKpisComparativa }[] = [
-  { id: "semana", label: "vs semana anterior",   short: "Semana",  getData: (k) => k.vs_semana_anterior },
-  { id: "cuatro", label: "vs promedio 4 semanas", short: "4 sem",   getData: (k) => k.vs_promedio_4_semanas },
-  { id: "yoy",    label: "vs año anterior",       short: "YoY",     getData: (k) => k.vs_ano_anterior },
+  { id: "semana", label: "vs semana anterior",    short: "Semana pasada", getData: (k) => k.vs_semana_anterior },
+  { id: "cuatro", label: "vs promedio 4 semanas", short: "Prom. 4 sem.",  getData: (k) => k.vs_promedio_4_semanas },
+  { id: "yoy",    label: "vs año anterior",       short: "Año pasado",    getData: (k) => k.vs_ano_anterior },
 ];
 
 function ComparativasTabs({ kpis }: { kpis: DiagnosisKpis }) {
@@ -126,7 +132,8 @@ function ComparativasTabs({ kpis }: { kpis: DiagnosisKpis }) {
       </div>
       <CardBody className="flex flex-col gap-3">
         <p className="text-caption text-faint">
-          Actual vs <span className="font-semibold text-fg">{data.label}</span>
+          Período actual comparado con{" "}
+          <span className="font-semibold text-fg">{data.label}</span>
           {" · "}
           {data.from} → {data.to}
         </p>
@@ -138,6 +145,7 @@ function ComparativasTabs({ kpis }: { kpis: DiagnosisKpis }) {
         />
         <DeltaFila
           label="Ventas recurrente"
+          help="Sin categorías de temporada. Es la comparación más confiable del negocio de fondo."
           delta_abs={data.delta_abs_recurrente}
           delta_pct={data.delta_pct_recurrente}
           prev={data.ventas_recurrente}
@@ -161,6 +169,7 @@ function ComparativasTabs({ kpis }: { kpis: DiagnosisKpis }) {
 
 function DeltaFila({
   label,
+  help,
   delta_abs,
   delta_pct,
   prev,
@@ -168,6 +177,7 @@ function DeltaFila({
   highlight = false,
 }: {
   label: string;
+  help?: string;
   delta_abs: number;
   delta_pct: number | null;
   prev: number;
@@ -198,9 +208,12 @@ function DeltaFila({
       )}
     >
       <div className="min-w-0">
-        <p className="text-caption font-semibold text-fg">{label}</p>
+        <p className="flex items-center gap-1 text-caption font-semibold text-fg">
+          {label}
+          {help && <HelpTip text={help} />}
+        </p>
         <p className="text-[0.65rem] text-faint">
-          {isNum ? num(prev) : money(prev)} previo
+          antes: {isNum ? num(prev) : money(prev)}
         </p>
       </div>
       <div className="flex flex-col items-end">

@@ -19,7 +19,7 @@ export function VentanaSelector({
     <div className="flex flex-wrap items-center gap-4">
       <div className="flex items-center gap-2">
         <span className="text-caption font-semibold uppercase tracking-wider text-faint">
-          Ventana
+          Analizar últimos
         </span>
         <ChipGroup
           value={days}
@@ -29,8 +29,11 @@ export function VentanaSelector({
         />
       </div>
       <div className="flex items-center gap-2">
-        <span className="text-caption font-semibold uppercase tracking-wider text-faint">
-          Top
+        <span
+          className="cursor-help text-caption font-semibold uppercase tracking-wider text-faint"
+          title="Cantidad de filas a mostrar en cada tabla"
+        >
+          Filas por tabla
         </span>
         <ChipGroup
           value={topN}

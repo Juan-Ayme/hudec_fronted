@@ -58,9 +58,12 @@ export function TotalRecurrentePair({
           "tabular-nums text-faint",
           s.recu,
         )}
-        title="Venta recurrente — excluye categorías estacionales"
+        title="Venta recurrente: excluye las categorías de temporada (Navidad, Día del Padre, etc.). Es la venta 'de todos los días' — la mejor señal de cómo va el negocio de fondo."
       >
-        {fmt(recurrente)} <span className="text-muted/70">recurrente</span>
+        {fmt(recurrente)}{" "}
+        <span className="cursor-help text-muted/70 underline decoration-dotted decoration-muted/40 underline-offset-2">
+          recurrente
+        </span>
       </p>
     </div>
   );

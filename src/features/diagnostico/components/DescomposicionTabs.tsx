@@ -31,6 +31,18 @@ interface DimSpec {
 const asRows = (arr: readonly DiagnosisDescompBase[]): DimRow[] =>
   arr as unknown as DimRow[];
 
+/** Códigos técnicos del backend → texto de gerente. */
+const BASE_LABEL: Record<string, string> = {
+  semana_anterior: "la semana anterior",
+  semana_anterior_ajustada: "la semana anterior (mismos días de la semana)",
+  promedio_4_semanas: "el promedio de las últimas 4 semanas",
+  ano_anterior: "las mismas fechas del año pasado",
+};
+
+function humanizarBase(base: string): string {
+  return BASE_LABEL[base] ?? base.replaceAll("_", " ");
+}
+
 const DIMS: DimSpec[] = [
   {
     id: "sucursal",
@@ -95,7 +107,7 @@ export function DescomposicionTabs({
             ¿Dónde ocurrió?
           </span>
         }
-        subtitle={`Base: ${descomposicion.comparacion_base}`}
+        subtitle={`Comparado contra ${humanizarBase(descomposicion.comparacion_base)}. Ordenado por el monto que más movió la venta (para bien o para mal).`}
       />
       <div className="flex flex-wrap gap-1 border-b border-border-soft px-3 py-2">
         {DIMS.map((d) => {
@@ -132,10 +144,15 @@ export function DescomposicionTabs({
                 <tr className="border-b border-border-soft text-[0.65rem] uppercase tracking-wider text-faint">
                   <th className="px-4 py-2 text-left font-semibold">{spec.label}</th>
                   <th className="px-4 py-2 text-right font-semibold">Actual</th>
-                  <th className="px-4 py-2 text-right font-semibold">Previo</th>
-                  <th className="px-4 py-2 text-right font-semibold">Δ%</th>
-                  <th className="px-4 py-2 text-right font-semibold">Δ S/</th>
-                  <th className="px-4 py-2 text-right font-semibold">Share</th>
+                  <th className="px-4 py-2 text-right font-semibold">Antes</th>
+                  <th className="px-4 py-2 text-right font-semibold">Cambio %</th>
+                  <th className="px-4 py-2 text-right font-semibold">Cambio S/</th>
+                  <th
+                    className="cursor-help px-4 py-2 text-right font-semibold"
+                    title="Qué parte de la venta actual del período aporta esta fila"
+                  >
+                    Peso
+                  </th>
                 </tr>
               </thead>
               <tbody>

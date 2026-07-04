@@ -5,7 +5,7 @@ import { Card, CardBody, CardHeader } from "@/components/ui/card";
 import { money, num, pct } from "@/lib/format";
 import { cn } from "@/lib/utils";
 import type { ComposicionBucket, ComposicionCatalogo } from "@/lib/bi-types";
-import { COMPOSICION_BUCKET, type CodigoMeta } from "@/features/bi/shared";
+import { COMPOSICION_BUCKET, HelpTip, type CodigoMeta } from "@/features/bi/shared";
 
 const BUCKET_ORDER: ComposicionBucket[] = ["nuevo", "reciente", "clasico"];
 
@@ -32,6 +32,7 @@ export function ComposicionCatalogoSection({
           <span className="flex items-center gap-2">
             <Layers className="h-5 w-5 text-info" />
             {money(composicion.total_venta_pen)} · {num(composicion.total_skus)} SKUs
+            <HelpTip text="Reparte la venta según cuánto hace que cada producto está en el catálogo. Si casi todo lo vendido es 'clásico', el catálogo se está renovando poco." />
           </span>
         }
         subtitle={composicion.lectura}

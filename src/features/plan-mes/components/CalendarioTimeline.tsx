@@ -28,6 +28,7 @@ export function CalendarioTimeline({
             Próximos {meses.length} meses
           </span>
         }
+        subtitle="Campañas y metas sugeridas por mes, calculadas a partir de lo que se vendió el año pasado en esas fechas."
         action={
           <div className="inline-flex overflow-hidden rounded-md border border-border-soft bg-surface-2">
             {[3, 6, 12].map((n) => (
@@ -79,29 +80,32 @@ function MesCard({ m }: { m: CalendarioMes }) {
       </div>
 
       {m.categoria_protagonista && (
-        <div className="rounded-md border border-border-soft bg-surface p-2">
+        <div
+          className="cursor-help rounded-md border border-border-soft bg-surface p-2"
+          title="La categoría que más vendió en este mes el año pasado — la candidata natural para empujar la campaña."
+        >
           <p className="flex items-center gap-1 text-[0.55rem] font-bold uppercase tracking-wider text-faint">
             <Sparkles className="h-2.5 w-2.5" aria-hidden="true" />
-            Protagonista
+            Categoría estrella
           </p>
           <p className="mt-0.5 truncate text-caption font-semibold text-fg">
             {m.categoria_protagonista.categoria}
           </p>
           <p className="truncate text-[0.6rem] text-faint">
-            {m.categoria_protagonista.departamento} · YoY{" "}
+            {m.categoria_protagonista.departamento} · año pasado{" "}
             {money(m.categoria_protagonista.venta_yoy)}
           </p>
         </div>
       )}
 
       <div className="grid grid-cols-3 gap-1.5 text-center">
-        <MetaChip label="Cons." value={m.meta_conservadora} tone="warning" />
-        <MetaChip label="Real." value={m.meta_realista} tone="info" />
-        <MetaChip label="Agr." value={m.meta_agresiva} tone="danger" />
+        <MetaChip label="Cons." title="Meta conservadora" value={m.meta_conservadora} tone="warning" />
+        <MetaChip label="Real." title="Meta realista" value={m.meta_realista} tone="info" />
+        <MetaChip label="Agr." title="Meta agresiva" value={m.meta_agresiva} tone="danger" />
       </div>
 
       <p className="border-t border-border-soft pt-1.5 text-[0.6rem] text-faint">
-        YoY {money(m.venta_yoy)}
+        Año pasado: {money(m.venta_yoy)}
       </p>
     </div>
   );
@@ -115,15 +119,20 @@ const CHIP_TONE = {
 
 function MetaChip({
   label,
+  title,
   value,
   tone,
 }: {
   label: string;
+  title?: string;
   value: number;
   tone: keyof typeof CHIP_TONE;
 }) {
   return (
-    <div className={cn("rounded-md px-1 py-1", CHIP_TONE[tone])}>
+    <div
+      className={cn("rounded-md px-1 py-1", CHIP_TONE[tone], title && "cursor-help")}
+      title={title}
+    >
       <p className="text-[0.5rem] font-bold uppercase tracking-wider">{label}</p>
       <p className="font-mono text-[0.65rem] tabular-nums font-bold">
         {money(value)}

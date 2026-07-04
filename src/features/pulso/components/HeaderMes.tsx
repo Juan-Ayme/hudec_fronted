@@ -9,7 +9,9 @@ import { cn } from "@/lib/utils";
 import type { PulseMesEnCurso } from "@/lib/bi-types";
 import {
   EstadoBadge,
+  HelpTip,
   TotalRecurrentePair,
+  estadoGaugeTone,
   formatMes,
 } from "@/features/bi/shared";
 
@@ -45,20 +47,34 @@ export function HeaderMes({ mes }: { mes: PulseMesEnCurso }) {
             <EstadoBadge estado={g.estado} />
             {g.meta > 0 && (
               <span className="text-muted">
-                Meta: <span className="font-semibold text-fg">{money(g.meta)}</span>
+                Meta del mes:{" "}
+                <span className="font-semibold text-fg">{money(g.meta)}</span>
+              </span>
+            )}
+            {g.meta_prorrateada > 0 && mes.dias_restantes > 0 && (
+              <span className="inline-flex items-center gap-1 text-muted">
+                Esperado a hoy:{" "}
+                <span className="font-semibold text-fg">
+                  {money(g.meta_prorrateada)}
+                </span>
+                <HelpTip text={`Al día ${mes.dias_transcurridos} de ${mes.dias_del_mes} correspondería llevar vendida esta parte de la meta. Comparalo con la venta acumulada para saber si vas al ritmo.`} />
               </span>
             )}
             {g.venta_diaria_necesaria > 0 && mes.dias_restantes > 0 && (
-              <span className="text-muted">
+              <span className="inline-flex items-center gap-1 text-muted">
                 Ritmo necesario:{" "}
                 <span className="font-semibold text-fg">
                   {money(g.venta_diaria_necesaria)}
                 </span>
                 /día
+                <HelpTip text="Lo que hay que vender por día, en promedio, durante los días que quedan, para alcanzar la meta del mes." />
               </span>
             )}
             {mes.meta_source !== "exacta" && (
-              <span className="rounded-full border border-info/25 bg-info/8 px-2 py-0.5 text-[0.65rem] font-semibold text-info">
+              <span
+                className="cursor-help rounded-full border border-info/25 bg-info/8 px-2 py-0.5 text-[0.65rem] font-semibold text-info"
+                title="No hay meta cargada para este mes; se estimó a partir de la venta histórica. Podés cargar la meta real en Configuración → Metas."
+              >
                 Meta estimada
               </span>
             )}
@@ -66,19 +82,23 @@ export function HeaderMes({ mes }: { mes: PulseMesEnCurso }) {
         </div>
 
         <div className="flex flex-col items-center gap-3">
+          {/* El color del gauge sale del ESTADO (ritmo vs meta prorrateada),
+              no del % de avance del mes: a inicio de mes un avance bajo es
+              normal y colorearlo con umbrales fijos pintaba rojo siempre. */}
           <MetricGauge
             value={clamp(g.avance_pct, 0, 120)}
             max={100}
-            label="Avance"
+            label="Avance del mes"
             suffix="%"
-            thresholds={{ danger: 80, warning: 95 }}
+            tone={estadoGaugeTone(g.estado)}
             size={140}
           />
-          <p className="text-caption text-muted">
-            Proyección cierre:{" "}
+          <p className="inline-flex items-center gap-1 text-caption text-muted">
+            Proyección de cierre:{" "}
             <span className="font-semibold text-fg">
               {money(g.proyeccion_cierre_mes)}
             </span>
+            <HelpTip text="Si se mantiene el ritmo de venta actual, el mes cerraría en este monto." side="bottom" />
           </p>
           <Link
             href="/plan-mes"

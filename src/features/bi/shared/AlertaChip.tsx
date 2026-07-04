@@ -12,6 +12,16 @@ import { SEVERIDAD_ALERTA } from "./constants";
  * y acción sugerida. Se puede pasar `onAction` para mostrar un botón que
  * dispara la navegación al lugar donde se resuelve.
  */
+/** El backend a veces menciona rutas técnicas ("/diagnosis") en el texto de
+ *  la acción sugerida. Las traducimos a nombres de vista legibles. */
+function humanizarAccion(accion: string): string {
+  return accion
+    .replace(/\/diagnosis\b/g, "la vista Diagnóstico")
+    .replace(/\/diagnostico\b/g, "la vista Diagnóstico")
+    .replace(/\/catalog-health\b/g, "la vista Salud del Catálogo")
+    .replace(/\/salud-catalogo\b/g, "la vista Salud del Catálogo");
+}
+
 export function AlertaChip({
   alerta,
   onAction,
@@ -57,9 +67,10 @@ export function AlertaChip({
             {alerta.impacto_pen !== 0 && Number.isFinite(alerta.impacto_pen) && (
               <p
                 className={cn(
-                  "font-mono text-caption tabular-nums font-bold whitespace-nowrap",
+                  "cursor-help font-mono text-caption tabular-nums font-bold whitespace-nowrap",
                   impactoNeg ? "text-danger" : "text-success",
                 )}
+                title="Impacto estimado en soles de este problema u oportunidad"
               >
                 {impactoNeg ? "−" : "+"}{money(Math.abs(alerta.impacto_pen))}
               </p>
@@ -68,8 +79,8 @@ export function AlertaChip({
           <p className="mt-1 text-caption text-muted">{alerta.detalle}</p>
           {alerta.accion_sugerida && (
             <p className="mt-1.5 text-caption text-fg/70">
-              <span className="font-semibold">Acción: </span>
-              {alerta.accion_sugerida}
+              <span className="font-semibold">Acción sugerida: </span>
+              {humanizarAccion(alerta.accion_sugerida)}
             </p>
           )}
           {alerta.skus && alerta.skus.length > 0 && (

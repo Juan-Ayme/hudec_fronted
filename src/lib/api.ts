@@ -640,6 +640,19 @@ export function comprasCatalogoExcelUrl(
   return `${API_BASE_URL}/analytics/compras-catalogo/excel${qs ? `?${qs}` : ""}`;
 }
 
+/** Informes Gerenciales — 3 Excel separados en lenguaje simple (Tablero). */
+export type ReporteGerencialTipo = "por-agotarse" | "estancados" | "rotacion";
+
+export function reporteGerencialExcelUrl(
+  tipo: ReporteGerencialTipo,
+  params: { office_id?: number | null } = {},
+): string {
+  const sp = new URLSearchParams();
+  if (params.office_id != null) sp.set("office_id", String(params.office_id));
+  const qs = sp.toString();
+  return `${API_BASE_URL}/analytics/reporte-gerencial/${tipo}/excel${qs ? `?${qs}` : ""}`;
+}
+
 /** Dashboard de Compras Inteligente — KPIs + distribución + lista de SKUs en quiebre real.
  *  Mismo universo que el Excel, en JSON. Alimenta la página /compras-catalogo. */
 export const getComprasCatalogo = (

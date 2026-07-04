@@ -5,7 +5,7 @@ import { Card, CardBody, CardHeader } from "@/components/ui/card";
 import { money } from "@/lib/format";
 import { cn } from "@/lib/utils";
 import type { HuecosYoyBlock } from "@/lib/bi-types";
-import { formatDeltaPct } from "@/features/bi/shared";
+import { HelpTip, formatDeltaPct } from "@/features/bi/shared";
 
 /**
  * Sección de huecos vs YoY en la vista de Salud del Catálogo.
@@ -16,14 +16,15 @@ export function HuecosYoyCatalogList({ block }: { block: HuecosYoyBlock }) {
   return (
     <Card>
       <CardHeader
-        eyebrow={`Huecos YoY · ${block.ventana}`}
+        eyebrow={`Huecos vs año pasado · ${block.ventana}`}
         title={
           <span className="flex items-center gap-2">
             <PackageX className="h-5 w-5 text-danger" />
             {money(block.total_hueco_pen)} en {block.subcategorias_count} sub-categorías
+            <HelpTip text="Rubros que venden mucho menos que hace un año. El 'hueco' es la plata que se está dejando de facturar. Revisar si falta surtido o si la demanda cambió." />
           </span>
         }
-        subtitle={block.criterio}
+        subtitle={`Criterio: ${block.criterio}`}
       />
       <CardBody>
         {block.top_huecos.length === 0 ? (
@@ -49,20 +50,25 @@ export function HuecosYoyCatalogList({ block }: { block: HuecosYoyBlock }) {
                 </div>
                 <div className="flex items-baseline justify-between gap-3">
                   <div>
-                    <p className="text-caption text-muted">Hueco</p>
+                    <p
+                      className="cursor-help text-caption text-muted"
+                      title="Plata que faltó frente a las mismas fechas del año pasado"
+                    >
+                      Hueco
+                    </p>
                     <p className="font-mono text-lg font-bold tabular-nums text-danger">
                       {money(h.hueco_pen)}
                     </p>
                   </div>
                   <div className="text-right">
-                    <p className="text-caption text-muted">Δ vs YoY</p>
+                    <p className="text-caption text-muted">vs año pasado</p>
                     <p className="font-mono text-body font-bold tabular-nums text-danger">
                       {formatDeltaPct(h.delta_pct)}
                     </p>
                   </div>
                 </div>
                 <p className="border-t border-danger/15 pt-2 text-[0.65rem] text-faint">
-                  {money(h.venta_actual)} vs {money(h.venta_yoy)}
+                  ahora {money(h.venta_actual)} · antes {money(h.venta_yoy)}
                 </p>
               </div>
             ))}

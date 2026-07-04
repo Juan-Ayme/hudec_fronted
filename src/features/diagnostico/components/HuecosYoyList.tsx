@@ -21,13 +21,14 @@ export function HuecosYoyList({ huecos }: { huecos: HuecoYoy[] }) {
   return (
     <Card>
       <CardHeader
-        eyebrow="Huecos vs año anterior"
+        eyebrow="Huecos vs año pasado"
         title={
           <span className="flex items-center gap-2">
             <PackageX className="h-5 w-5 text-danger" />
             Sub-categorías que perdieron demanda
           </span>
         }
+        subtitle="Rubros que venden mucho menos que hace un año. El 'hueco' es la plata que se está dejando de facturar frente al año pasado."
       />
       <CardBody>
         {huecos.length === 0 ? (
@@ -58,13 +59,18 @@ export function HuecosYoyList({ huecos }: { huecos: HuecoYoy[] }) {
                   </div>
                   <div className="flex items-baseline justify-between gap-3">
                     <div>
-                      <p className="text-caption text-muted">Hueco</p>
+                      <p
+                        className="cursor-help text-caption text-muted"
+                        title="Plata que faltó frente a las mismas fechas del año pasado"
+                      >
+                        Hueco
+                      </p>
                       <p className="font-mono text-lg font-bold tabular-nums text-danger">
                         {money(h.hueco_pen)}
                       </p>
                     </div>
                     <div className="text-right">
-                      <p className="text-caption text-muted">Δ vs YoY</p>
+                      <p className="text-caption text-muted">vs año pasado</p>
                       <p className="font-mono text-body font-bold tabular-nums text-danger">
                         {formatDeltaPct(h.delta_pct)}
                       </p>
@@ -72,7 +78,7 @@ export function HuecosYoyList({ huecos }: { huecos: HuecoYoy[] }) {
                   </div>
                   <div className="flex items-center justify-between border-t border-danger/15 pt-2 text-[0.65rem]">
                     <span className="text-faint">
-                      {money(h.venta_actual)} vs {money(h.venta_yoy)}
+                      ahora {money(h.venta_actual)} · antes {money(h.venta_yoy)}
                     </span>
                     <Badge tone={diag.tone} className="gap-1">
                       <AlertCircle className="h-3 w-3" aria-hidden="true" />

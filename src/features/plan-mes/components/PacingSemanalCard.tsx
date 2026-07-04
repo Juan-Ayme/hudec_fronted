@@ -7,6 +7,13 @@ import { cn } from "@/lib/utils";
 import type { PacingSemanal } from "@/lib/bi-types";
 import { formatMes } from "@/features/bi/shared";
 
+/** Códigos de método del backend → texto de gerente. */
+const METODO_PACING: Record<string, string> = {
+  dist_yoy_misma_semana:
+    "repartida según cómo se vendió cada semana el año pasado",
+  uniforme: "repartida en partes iguales entre las semanas",
+};
+
 /**
  * Pacing semanal: barras horizontales con la meta por semana + la venta YoY
  * de la misma semana para comparación visual.
@@ -16,17 +23,19 @@ export function PacingSemanalCard({ pacing }: { pacing: PacingSemanal }) {
     ...pacing.semanas.map((s) => Math.max(s.meta, s.yoy_venta)),
     1,
   );
+  const metodo =
+    METODO_PACING[pacing.metodo] ?? pacing.metodo.replaceAll("_", " ");
   return (
     <Card>
       <CardHeader
-        eyebrow={`Pacing semanal · ${formatMes(pacing.mes)}`}
+        eyebrow={`Plan semanal de venta · ${formatMes(pacing.mes)}`}
         title={
           <span className="flex items-center gap-2">
             <CalendarRange className="h-5 w-5 text-primary" />
             {money(pacing.meta_total)}
           </span>
         }
-        subtitle={`Método: ${pacing.metodo} · YoY total ${money(pacing.venta_yoy_total)}`}
+        subtitle={`Cuánto conviene vender cada semana para llegar a la meta, ${metodo}. El año pasado este mes se vendió ${money(pacing.venta_yoy_total)}.`}
       />
       <CardBody className="flex flex-col gap-3">
         {pacing.semanas.length === 0 ? (
@@ -41,10 +50,13 @@ export function PacingSemanalCard({ pacing }: { pacing: PacingSemanal }) {
               <div key={s.sem} className="flex flex-col gap-1">
                 <div className="flex items-baseline justify-between text-caption">
                   <span className="font-semibold text-fg">
-                    Sem {s.sem} · {s.from} → {s.to}
+                    Semana {s.sem} · {s.from} → {s.to}
                   </span>
-                  <span className="font-mono tabular-nums text-muted">
-                    {pct(s.pct_mes)} · {s.dias}d
+                  <span
+                    className="cursor-help font-mono tabular-nums text-muted"
+                    title={`Esta semana concentra el ${pct(s.pct_mes)} de la meta del mes (${s.dias} días)`}
+                  >
+                    {pct(s.pct_mes)} del mes · {s.dias} días
                   </span>
                 </div>
                 <div className="relative h-6 overflow-hidden rounded-md bg-surface-3/40">
@@ -64,7 +76,9 @@ export function PacingSemanalCard({ pacing }: { pacing: PacingSemanal }) {
                 </div>
                 <div className="flex justify-between font-mono text-[0.65rem] tabular-nums">
                   <span className="text-primary">Meta {moneyCompact(s.meta)}</span>
-                  <span className="text-info">YoY {moneyCompact(s.yoy_venta)}</span>
+                  <span className="text-info">
+                    Año pasado {moneyCompact(s.yoy_venta)}
+                  </span>
                 </div>
               </div>
             );
@@ -75,7 +89,7 @@ export function PacingSemanalCard({ pacing }: { pacing: PacingSemanal }) {
             <span className="h-2 w-3 rounded bg-primary/70" /> Meta sugerida
           </span>
           <span className="inline-flex items-center gap-1.5">
-            <span className="h-2 w-0.5 bg-info" /> Referencia YoY
+            <span className="h-2 w-0.5 bg-info" /> Venta del año pasado (misma semana)
           </span>
         </p>
       </CardBody>

@@ -27,6 +27,7 @@ export function Ultimos7DiasCard({ resumen }: { resumen: PulseUltimos7Dias }) {
             {resumen.from} → {resumen.to}
           </span>
         }
+        subtitle="Los porcentajes comparan estos 7 días contra los 7 días previos y contra las mismas fechas del año pasado."
       />
       <CardBody className="grid gap-5 md:grid-cols-2">
         <div className="flex flex-col gap-3">
@@ -46,12 +47,12 @@ export function Ultimos7DiasCard({ resumen }: { resumen: PulseUltimos7Dias }) {
 
         <div className="flex flex-col gap-3">
           <DeltaRow
-            label="vs semana anterior"
+            label="vs los 7 días anteriores"
             total={resumen.delta_vs_semana_anterior_pct_total}
             recurrente={resumen.delta_vs_semana_anterior_pct_recurrente}
           />
           <DeltaRow
-            label="vs mismo período año anterior"
+            label="vs mismas fechas del año pasado"
             total={resumen.delta_vs_ano_anterior_pct_total}
             recurrente={resumen.delta_vs_ano_anterior_pct_recurrente}
           />
@@ -90,7 +91,13 @@ function DeltaRow({
         <span className={cn("font-mono text-lg font-bold tabular-nums", cls(toneTotal))}>
           {formatDeltaPct(total)}
         </span>
-        <span className={cn("font-mono text-caption tabular-nums", cls(toneRecu))}>
+        <span
+          className={cn(
+            "cursor-help font-mono text-caption tabular-nums underline decoration-dotted decoration-muted/40 underline-offset-2",
+            cls(toneRecu),
+          )}
+          title="Variación de la venta recurrente (sin categorías de temporada). Es el número más confiable para leer la tendencia."
+        >
           {formatDeltaPct(recurrente)} recurrente
         </span>
       </div>

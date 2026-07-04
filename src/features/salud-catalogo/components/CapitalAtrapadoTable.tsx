@@ -5,6 +5,7 @@ import { Card, CardBody, CardHeader } from "@/components/ui/card";
 import { money, num, pct } from "@/lib/format";
 import { cn } from "@/lib/utils";
 import type { CapitalAtrapado } from "@/lib/bi-types";
+import { HelpTip } from "@/features/bi/shared";
 
 /**
  * Tabla de SKUs con capital atrapado (recibidos ≤90d con sellthrough <20%).
@@ -26,9 +27,10 @@ export function CapitalAtrapadoTable({
             <span className="text-caption text-faint">
               en {num(data.skus_count_total)} SKUs
             </span>
+            <HelpTip text="Plata invertida en mercadería que llegó hace poco y casi no se vende. Conviene decidir: ¿empujar, mover de tienda o liquidar?" />
           </span>
         }
-        subtitle={data.criterio}
+        subtitle={`Criterio: ${data.criterio}`}
       />
       <CardBody className="p-0">
         {data.top_skus.length === 0 ? (
@@ -41,11 +43,31 @@ export function CapitalAtrapadoTable({
               <thead className="sticky top-0 bg-surface-2/95 backdrop-blur-md">
                 <tr className="border-b border-border-soft text-[0.65rem] uppercase tracking-wider text-faint">
                   <th className="px-4 py-2 text-left font-semibold">SKU · Producto</th>
-                  <th className="px-4 py-2 text-left font-semibold">Recepción</th>
-                  <th className="px-4 py-2 text-right font-semibold">Recibidas / Vend.</th>
+                  <th
+                    className="cursor-help px-4 py-2 text-left font-semibold"
+                    title="Fecha en que llegó la mercadería"
+                  >
+                    Llegó el
+                  </th>
+                  <th
+                    className="cursor-help px-4 py-2 text-right font-semibold"
+                    title="Unidades recibidas / unidades vendidas desde la recepción"
+                  >
+                    Recibidas / Vend.
+                  </th>
                   <th className="px-4 py-2 text-right font-semibold">Stock</th>
-                  <th className="px-4 py-2 text-right font-semibold">Sellthrough</th>
-                  <th className="px-4 py-2 text-right font-semibold">Capital</th>
+                  <th
+                    className="cursor-help px-4 py-2 text-right font-semibold"
+                    title="De cada 100 unidades recibidas, cuántas ya se vendieron. Menos de 20% en 90 días es señal de alerta."
+                  >
+                    % vendido
+                  </th>
+                  <th
+                    className="cursor-help px-4 py-2 text-right font-semibold"
+                    title="Plata parada: stock actual × costo unitario"
+                  >
+                    Capital parado
+                  </th>
                 </tr>
               </thead>
               <tbody>

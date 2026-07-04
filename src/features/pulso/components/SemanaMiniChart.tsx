@@ -23,6 +23,7 @@ export function SemanaMiniChart({ semana }: { semana: PulseSemanaDia[] }) {
               Ventas por día
             </span>
           }
+          subtitle="Sólo días cerrados — el día de hoy se suma cuando termina."
         />
         <CardBody>
           <p className="py-6 text-center text-caption text-faint">
@@ -92,11 +93,17 @@ export function SemanaMiniChart({ semana }: { semana: PulseSemanaDia[] }) {
         })}
 
         <p className="mt-2 flex flex-wrap items-center gap-3 border-t border-border-soft pt-2 text-[0.65rem] text-faint">
-          <span className="inline-flex items-center gap-1.5">
-            <span className="h-2 w-3 rounded bg-primary" /> Recurrente
+          <span
+            className="inline-flex cursor-help items-center gap-1.5"
+            title="Venta sin categorías de temporada — la venta 'de todos los días'."
+          >
+            <span className="h-2 w-3 rounded bg-primary" /> Venta recurrente
           </span>
-          <span className="inline-flex items-center gap-1.5">
-            <span className="h-2 w-3 rounded bg-primary/50" /> Estacional (extra)
+          <span
+            className="inline-flex cursor-help items-center gap-1.5"
+            title="Venta extra de categorías de temporada (Navidad, Día del Padre, etc.)."
+          >
+            <span className="h-2 w-3 rounded bg-primary/50" /> Venta de temporada (extra)
           </span>
         </p>
       </CardBody>

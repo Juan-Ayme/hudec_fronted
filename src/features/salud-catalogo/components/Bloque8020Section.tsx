@@ -13,6 +13,7 @@ import type {
 } from "@/lib/bi-types";
 import {
   EstadoBadge,
+  HelpTip,
   ROL_TARGET,
   SKUS_ESTADO,
   formatAvance,
@@ -28,14 +29,15 @@ export function Bloque8020Section({ bloque }: { bloque: Bloque8020 }) {
   return (
     <Card>
       <CardHeader
-        eyebrow={`Bloque 80/20 · ${formatMes(bloque.mes)}`}
+        eyebrow={`Categorías clave (regla 80/20) · ${formatMes(bloque.mes)}`}
         title={
           <span className="flex items-center gap-2">
             <Sparkles className="h-5 w-5 text-violet" />
             {bloque.total_categorias} categorías con meta cargada
+            <HelpTip text="El puñado de categorías que concentra la mayor parte de la venta (regla 80/20). Cada una tiene meta mensual, un rol en el negocio y un rango ideal de surtido." />
           </span>
         }
-        subtitle={`Día ${bloque.dias_transcurridos} de ${bloque.dias_del_mes} · último cierre ${bloque.ultimo_dia_cerrado}`}
+        subtitle={`Día ${bloque.dias_transcurridos} de ${bloque.dias_del_mes} · datos al cierre de ${bloque.ultimo_dia_cerrado}`}
       />
       <CardBody className="flex flex-col gap-5">
         {bloque.por_sucursal.length > 0 && (
@@ -53,7 +55,10 @@ export function Bloque8020Section({ bloque }: { bloque: Bloque8020 }) {
 }
 
 function SucursalCard({ sucursal }: { sucursal: Bloque8020Sucursal }) {
-  const avance = formatAvance(sucursal.avance_pct);
+  // El COLOR sale del ritmo (venta vs lo esperado al día de hoy), no del
+  // avance del mes: a inicio de mes el avance siempre es bajo y pintarlo
+  // rojo confunde. El ritmo sí dice si la sucursal va bien o mal HOY.
+  const ritmo = formatAvance(sucursal.ritmo_vs_meta_pct);
   return (
     <div className="flex flex-col gap-3 rounded-lg border border-border-soft bg-surface-2/40 p-3">
       <div className="flex items-center gap-2">
@@ -74,28 +79,36 @@ function SucursalCard({ sucursal }: { sucursal: Bloque8020Sucursal }) {
           </p>
         </div>
         <div className="text-right">
-          <p className="text-caption text-muted">Avance</p>
+          <p
+            className="cursor-help text-caption text-muted underline decoration-dotted decoration-muted/40 underline-offset-2"
+            title="Venta acumulada vs lo esperado al día de hoy. 100% = al día con la meta; menos de 80% = en riesgo."
+          >
+            Ritmo
+          </p>
           <p
             className={cn(
               "font-mono text-lg font-bold tabular-nums",
-              avance.tone === "success"
+              ritmo.tone === "success"
                 ? "text-success"
-                : avance.tone === "warning"
+                : ritmo.tone === "warning"
                 ? "text-warning"
-                : avance.tone === "danger"
+                : ritmo.tone === "danger"
                 ? "text-danger"
                 : "text-fg",
             )}
           >
-            {avance.text}
+            {ritmo.text}
           </p>
           <p className="font-mono text-[0.65rem] tabular-nums text-faint">
-            Ritmo {pct(sucursal.ritmo_vs_meta_pct)}
+            Avance del mes {pct(sucursal.avance_pct)}
           </p>
         </div>
       </div>
 
-      <div className="grid grid-cols-4 gap-1.5 border-t border-border-soft pt-2 text-center">
+      <div
+        className="grid grid-cols-4 gap-1.5 border-t border-border-soft pt-2 text-center"
+        title="Cuántas de las categorías con meta de esta sucursal están en cada situación"
+      >
         <StatePill n={sucursal.cumplen} label="Cumplen" tone="success" />
         <StatePill n={sucursal.en_ritmo} label="En ritmo" tone="success" />
         <StatePill n={sucursal.atrasado_leve} label="Atraso" tone="warning" />
@@ -212,9 +225,21 @@ function CategoriasTable({
               <SortHeader label="Meta" sortKey="meta" current={sortBy} onSort={setSortBy} align="right" />
               <SortHeader label="Venta" sortKey="venta" current={sortBy} onSort={setSortBy} align="right" />
               <SortHeader label="Avance" sortKey="avance" current={sortBy} onSort={setSortBy} align="right" />
-              <SortHeader label="Gap" sortKey="gap" current={sortBy} onSort={setSortBy} align="right" />
+              <SortHeader
+                label="Diferencia"
+                title="Venta acumulada menos meta del mes: negativo (rojo) = lo que falta, positivo (verde) = lo que sobra"
+                sortKey="gap"
+                current={sortBy}
+                onSort={setSortBy}
+                align="right"
+              />
               <th className="px-3 py-2 text-left font-semibold">Estado</th>
-              <th className="px-3 py-2 text-left font-semibold">SKUs</th>
+              <th
+                className="cursor-help px-3 py-2 text-left font-semibold"
+                title="Variedad de productos: con stock hoy / rango ideal (mínimo–máximo) definido para la categoría"
+              >
+                Surtido
+              </th>
             </tr>
           </thead>
           <tbody>
@@ -230,12 +255,14 @@ function CategoriasTable({
 
 function SortHeader({
   label,
+  title,
   sortKey,
   current,
   onSort,
   align,
 }: {
   label: string;
+  title?: string;
   sortKey: SortKey;
   current: SortKey;
   onSort: (k: SortKey) => void;
@@ -249,6 +276,7 @@ function SortHeader({
         isActive ? "text-primary" : "hover:text-fg",
         align === "right" ? "text-right" : "text-left",
       )}
+      title={title ?? `Ordenar por ${label.toLowerCase()}`}
       onClick={() => onSort(sortKey)}
     >
       {label} {isActive && "↓"}
@@ -326,7 +354,11 @@ function CategoriaRow({ c }: { c: Bloque8020Categoria }) {
         <EstadoBadge estado={c.estado} />
       </td>
       <td className="px-3 py-2">
-        <Badge tone={skus.tone} className="whitespace-nowrap">
+        <Badge
+          tone={skus.tone}
+          className="cursor-help whitespace-nowrap"
+          title={`${skus.label}: hay ${c.skus_con_stock} productos con stock y el rango ideal para esta categoría es ${c.skus_min}–${c.skus_max}.`}
+        >
           {c.skus_con_stock} / {c.skus_min}–{c.skus_max}
         </Badge>
       </td>

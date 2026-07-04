@@ -27,13 +27,18 @@ export function TopCategoriasList({
             {money(categorias.total_actual)}{" "}
             <span className={cn(
               "font-mono text-body font-bold",
-              categorias.delta_yoy_pct != null && categorias.delta_yoy_pct > 0 ? "text-success" : "text-danger",
+              // null u 0 en neutro — antes el "—" salía pintado de rojo.
+              categorias.delta_yoy_pct == null || categorias.delta_yoy_pct === 0
+                ? "text-fg"
+                : categorias.delta_yoy_pct > 0
+                ? "text-success"
+                : "text-danger",
             )}>
               {formatDeltaPct(categorias.delta_yoy_pct)}
             </span>
           </span>
         }
-        subtitle={`${categorias.categorias_totales} categorías activas · vs YoY ${money(categorias.total_yoy)}`}
+        subtitle={`${categorias.categorias_totales} categorías con venta · mismas fechas del año pasado: ${money(categorias.total_yoy)}`}
       />
       <CardBody className="p-0">
         {categorias.top_categorias.length === 0 ? (
@@ -46,10 +51,20 @@ export function TopCategoriasList({
               <thead className="sticky top-0 bg-surface-2/95 backdrop-blur-md">
                 <tr className="border-b border-border-soft text-[0.65rem] uppercase tracking-wider text-faint">
                   <th className="px-4 py-2 text-left font-semibold">Categoría</th>
-                  <th className="px-4 py-2 text-right font-semibold">30d</th>
-                  <th className="px-4 py-2 text-right font-semibold">YoY</th>
-                  <th className="px-4 py-2 text-right font-semibold">Δ YoY</th>
-                  <th className="px-4 py-2 text-right font-semibold">SKUs</th>
+                  <th className="px-4 py-2 text-right font-semibold">Últ. 30 días</th>
+                  <th
+                    className="cursor-help px-4 py-2 text-right font-semibold"
+                    title="Venta de las mismas fechas del año pasado"
+                  >
+                    Año pasado
+                  </th>
+                  <th className="px-4 py-2 text-right font-semibold">Cambio</th>
+                  <th
+                    className="cursor-help px-4 py-2 text-right font-semibold"
+                    title="Cantidad de productos distintos con venta en la ventana"
+                  >
+                    SKUs
+                  </th>
                   <th className="px-4 py-2 text-left font-semibold">Tendencia</th>
                 </tr>
               </thead>

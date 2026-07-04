@@ -33,16 +33,20 @@ export function Badge({
   tone = "neutral",
   dot = false,
   className,
+  title,
   children,
 }: {
   tone?: BadgeTone;
   /** Mostrar dot indicator antes del texto (estado activo / pulse). */
   dot?: boolean;
   className?: string;
+  /** Tooltip nativo — útil para explicar el significado del badge. */
+  title?: string;
   children: React.ReactNode;
 }) {
   return (
     <span
+      title={title}
       className={cn(
         "inline-flex items-center gap-1.5 rounded-sm border px-2 py-0.5 text-caption font-medium whitespace-nowrap",
         tones[tone],

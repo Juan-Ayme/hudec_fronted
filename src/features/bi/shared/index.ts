@@ -9,5 +9,6 @@ export * from "./EstadoBadge";
 export * from "./VeredictoCard";
 export * from "./AlertaChip";
 export * from "./EstacionalesInfo";
+export * from "./HelpTip";
 export * from "./OnboardingChecklist";
 export * from "./useBIQuery";

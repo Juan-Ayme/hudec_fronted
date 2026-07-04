@@ -19,25 +19,37 @@ const NIVELES: {
   {
     key: "conservadora",
     label: "Conservadora",
-    desc: "Fácil de superar, low risk",
+    desc: "Piso seguro: fácil de superar",
     tone: "warning",
     getValue: (s) => s.meta_conservadora,
   },
   {
     key: "realista",
     label: "Realista",
-    desc: "YoY + crecimiento probable",
+    desc: "Lo esperable si el crecimiento se mantiene",
     tone: "info",
     getValue: (s) => s.meta_realista,
   },
   {
     key: "agresiva",
     label: "Agresiva",
-    desc: "Requiere plan de acción",
+    desc: "Exigente: requiere plan de acción",
     tone: "danger",
     getValue: (s) => s.meta_agresiva,
   },
 ];
+
+/** Códigos de método del backend → explicación corta para el gerente. */
+const METODO_LABEL: Record<string, string> = {
+  yoy_mas_crecimiento_3m_promedio:
+    "venta del mismo mes del año pasado + el crecimiento promedio de los últimos meses",
+  yoy_directo: "venta del mismo mes del año pasado",
+  promedio_historico: "promedio de los meses con datos",
+};
+
+function humanizarMetodo(metodo: string): string {
+  return METODO_LABEL[metodo] ?? metodo.replaceAll("_", " ");
+}
 
 const TONE_STYLES = {
   info: {
@@ -85,7 +97,7 @@ export function SugerenciaMetaSection({
               Meta sugerida para {formatMes(sug.mes_objetivo)}
             </span>
           }
-          subtitle={`Método: ${sug.metodo} · YoY ${money(sug.venta_yoy_mismo_mes)} · crecimiento 3m ${pct(sug.crecimiento_yoy_3m_pct)}`}
+          subtitle={`Calculada sobre la ${humanizarMetodo(sug.metodo)}. El año pasado este mes se vendió ${money(sug.venta_yoy_mismo_mes)}; el crecimiento reciente es ${pct(sug.crecimiento_yoy_3m_pct)}.`}
         />
         <CardBody>
           <div className="grid gap-4 md:grid-cols-3">
@@ -141,11 +153,12 @@ export function SugerenciaMetaSection({
                 {money(sug.mejor_mes_historico)}
               </span>
             </span>
-            <span className="text-muted">
-              Muestras crecimiento:{" "}
-              <span className="font-semibold text-fg">
-                {sug.muestras_crecimiento}
-              </span>
+            <span
+              className="cursor-help text-muted underline decoration-dotted decoration-muted/40 underline-offset-2"
+              title="Cantidad de meses con datos de ambos años usados para estimar el crecimiento. Con pocos meses de historia, tomá la sugerencia con cautela."
+            >
+              Basada en {sug.muestras_crecimiento}{" "}
+              {sug.muestras_crecimiento === 1 ? "mes comparable" : "meses comparables"}
             </span>
           </div>
         </CardBody>
@@ -213,8 +226,9 @@ function ConfirmSaveDialog({
               </p>
               <p className="mt-1 text-caption text-muted">
                 Nivel: <span className="font-semibold">{nivel}</span>. Si ya
-                había meta cargada para este mes, se reemplaza. La distribución
-                por sucursal es proporcional a la venta actual.
+                había una meta cargada para este mes, se reemplaza. La meta se
+                reparte en partes iguales entre las sucursales — podés ajustar
+                el detalle en Configuración → Metas.
               </p>
             </div>
           </div>

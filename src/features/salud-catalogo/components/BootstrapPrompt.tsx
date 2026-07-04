@@ -58,12 +58,14 @@ export function BootstrapPrompt({
           </div>
           <div className="min-w-0 flex-1">
             <p className="text-h3 font-bold text-fg">
-              Activá el bloque 80/20
+              Activá las metas por categoría (80/20)
             </p>
             <p className="mt-1 text-caption text-fg/80">
-              Aún no tenés metas por categoría cargadas. El bootstrap analiza tus
-              últimos 90 días de venta y sugiere metas + roles (motor / fijo /
-              complemento / upsell) por sucursal. Podés previsualizar antes.
+              Aún no hay metas por categoría cargadas. El sistema puede analizar
+              tus últimos 90 días de venta y sugerir metas y roles (motor / fijo
+              / complemento / upsell) para cada categoría y sucursal. Podés ver
+              la propuesta antes de aplicarla — nada se guarda hasta que
+              confirmes.
             </p>
           </div>
           <div className="flex shrink-0 flex-wrap gap-2">
@@ -98,9 +100,9 @@ export function BootstrapPrompt({
 
       {confirmOpen === "safe" && (
         <ConfirmDialog
-          title="Ejecutar bootstrap"
-          body="Se van a insertar las categorías sugeridas en category_targets. Si ya había filas, la API va a rechazar y te vamos a ofrecer reset con force."
-          confirmLabel="Ejecutar"
+          title="Crear metas sugeridas"
+          body="Se van a crear las metas por categoría sugeridas. Si ya existían metas cargadas, el sistema lo va a avisar y te ofreceremos recargarlas desde cero."
+          confirmLabel="Crear metas"
           confirmTone="info"
           onCancel={() => setConfirmOpen(null)}
           onConfirm={() => doBootstrap(false)}
@@ -110,8 +112,8 @@ export function BootstrapPrompt({
 
       {confirmOpen === "force" && (
         <ConfirmDialog
-          title="⚠️ Reset con force"
-          body="Ya hay category_targets cargados. Con force=true, la API BORRA todo lo actual y recarga desde cero. Esto pisa cualquier edición manual previa."
+          title="⚠️ Borrar y recargar metas"
+          body="Ya hay metas por categoría cargadas. Si continuás, se BORRAN todas las actuales (incluidas las editadas a mano) y se recargan las sugeridas desde cero."
           confirmLabel="Sí, borrar y recargar"
           confirmTone="danger"
           onCancel={() => setConfirmOpen(null)}

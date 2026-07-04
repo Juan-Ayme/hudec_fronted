@@ -67,7 +67,7 @@ export function PulsoView() {
       <Ultimos7DiasCard resumen={p.ultimos_7_dias} />
 
       <div>
-        <div className="mb-3 flex items-center gap-2">
+        <div className="mb-1 flex items-center gap-2">
           <Bell className="h-5 w-5 text-warning" aria-hidden="true" />
           <h2 className="text-h3 font-semibold text-fg">Alertas del momento</h2>
           {p.alertas.length > 0 && (
@@ -76,6 +76,10 @@ export function PulsoView() {
             </span>
           )}
         </div>
+        <p className="mb-3 text-caption text-muted">
+          Problemas y oportunidades detectados hoy, ordenados por urgencia. El
+          monto es el impacto estimado en soles.
+        </p>
         <AlertaList
           alertas={p.alertas}
           onAction={() => router.push("/diagnostico")}

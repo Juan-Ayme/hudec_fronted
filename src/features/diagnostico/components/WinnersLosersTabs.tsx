@@ -8,6 +8,7 @@ import { money, num } from "@/lib/format";
 import { cn } from "@/lib/utils";
 import type {
   DiagnosisSkuMov,
+  DiagnosisSkuNuevo,
   DiagnosisWinnersLosers,
 } from "@/lib/bi-types";
 import { deltaTone, formatDeltaPct } from "@/features/bi/shared";
@@ -18,15 +19,25 @@ const TABS: {
   id: WLKey;
   label: string;
   short: string;
+  desc: string;
   icon: LucideIcon;
   tone: "success" | "danger" | "info" | "warning";
   getRows: (w: DiagnosisWinnersLosers) => DiagnosisSkuMov[];
 }[] = [
-  { id: "subieron",  label: "Top que subieron",     short: "Subieron",  icon: TrendingUp,   tone: "success", getRows: (w) => w.top_subieron },
-  { id: "cayeron",   label: "Top que cayeron",      short: "Cayeron",   icon: TrendingDown, tone: "danger",  getRows: (w) => w.top_cayeron },
-  { id: "nuevos",    label: "Nuevos con tracción",  short: "Nuevos",    icon: Sprout,       tone: "info",    getRows: (w) => w.skus_nuevos_con_traccion },
-  { id: "enfriados", label: "Se enfriaron",         short: "Enfriados", icon: Snowflake,    tone: "warning", getRows: (w) => w.skus_que_se_enfriaron },
+  { id: "subieron",  label: "Top que subieron",    short: "Subieron",  desc: "Los productos que más soles sumaron respecto al período anterior.",             icon: TrendingUp,   tone: "success", getRows: (w) => w.top_subieron },
+  { id: "cayeron",   label: "Top que cayeron",     short: "Cayeron",   desc: "Los productos que más soles perdieron respecto al período anterior.",           icon: TrendingDown, tone: "danger",  getRows: (w) => w.top_cayeron },
+  { id: "nuevos",    label: "Nuevos con tracción", short: "Nuevos",    desc: "Productos sin ventas previas que arrancaron a venderse en este período.",       icon: Sprout,       tone: "info",    getRows: () => [] },
+  { id: "enfriados", label: "Se enfriaron",        short: "Enfriados", desc: "Productos que vendían seguido y dejaron de moverse. Revisar stock o exhibición.", icon: Snowflake,    tone: "warning", getRows: (w) => w.skus_que_se_enfriaron },
 ];
+
+/** El tab "nuevos" tiene shape propio (sin período previo ni delta). */
+const rowsFor = (
+  w: DiagnosisWinnersLosers,
+  id: WLKey,
+): DiagnosisSkuMov[] | DiagnosisSkuNuevo[] =>
+  id === "nuevos"
+    ? w.skus_nuevos_con_traccion ?? []
+    : TABS.find((t) => t.id === id)!.getRows(w) ?? [];
 
 const toneClasses = {
   success: { bgActive: "bg-success/12 text-success", pill: "text-success" },
@@ -43,12 +54,12 @@ export function WinnersLosersTabs({
 }) {
   const [tab, setTab] = useState<WLKey>("cayeron");
   const spec = TABS.find((t) => t.id === tab)!;
-  const rows = spec.getRows(ganadores);
+  const rows = rowsFor(ganadores, tab);
 
   return (
     <Card>
       <CardHeader
-        eyebrow="Movimientos por SKU"
+        eyebrow="Movimientos por producto"
         title="Ganadores y perdedores"
       />
       <div className="flex flex-wrap gap-1 border-b border-border-soft px-3 py-2">
@@ -70,17 +81,22 @@ export function WinnersLosersTabs({
               <Icon className="h-3.5 w-3.5" />
               {t.short}
               <span className="rounded-full bg-surface-3 px-1.5 py-0 font-mono text-[0.6rem] tabular-nums">
-                {t.getRows(ganadores).length}
+                {rowsFor(ganadores, t.id).length}
               </span>
             </button>
           );
         })}
       </div>
+      <p className="border-b border-border-soft/50 px-4 py-2 text-caption text-muted">
+        {spec.desc}
+      </p>
       <CardBody className="p-0">
         {rows.length === 0 ? (
           <p className="p-6 text-center text-caption text-faint">
-            Sin SKUs en esta categoría.
+            Sin productos en esta categoría.
           </p>
+        ) : tab === "nuevos" ? (
+          <NuevosTable rows={rows as DiagnosisSkuNuevo[]} />
         ) : (
           <div className="max-h-96 overflow-y-auto custom-scrollbar">
             <table className="w-full text-caption">
@@ -88,13 +104,13 @@ export function WinnersLosersTabs({
                 <tr className="border-b border-border-soft text-[0.65rem] uppercase tracking-wider text-faint">
                   <th className="px-4 py-2 text-left font-semibold">SKU · Producto</th>
                   <th className="px-4 py-2 text-right font-semibold">Actual</th>
-                  <th className="px-4 py-2 text-right font-semibold">Previo</th>
-                  <th className="px-4 py-2 text-right font-semibold">Δ%</th>
-                  <th className="px-4 py-2 text-right font-semibold">Δ S/</th>
+                  <th className="px-4 py-2 text-right font-semibold">Antes</th>
+                  <th className="px-4 py-2 text-right font-semibold">Cambio %</th>
+                  <th className="px-4 py-2 text-right font-semibold">Cambio S/</th>
                 </tr>
               </thead>
               <tbody>
-                {rows.map((r, i) => {
+                {(rows as DiagnosisSkuMov[]).map((r, i) => {
                   const tone = deltaTone(r.delta_pct);
                   const toneCls = {
                     success: "text-success",
@@ -163,5 +179,52 @@ export function WinnersLosersTabs({
         )}
       </CardBody>
     </Card>
+  );
+}
+
+/**
+ * Tabla especial para SKUs nuevos: el backend no manda período previo ni
+ * delta (no existían antes) — manda ventas, unidades y fecha de primera venta.
+ * Antes se usaba la tabla estándar y estas columnas quedaban en "—".
+ */
+function NuevosTable({ rows }: { rows: DiagnosisSkuNuevo[] }) {
+  return (
+    <div className="max-h-96 overflow-y-auto custom-scrollbar">
+      <table className="w-full text-caption">
+        <thead className="sticky top-0 bg-surface-2/95 backdrop-blur-md">
+          <tr className="border-b border-border-soft text-[0.65rem] uppercase tracking-wider text-faint">
+            <th className="px-4 py-2 text-left font-semibold">SKU · Producto</th>
+            <th className="px-4 py-2 text-right font-semibold">Ventas</th>
+            <th className="px-4 py-2 text-right font-semibold">Unidades</th>
+            <th className="px-4 py-2 text-right font-semibold">Primera venta</th>
+          </tr>
+        </thead>
+        <tbody>
+          {rows.map((r, i) => (
+            <tr
+              key={`${r.sku}-${i}`}
+              className="border-b border-border-soft/50 hover:bg-surface-2/40"
+            >
+              <td className="px-4 py-2">
+                <p className="truncate font-semibold text-fg">{r.producto}</p>
+                <p className="font-mono text-[0.65rem] text-faint">
+                  {r.sku}
+                  {r.sucursal ? ` · ${r.sucursal}` : ""}
+                </p>
+              </td>
+              <td className="px-4 py-2 text-right font-mono tabular-nums font-semibold text-success">
+                {money(r.ventas)}
+              </td>
+              <td className="px-4 py-2 text-right font-mono tabular-nums text-fg">
+                {r.unds != null ? num(r.unds) : "—"}
+              </td>
+              <td className="px-4 py-2 text-right font-mono tabular-nums text-muted">
+                {r.primera_venta ?? "—"}
+              </td>
+            </tr>
+          ))}
+        </tbody>
+      </table>
+    </div>
   );
 }

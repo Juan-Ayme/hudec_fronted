@@ -22,6 +22,7 @@ import { SkuTable } from "./SkuTable";
 import { SkuDetailDrawer } from "./SkuDetailDrawer";
 import { TreeLoader, ListLoader, TableLoader } from "@/components/ui/chart-loaders";
 import { comprasCatalogoExcelUrl, downloadExcelFile } from "@/lib/api";
+import { InformesGerencialesButton } from "@/components/informes-gerenciales-button";
 
 function FilterChip({
   label,
@@ -512,9 +513,10 @@ export function ComprasView() {
                         )}
                       </div>
                       <div className="w-px h-6 bg-border-soft mx-1 hidden sm:block" />
-                      <Button 
-                        onClick={downloadExcel} 
-                        variant="outline" 
+                      <InformesGerencialesButton officeId={officeId} compact />
+                      <Button
+                        onClick={downloadExcel}
+                        variant="outline"
                         size="sm"
                         className="h-8 shrink-0 border-success/40 bg-success/12 text-success transition-colors hover:bg-success/25 hover:border-success/60"
                       >

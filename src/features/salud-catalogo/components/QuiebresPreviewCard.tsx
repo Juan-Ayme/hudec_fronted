@@ -5,6 +5,7 @@ import { AlertOctagon, ArrowRight } from "lucide-react";
 import { Card, CardBody, CardHeader } from "@/components/ui/card";
 import { money, num } from "@/lib/format";
 import type { QuiebresDemanda } from "@/lib/bi-types";
+import { HelpTip } from "@/features/bi/shared";
 
 /**
  * Preview de quiebres con demanda activa. El detalle real está en
@@ -19,11 +20,12 @@ export function QuiebresPreviewCard({
   return (
     <Card>
       <CardHeader
-        eyebrow={`Quiebres con demanda · últ. ${data.ventana_dias}d`}
+        eyebrow={`Agotados con demanda · últimos ${data.ventana_dias} días`}
         title={
           <span className="flex items-center gap-2">
             <AlertOctagon className="h-5 w-5 text-danger" />
             {money(data.monto_estimado_pen)} perdidos en {num(data.skus_count)} SKUs
+            <HelpTip text="Productos sin stock que la gente sigue pidiendo. El monto estima cuánto se habría vendido si hubiera habido stock. Prioridad de reposición." />
           </span>
         }
         action={
@@ -54,7 +56,8 @@ export function QuiebresPreviewCard({
                   </p>
                   <p className="font-mono text-[0.6rem] text-faint">
                     {s.sku}
-                    {s.sucursal ? ` · ${s.sucursal}` : ""} · {s.dias_quiebre}d s/stock
+                    {s.sucursal ? ` · ${s.sucursal}` : ""} · {s.dias_quiebre}{" "}
+                    {s.dias_quiebre === 1 ? "día" : "días"} sin stock
                   </p>
                 </div>
                 <p className="font-mono text-caption tabular-nums font-bold text-danger whitespace-nowrap">

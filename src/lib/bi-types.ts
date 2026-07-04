@@ -56,13 +56,18 @@ export interface Exclusiones {
   nota: string;
 }
 
-export interface VeredictoVentana {
+/** Sub-ventana de comparación del veredicto. El backend manda un dict con
+ *  claves como "actual" / "mes_anterior" / "ano_anterior", cada una con su
+ *  rango de fechas y ventas. */
+export interface VeredictoVentanaPeriodo {
   from?: string;
   to?: string;
-  ventas_actual?: number;
-  ventas_comparable?: number;
+  ventas_total?: number;
+  ventas_recurrente?: number;
   [k: string]: unknown;
 }
+
+export type VeredictoVentana = Record<string, VeredictoVentanaPeriodo | undefined>;
 
 export interface Veredicto {
   codigo: VeredictoCodigo;
@@ -99,6 +104,8 @@ export interface PulseMesSucursal {
   venta_acumulada_recurrente: number;
   meta: number;
   meta_prorrateada: number;
+  /** venta − meta: NEGATIVO = falta para la meta. Convención unificada en
+   *  todos los endpoints BI (jul 2026). */
   gap_a_meta: number;
   avance_pct: number;
   cumplimiento_vs_ritmo_pct: number;
@@ -304,8 +311,9 @@ export interface DiagnosisQuiebreSku {
   sucursal?: string;
   office_id?: number;
   dias_quiebre: number;
-  tdpv_30d: number;
-  precio_unit_30d: number;
+  /** Tasa diaria promedio de venta (unidades/día en los últimos 30d). */
+  tdpv: number;
+  precio_unit: number;
   perdida_estimada_pen: number;
 }
 
@@ -356,10 +364,24 @@ export interface DiagnosisSkuMov {
   [k: string]: unknown;
 }
 
+/** SKU nuevo con tracción. Shape distinto al resto de winners/losers: como no
+ *  existía en el período previo, el backend NO manda ventas_prev/delta —
+ *  manda la venta del período y la fecha de primera venta. */
+export interface DiagnosisSkuNuevo {
+  sku: string;
+  producto: string;
+  sucursal?: string;
+  office_id?: number;
+  ventas: number;
+  unds?: number;
+  primera_venta?: string;
+  [k: string]: unknown;
+}
+
 export interface DiagnosisWinnersLosers {
   top_subieron: DiagnosisSkuMov[];
   top_cayeron: DiagnosisSkuMov[];
-  skus_nuevos_con_traccion: DiagnosisSkuMov[];
+  skus_nuevos_con_traccion: DiagnosisSkuNuevo[];
   skus_que_se_enfriaron: DiagnosisSkuMov[];
 }
 
@@ -511,10 +533,12 @@ export interface CapitalAtrapado {
 export interface CandidatoDescuentoSku {
   sku: string;
   producto: string;
+  departamento?: string;
+  categoria?: string;
   sucursal: string;
   office_id: number;
-  stock_actual: number;
-  dias_sin_venta: number;
+  /** El backend manda `stock` (no `stock_actual`) en este endpoint. */
+  stock: number;
   costo_unit: number;
   valor_inventario_pen: number;
 }
@@ -532,7 +556,9 @@ export interface QuiebreDemandaSku {
   sucursal?: string;
   office_id?: number;
   dias_quiebre: number;
-  tdpv_30d: number;
+  /** Tasa diaria promedio de venta (unidades/día). */
+  tdpv: number;
+  precio_unit?: number;
   perdida_estimada_pen: number;
 }
 
@@ -596,11 +622,14 @@ export interface PlanMesEnCurso {
   venta_diaria_promedio: number;
   meta: number;
   meta_source: MetaSource;
-  gap_a_meta: number;
+  /** venta − meta: NEGATIVO = falta. Unificado con /pulse en jul 2026 —
+   *  antes este endpoint usaba el signo inverso. */
+  gap_a_meta: number | null;
   proyeccion_lineal: number;
   estado: MetaEstado;
-  venta_diaria_necesaria: number;
-  ritmo_necesario_multiplo: number;
+  /** null cuando la meta ya se cumplió o no quedan días. */
+  venta_diaria_necesaria: number | null;
+  ritmo_necesario_multiplo: number | null;
 }
 
 export type SugerenciaNivel = "conservadora" | "realista" | "agresiva";

@@ -5,6 +5,7 @@ import { cn } from "@/lib/utils";
 import type { Veredicto } from "@/lib/bi-types";
 import { VEREDICTO } from "./constants";
 import { deltaArrow, formatDeltaPct } from "./format-bi";
+import { Activity } from "lucide-react";
 
 /**
  * Card grande con el veredicto del momento: título, explicación textual y
@@ -18,10 +19,16 @@ export function VeredictoCard({
   veredicto,
   className,
 }: {
-  veredicto: Veredicto;
+  veredicto?: Veredicto;
   className?: string;
 }) {
-  const meta = VEREDICTO[veredicto.codigo];
+  if (!veredicto) return null;
+
+  const meta = VEREDICTO[veredicto.codigo] || {
+    tone: "neutral",
+    label: veredicto.codigo || "Desconocido",
+    icon: Activity,
+  };
   const Icon = meta.icon;
   const toneBorder = {
     success: "border-l-success/70",
@@ -73,21 +80,45 @@ export function VeredictoCard({
             <div className="mt-3 flex flex-wrap items-center gap-3 text-caption">
               {veredicto.delta_yoy_pct != null && (
                 <DeltaChip
-                  label="vs año anterior"
+                  label="vs mismas fechas del año pasado"
                   value={veredicto.delta_yoy_pct}
                 />
               )}
               {veredicto.delta_mes_anterior_pct != null && (
                 <DeltaChip
-                  label="vs mes anterior"
+                  label="vs mismas fechas del mes pasado"
                   value={veredicto.delta_mes_anterior_pct}
                 />
               )}
             </div>
           )}
+          <VentanaNote veredicto={veredicto} />
         </div>
       </CardBody>
     </Card>
+  );
+}
+
+/** Nota chica con la base y ventana del cálculo, para que quede claro QUÉ se
+ *  está comparando (fechas equivalentes, no meses completos). */
+function VentanaNote({ veredicto }: { veredicto: Veredicto }) {
+  const actual = veredicto.ventana?.actual;
+  const rango =
+    actual?.from && actual?.to ? `${actual.from} → ${actual.to}` : null;
+  const baseRecurrente = veredicto.base_calculo === "venta_recurrente";
+  if (!rango && !baseRecurrente) return null;
+  return (
+    <p className="mt-2 text-[0.7rem] text-faint">
+      {rango && <>Comparando lo que va del mes ({rango}) contra las mismas fechas. </>}
+      {baseRecurrente && (
+        <span
+          className="cursor-help underline decoration-dotted decoration-muted/40 underline-offset-2"
+          title="La venta recurrente excluye categorías de temporada (Navidad, Día del Padre, etc.) para no distorsionar la comparación."
+        >
+          Calculado sobre venta recurrente.
+        </span>
+      )}
+    </p>
   );
 }
 

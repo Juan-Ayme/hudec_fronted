@@ -53,6 +53,38 @@ export const ESTADO_META: Record<MetaEstado, CodigoMeta> = {
   SIN_META:         { tone: "neutral", label: "Sin meta",      icon: Circle       },
 };
 
+// Explicación en lenguaje de gerente de cada estado. Se muestra como tooltip
+// del EstadoBadge — el estado compara la venta acumulada contra la parte de
+// la meta que corresponde al día del mes (meta prorrateada).
+export const ESTADO_META_DESC: Record<MetaEstado, string> = {
+  META_CUMPLIDA:    "Ya se superó la meta del mes completo.",
+  ADELANTADO:       "La venta va por encima de lo esperado para el día del mes.",
+  EN_RITMO:         "La venta va al ritmo esperado para el día del mes.",
+  ATRASADO_LEVE:    "La venta va levemente por debajo de lo esperado a la fecha. Aún es recuperable.",
+  RIESGO_NO_LLEGAR: "La venta va muy por debajo de lo esperado a la fecha. A este ritmo no se llega a la meta.",
+  SIN_META:         "No hay meta cargada para este mes. Cargala en Configuración → Metas.",
+};
+
+/** Tono de gauge/medidor según el estado de meta del backend. Evita colorear
+ *  el "% de avance del mes" con umbrales fijos (a inicio de mes un avance
+ *  bajo es normal — lo que importa es el ritmo, y eso ya lo resume `estado`). */
+export function estadoGaugeTone(
+  estado: MetaEstado,
+): "primary" | "success" | "warning" | "danger" {
+  switch (estado) {
+    case "META_CUMPLIDA":
+    case "ADELANTADO":
+    case "EN_RITMO":
+      return "success";
+    case "ATRASADO_LEVE":
+      return "warning";
+    case "RIESGO_NO_LLEGAR":
+      return "danger";
+    default:
+      return "primary";
+  }
+}
+
 // Veredictos del momento del negocio.
 export const VEREDICTO: Record<VeredictoCodigo, CodigoMeta> = {
   CRECIENDO_FUERTE:        { tone: "success", label: "Creciendo fuerte",       icon: TrendingUp   },
