@@ -67,18 +67,6 @@ export const NAV_GROUPS: NavGroup[] = [
     ],
   },
   {
-    // Contiene páginas experimentales + versiones legacy previas al módulo BI.
-    // Los "(legacy)" quedan visibles pero desincentivados: sus reemplazos son
-    // /pulso y /diagnostico dentro del grupo BI.
-    title: "Beta / Legacy",
-    items: [
-      { href: "/productos", label: "Productos", icon: Package },
-      { href: "/reportes/tablero", label: "Tablero Semanal (legacy)", icon: Gauge },
-      { href: "/reportes/diario", label: "Reporte Diario (legacy)", icon: CalendarClock },
-      { href: "/simulador", label: "Simulador Cascada", icon: Activity },
-    ],
-  },
-  {
     title: "Operaciones",
     items: [
       { href: "/auditorias", label: "Auditorías", icon: ShieldCheck },
