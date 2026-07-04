@@ -1,43 +1,26 @@
 // Cliente HTTP tipado para la API KAWII/HUDEC.
 import type {
-  ActionGroupsResponse,
   AuditResponse,
   Category,
   ComprasCatalogoResponse,
   DataQualityIssue,
   Department,
-  RotacionHistoricaResponse,
-  // DistributionResponse,     // usado solo por getMatrixDistribution (comentado)
-  // DocumentDetail,           // usado solo por getDocument (comentado)
-  // DocumentListItem,         // usado solo por getDocuments (comentado)
-  // DocumentsSummary,         // usado solo por getDocumentsSummary (comentado)
   FixNamingResponse,
   Health,
   Kpis,
   MatrixModule,
   MatrixResponse,
-  // MatrixSummaryResponse,    // usado solo por getMatrixSummary (comentado)
-  Paginated,
   ProductDetail,
-  ProductListItem,
-  ProductsSummary,
   ProductType,
   ProductTypesResponse,
   SalesByCategory,
   SalesByDay,
   SalesByDepartment,
-  SalesVsGoal,
-  SkuDetail,
+  SalesByDepartment,
   SkuHistory,
-  StockoutsResponse,
   GoalsResponse,
-  WeeklyBoard,
   TicketAnatomy,
   SalesByOffice,
-  // SalesBySubcategory,       // usado solo por getSalesBySubcategory (comentado)
-  // StockHistoryPoint,        // usado solo por getStockHistory (comentado)
-  // StockLevel,               // usado solo por getStockLevels (comentado)
-  // StockTop,                 // usado solo por getStockTop (comentado)
   StockValuation,
   Subcategory,
   SyncLogEntry,
@@ -45,7 +28,6 @@ import type {
   SyncTriggerResponse,
   TaxonomyTree,
   TopProduct,
-  // TransferResponse,         // usado solo por getMatrixTransfers (comentado)
 } from "./types";
 import { toast } from "@/lib/toast";
 
@@ -523,17 +505,7 @@ export const getSalesByCategory = (
     signal,
   }).then((rows) => rows.map((r) => ({ ...r, ventas: toNum(r.ventas) })));
 
-// FUNCIÓN COMENTADA (2026-06-20) — no importada por ninguna página.
-// El endpoint backend /analytics/sales-by-subcategory también está comentado.
-// export const getSalesBySubcategory = (
-//   days: number,
-//   signal?: AbortSignal,
-//   office_id?: number | null,
-// ) =>
-//   request<SalesBySubcategory[]>("/analytics/sales-by-subcategory", {
-//     query: { days, office_id: office_id ?? undefined },
-//     signal,
-//   }).then((rows) => rows.map((r) => ({ ...r, ventas: toNum(r.ventas) })));
+
 
 export const getSalesByOffice = (days: number, signal?: AbortSignal) =>
   request<SalesByOffice[]>("/analytics/sales-by-office", {
@@ -553,42 +525,6 @@ export const getTopProducts = (
   });
 
 // ─────────────── Tablero Semanal (5 KPIs de gerencia) ───────────────
-/** SKUs en quiebre (stock disponible = 0), con marca de demanda (venta perdida). */
-export const getStockouts = (
-  params: { office_id?: number | null; demand_window_days?: number; limit?: number } = {},
-  signal?: AbortSignal,
-) =>
-  request<StockoutsResponse>("/analytics/stockouts", {
-    query: {
-      office_id: params.office_id ?? undefined,
-      demand_window_days: params.demand_window_days,
-      limit: params.limit,
-    },
-    signal,
-  });
-
-/** Venta acumulada del mes vs meta (manual). `month` = "YYYY-MM" (default: mes en curso). */
-export const getSalesVsGoal = (
-  month?: string | null,
-  office_id?: number | null,
-  signal?: AbortSignal,
-) =>
-  request<SalesVsGoal>("/analytics/sales-vs-goal", {
-    query: { month: month ?? undefined, office_id: office_id ?? undefined },
-    signal,
-  });
-
-/** Tablero consolidado: los 5 KPIs en un solo payload. */
-export const getWeeklyBoard = (
-  days: number,
-  office_id?: number | null,
-  month?: string | null,
-  signal?: AbortSignal,
-) =>
-  request<WeeklyBoard>("/analytics/weekly-board", {
-    query: { days, office_id: office_id ?? undefined, month: month ?? undefined },
-    signal,
-  });
 
 /** Metas de venta configuradas (manual), keyed por mes. */
 export const getGoals = (signal?: AbortSignal) =>
@@ -603,9 +539,6 @@ export const setGoals = (body: {
   request<Record<string, unknown>>("/analytics/goals", { method: "PUT", body });
 
 // ─────────── Simulador de Cascada (debugger por SKU) ───────────
-/** Métricas crudas del SKU por sucursal (alimentan la cascada TS). */
-export const getSkuDetail = (sku: string, signal?: AbortSignal) =>
-  request<SkuDetail>(`/matrix-sim/sku-detail/${encodeURIComponent(sku)}`, { signal });
 
 /** Serie temporal diaria del SKU (ventas + recepciones) para el gráfico. */
 export const getSkuHistory = (
@@ -744,11 +677,7 @@ export interface ProductFilters {
   offset?: number;
 }
 
-export const getProducts = (filters: ProductFilters, signal?: AbortSignal) =>
-  request<Paginated<ProductListItem>>("/products", {
-    query: filters as Query,
-    signal,
-  });
+
 
 export const getProduct = (id: number, signal?: AbortSignal) =>
   request<ProductDetail>(`/products/${id}`, { signal });
@@ -762,8 +691,7 @@ export const setProductSubcategory = (
     query: subcategory_id === null ? {} : { subcategory_id },
   });
 
-export const getProductsSummary = (signal?: AbortSignal) =>
-  request<ProductsSummary>("/products/stats/summary", { signal });
+
 
 // ───────────────────────── Stock ────────────────────────
 // Único endpoint vivo tras el cleanup: lo usa el Dashboard (DonutChart) Y el
@@ -772,50 +700,7 @@ export const getProductsSummary = (signal?: AbortSignal) =>
 export const getStockValuation = (signal?: AbortSignal) =>
   request<StockValuation>("/stock/valuation", { signal });
 
-// FUNCIONES COMENTADAS (2026-06-20) — no importadas por ninguna página.
-// Sus endpoints backend (/stock/levels, /stock/top, /stock/history) también
-// están comentados. Se preservan para reactivar fácilmente.
-// export const getStockLevels = (
-//   params: { office_id?: number; only_with_stock?: boolean; limit?: number },
-//   signal?: AbortSignal,
-// ) => request<StockLevel[]>("/stock/levels", { query: params, signal });
-//
-// export const getStockTop = (limit = 20, signal?: AbortSignal) =>
-//   request<StockTop[]>("/stock/top", { query: { limit }, signal });
-//
-// export const getStockHistory = (
-//   days: number,
-//   variant_id?: number,
-//   signal?: AbortSignal,
-// ) =>
-//   request<StockHistoryPoint[]>("/stock/history", {
-//     query: { days, variant_id },
-//     signal,
-//   });
 
-// ─────────────────────── Documentos ─────────────────────
-// FUNCIONES COMENTADAS (2026-06-20) — el router /documents completo está
-// comentado en el backend (ningún endpoint se consumía).
-// export interface DocumentFilters {
-//   date_from?: string;
-//   date_to?: string;
-//   document_type_id?: number;
-//   office_id?: number;
-//   limit?: number;
-//   offset?: number;
-// }
-//
-// export const getDocuments = (filters: DocumentFilters, signal?: AbortSignal) =>
-//   request<Paginated<DocumentListItem>>("/documents", {
-//     query: filters as Query,
-//     signal,
-//   });
-//
-// export const getDocument = (id: number, signal?: AbortSignal) =>
-//   request<DocumentDetail>(`/documents/${id}`, { signal });
-//
-// export const getDocumentsSummary = (signal?: AbortSignal) =>
-//   request<DocumentsSummary>("/documents/stats/summary", { signal });
 
 // ─────────────────────── Matrices ──────────────────────
 export interface MatrixFilters {
@@ -849,23 +734,6 @@ export const getMatrix = (
     signal,
   });
 
-// FUNCIONES COMENTADAS (2026-06-20) — no importadas por ninguna página.
-// Sus endpoints backend también están comentados.
-// export const getMatrixDistribution = (
-//   moduleId: string,
-//   sucursal?: string,
-//   signal?: AbortSignal,
-// ) =>
-//   request<DistributionResponse>(`/matrix/${moduleId}/distribution`, {
-//     query: { sucursal },
-//     signal,
-//   });
-//
-// export const getMatrixTransfers = (moduleId: string, signal?: AbortSignal) =>
-//   request<TransferResponse>(`/matrix/${moduleId}/transfers`, { signal });
-//
-// export const getMatrixSummary = (signal?: AbortSignal) =>
-//   request<MatrixSummaryResponse>("/matrix/_/summary", { signal });
 
 export function matrixExcelUrl(
   moduleId: string,
@@ -1029,12 +897,6 @@ export const bootstrapTaxonomy = (taxonomy: TaxonomyDict) =>
     };
   }>("/taxonomy/bootstrap", { method: "POST", body: { taxonomy } });
 
-// FUNCIÓN COMENTADA (2026-06-20) — no importada por ninguna página.
-// El endpoint backend /taxonomy/categories/empty/audit también está comentado.
-// export const auditEmptyCategories = (signal?: AbortSignal) =>
-//   request<Record<string, unknown>>("/taxonomy/categories/empty/audit", {
-//     signal,
-//   });
 
 // ───────────────── Product Types (BSale) ────────────────
 export interface ProductTypeFilters {
@@ -1111,11 +973,6 @@ export const stopSyncTask = (taskId: string) =>
     { method: "POST" }
   );
 
-// FUNCIÓN COMENTADA (2026-06-20) — no importada por ninguna página.
-// El endpoint backend /sync/tasks/{id} también está comentado.
-// La función getSyncTasks (lista completa) sí se sigue usando.
-// export const getSyncTask = (id: string, signal?: AbortSignal) =>
-//   request<SyncTask>(`/sync/tasks/${id}`, { signal });
 
 export const getSyncLog = (limit = 30, signal?: AbortSignal) =>
   request<SyncLogEntry[]>("/sync/log", { query: { limit }, signal });
@@ -1126,7 +983,4 @@ export const getDataQuality = (limit = 100, signal?: AbortSignal) =>
     signal,
   });
 
-// ── action-groups (lo usan /reportes/tablero y /reportes/diario, ver bloque Matrices arriba) ──
-export const getMatrixActionGroups = (moduleId: string, signal?: AbortSignal) =>
-  request<ActionGroupsResponse>(`/matrix/${moduleId}/action-groups`, { signal });
 

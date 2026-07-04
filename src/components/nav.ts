@@ -1,9 +1,6 @@
 import {
   LayoutDashboard,
-  Package,
-  // Boxes,    // usado solo por enlace /stock (comentado)
-  // Receipt,  // usado solo por enlace /ventas (comentado)
-  // Table2,   // usado solo por enlace /matrices (comentado)
+
   LayoutGrid,
   FolderTree,
   Tags,
