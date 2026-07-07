@@ -1,4 +1,4 @@
-import type { ComprasCatalogoSku } from "@/lib/types";
+import type { ComprasCatalogoSku, ComprasSimilarItem, ComprasSimilares } from "@/lib/types";
 import { Selection, TreeNode } from "../types";
 
 export function buildTree(skus: ComprasCatalogoSku[]): TreeNode[] {
@@ -77,6 +77,30 @@ export function severityChipClass(sev: string): string {
   if (sev.includes("Alta")) return "bg-warning/15 text-warning border-warning/25";
   return "bg-surface-3 text-muted border-border-soft";
 }
+
+/* ── Similares en tienda (advertencia antes de comprar) ──
+   Espejo de similarsLabel de ventas-jerarquicas/utils/similarity.ts, pero
+   sobre el campo `similares` que ya viene calculado del backend. */
+
+export function similaresLabel(info: ComprasSimilares): string {
+  const parts: string[] = [];
+  if (info.vigilar > 0) parts.push(`${info.vigilar} en saludable`);
+  if (info.lentos > 0) parts.push(`${info.lentos} en lentos`);
+  if (info.liquidar > 0) parts.push(`${info.liquidar} en liquidar`);
+  return parts.slice(0, 2).join(" · ");
+}
+
+export const SIMILAR_ESTADO_LABEL: Record<ComprasSimilarItem["estado"], string> = {
+  vigilar: "Saludable",
+  lentos: "Lento",
+  liquidar: "Liquidar",
+};
+
+export const SIMILAR_ESTADO_TONE: Record<ComprasSimilarItem["estado"], string> = {
+  vigilar: "bg-success/15 text-success border-success/20",
+  lentos: "bg-warning/15 text-warning border-warning/20",
+  liquidar: "bg-surface-3 text-muted border-border-soft",
+};
 
 export const DEPT_COLORS = [
   "bg-emerald-500",

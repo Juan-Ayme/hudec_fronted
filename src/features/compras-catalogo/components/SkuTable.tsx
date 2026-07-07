@@ -1,9 +1,10 @@
 import React from "react";
-import { Clock, X } from "lucide-react";
+import { AlertTriangle, Clock, X } from "lucide-react";
 import { cn } from "@/lib/utils";
 import { money, num, pct } from "@/lib/format";
 import type { ComprasCatalogoSku } from "@/lib/types";
 import { ClassificationCell } from "@/components/ui/classification";
+import { similaresLabel } from "../utils";
 
 export function SkuTable({
   rows,
@@ -74,6 +75,14 @@ const SkuTableRow = React.memo(function SkuTableRow({
           {s.sku}
           {s.subcategoria ? ` · ${s.subcategoria}` : ""}
         </p>
+        {s.similares && s.similares.items.length > 0 && (
+          <span
+            title="Ya tienes productos parecidos con stock en esta subcategoría — revisar antes de comprar"
+            className="mt-1 inline-flex items-center gap-1 rounded border border-warning/30 bg-warning/15 px-1.5 py-0.5 text-[9px] font-bold uppercase tracking-widest text-warning"
+          >
+            <AlertTriangle className="h-2.5 w-2.5" /> {similaresLabel(s.similares)}
+          </span>
+        )}
       </td>
       <td className="py-2.5 px-2">
         <ClassificationCell

@@ -18,6 +18,7 @@ import type {
   SalesByDepartment,
   SalesByDepartment,
   SkuHistory,
+  SalesVsGoal,
   GoalsResponse,
   TicketAnatomy,
   SalesByOffice,
@@ -529,6 +530,16 @@ export const getTopProducts = (
 /** Metas de venta configuradas (manual), keyed por mes. */
 export const getGoals = (signal?: AbortSignal) =>
   request<GoalsResponse>("/analytics/goals", { signal });
+
+export const getSalesVsGoal = (
+  month: string,
+  office_id?: number | null,
+  signal?: AbortSignal,
+) =>
+  request<SalesVsGoal>("/analytics/sales-vs-goal", {
+    query: { month, office_id: office_id ?? undefined },
+    signal,
+  });
 
 /** Carga/actualiza la meta de un mes. */
 export const setGoals = (body: {

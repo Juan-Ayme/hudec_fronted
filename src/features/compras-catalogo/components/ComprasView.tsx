@@ -2,7 +2,7 @@
 
 import { useState } from "react";
 
-import { AlertTriangle, Archive, ChevronDown, ChevronRight, Download, Filter, Home, Layers, Package, Percent, Search, ShoppingCart, SlidersHorizontal, TrendingDown, TrendingUp, Wallet, X, AlertCircle, ArrowRight } from "lucide-react";
+import { AlertTriangle, Archive, Boxes, ChevronDown, ChevronRight, Download, Filter, Home, Layers, Package, Percent, Search, ShoppingCart, SlidersHorizontal, TrendingDown, TrendingUp, Wallet, X, AlertCircle, ArrowRight } from "lucide-react";
 import { cn } from "@/lib/utils";
 import { money, num, pct } from "@/lib/format";
 import { useSucursal } from "@/components/sucursal-context";
@@ -325,6 +325,14 @@ export function ComprasView() {
               tone="success"
               loading={query.isLoading}
               sub="Ponderado (90d)"
+            />
+            <CompactKpi
+              label="Con similar en tienda"
+              value={num(query.data?.kpis.skus_con_similar)}
+              icon={Boxes}
+              tone="warning"
+              loading={query.isLoading}
+              sub="Revisar antes de comprar"
             />
             </section>
           )}

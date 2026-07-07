@@ -653,6 +653,26 @@ export interface ComprasCatalogoKpis {
   venta_90d_en_riesgo: number;
   unidades_a_reponer: number;
   margen_promedio_pct: number | null;
+  skus_con_similar: number;   // SKUs con ≥1 producto similar con stock en tienda
+}
+
+// Producto de nombre parecido (misma subcategoría y sucursal) que YA tiene
+// stock en tienda. Advertencia informativa: el SKU no se excluye de compras.
+export interface ComprasSimilarItem {
+  sku: string;
+  producto: string;
+  estado: "vigilar" | "lentos" | "liquidar";
+  stock: number;
+  cobertura: string;
+  unds_vend_90d: number;
+  sucursal?: string | null;
+}
+
+export interface ComprasSimilares {
+  vigilar: number;            // similares en estado saludable
+  lentos: number;
+  liquidar: number;
+  items: ComprasSimilarItem[]; // ordenados: vigilar → lentos → liquidar, stock desc
 }
 
 export interface ComprasCatalogoDept {
@@ -693,6 +713,7 @@ export interface ComprasCatalogoSku {
   ultima_venta: string | null;
   tendencia: string | null;
   cantidad_sugerida: number;
+  similares: ComprasSimilares | null;  // null = sin similares con stock
   margen_pct: number | null;
   margen_soles: number | null;
   costo_soles: number | null;

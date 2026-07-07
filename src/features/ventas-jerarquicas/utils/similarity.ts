@@ -20,6 +20,15 @@ function normalize(str: string): string {
     .trim();
 }
 
+// Stemming ligero singular/plural: "hisopos" → "hisopo", "papeles" → "papel".
+// Debe mantenerse IDÉNTICO al backend (backend_hudec/analytics/similares.py),
+// que calcula los similares del Excel de compras y de /compras-catalogo.
+function stem(token: string): string {
+  if (token.endsWith("es") && token.length >= 5) return token.slice(0, -2);
+  if (token.endsWith("s") && token.length >= 4) return token.slice(0, -1);
+  return token;
+}
+
 function tokenize(name: string): Set<string> {
   const tokens = new Set<string>();
   for (const t of normalize(name).split(" ")) {
@@ -27,7 +36,7 @@ function tokenize(name: string): Set<string> {
     if (STOPWORDS.has(t)) continue;
     if (PRESENTATION_RE.test(t)) continue;
     if (PURE_DIGITS_RE.test(t)) continue;
-    tokens.add(t);
+    tokens.add(stem(t));
   }
   return tokens;
 }
@@ -88,6 +97,10 @@ export function buildSimilarityIndex(rows: Row[]): Map<string, SimilarsInfo> {
       for (const candidate of entries) {
         if (candidate === target) continue;
         if (!SIMILAR_TARGET_COLS.has(candidate.col)) continue;
+        // Un similar agotado no sustituye nada (idéntico al backend
+        // analytics/similares.py): solo cuenta si tiene stock en tienda.
+        const candStock = n(candidate.row["Stock Disp"]);
+        if (candStock <= 0) continue;
 
         let shared = 0;
         for (const t of target.tokens) {
@@ -96,14 +109,20 @@ export function buildSimilarityIndex(rows: Row[]): Map<string, SimilarsInfo> {
             if (shared >= MIN_SHARED_TOKENS) break;
           }
         }
-        if (shared < MIN_SHARED_TOKENS) continue;
+        // Umbral adaptativo (idéntico al backend): ≥2 tokens compartidos, o
+        // 1 solo si cubre ≥50% del nombre más corto — ej. "BYWIN HISOPOS X
+        // 505 UND" {bywin, hisopo} vs "HISOPO POTE PEQUEÑO".
+        const minSize = Math.min(target.tokens.size, candidate.tokens.size);
+        const isSimilar =
+          shared >= MIN_SHARED_TOKENS || (shared >= 1 && shared / minSize >= 0.5);
+        if (!isSimilar) continue;
 
         counts[candidate.col as "vigilar" | "lentos" | "liquidar"]++;
         items.push({
           sku: s(candidate.row["Código SKU"]),
           producto: s(candidate.row["Producto"]),
           estado: candidate.col,
-          stock: n(candidate.row["Stock Disp"]),
+          stock: candStock,
           cobertura: s(candidate.row["Cobertura"]) || "—",
           unidades: n(candidate.row["Unds Vend (90d)"]),
         });

@@ -3,7 +3,7 @@
 import { useState } from "react";
 import dynamic from "next/dynamic";
 import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
-import { Check, Clock, ShoppingCart, Copy, X, TrendingUp, TrendingDown, Calendar } from "lucide-react";
+import { Boxes, Check, Clock, ShoppingCart, Copy, X, TrendingUp, TrendingDown, Calendar } from "lucide-react";
 import { toast } from "@/lib/toast";
 import { getSkuHistory, getPurchaseDecisionsBySku, createPurchaseDecision, type PurchaseDecisionKind } from "@/lib/api";
 import { dateShort, money, num, pct } from "@/lib/format";
@@ -13,7 +13,7 @@ import { Drawer } from "@/components/ui/drawer";
 import { Button } from "@/components/ui/button";
 import { getClassificationMeta } from "@/components/ui/classification";
 import { LoadingState, ErrorState, EmptyState } from "@/components/ui/states";
-import { severityChipClass } from "../utils";
+import { severityChipClass, SIMILAR_ESTADO_LABEL, SIMILAR_ESTADO_TONE } from "../utils";
 
 const SkuHistoryChart = dynamic(() => import("@/components/charts/sku-history-chart").then(mod => mod.SkuHistoryChart), { ssr: false });
 
@@ -186,6 +186,53 @@ export function SkuDetailDrawer({
               </div>
             </div>
           </div>
+
+          {sku.similares && sku.similares.items.length > 0 && (
+            <div className="rounded-lg border border-warning/30 bg-warning/10 p-4">
+              <h4 className="flex items-center gap-1.5 text-caption font-semibold uppercase tracking-wide text-warning">
+                <Boxes className="h-3.5 w-3.5" />
+                Productos similares en tienda
+              </h4>
+              <p className="mt-1 text-[11px] leading-relaxed text-muted">
+                Otros SKUs de la misma subcategoría con nombres parecidos. Revísalos
+                antes de confirmar la compra para no duplicar stock.
+              </p>
+              <ul className="mt-2 space-y-1.5">
+                {sku.similares.items.slice(0, 6).map((sim) => (
+                  <li
+                    key={`${sim.sku}-${sim.sucursal ?? ""}`}
+                    className="flex items-center justify-between gap-2 rounded-md bg-surface-2 px-3 py-2 text-xs"
+                  >
+                    <div className="min-w-0">
+                      <p className="truncate font-semibold text-fg">{sim.producto}</p>
+                      <p className="font-mono text-[9px] text-faint">
+                        {sim.sku} · cob. {sim.cobertura}
+                      </p>
+                    </div>
+                    <div className="flex shrink-0 items-center gap-2">
+                      <span
+                        className={cn(
+                          "rounded border px-1.5 py-0.5 text-[9px] font-bold uppercase tracking-wider",
+                          SIMILAR_ESTADO_TONE[sim.estado],
+                        )}
+                      >
+                        {SIMILAR_ESTADO_LABEL[sim.estado]}
+                      </span>
+                      <span className="tabular-nums font-semibold text-fg">
+                        {num(sim.stock)} u
+                      </span>
+                    </div>
+                  </li>
+                ))}
+              </ul>
+              {sku.similares.items.length > 6 && (
+                <p className="mt-1.5 text-[10px] text-faint">
+                  y {sku.similares.items.length - 6} similar
+                  {sku.similares.items.length - 6 === 1 ? "" : "es"} más
+                </p>
+              )}
+            </div>
+          )}
 
           {current && (
             <div className="flex flex-wrap items-center gap-2 rounded-md border border-success/40 bg-success-dim/30 px-3 py-2 text-xs text-success">

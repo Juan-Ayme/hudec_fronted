@@ -312,14 +312,16 @@ export function AppShell({ children }: { children: React.ReactNode }) {
     router,
   ]);
 
-  // Restaurar preferencia de colapso del sidebar.
+  // Auto-colapsar sidebar según la ruta:
+  // - En Dashboard ("/"): sidebar expandido.
+  // - En cualquier otra página: sidebar colapsado.
   useEffect(() => {
     if (typeof window === "undefined") return;
+    const shouldCollapse = pathname !== "/";
     // eslint-disable-next-line react-hooks/set-state-in-effect
-    setSidebarCollapsed(
-      localStorage.getItem("kawii_sidebar_collapsed") === "true",
-    );
-  }, []);
+    setSidebarCollapsed(shouldCollapse);
+    localStorage.setItem("kawii_sidebar_collapsed", String(shouldCollapse));
+  }, [pathname]);
 
   const toggleSidebar = () => {
     setSidebarCollapsed((prev) => {
