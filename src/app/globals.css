@@ -65,25 +65,26 @@
   --text-mono-md--line-height: 1.25rem;
 
   /* ── Radius scale ─────────────────────────────────────────────── */
-  --radius-sm: 0.375rem;     /* 6px  — badges, chips, inputs chicos */
-  --radius-md: 0.5rem;       /* 8px  — botones, inputs */
-  --radius-lg: 0.75rem;      /* 12px — cards (default histórico) */
-  --radius-xl: 1rem;         /* 16px — modales, dialogs */
+  --radius-sm: 0.5rem;       /* 8px  — badges, chips */
+  --radius-md: 0.75rem;      /* 12px  — botones, inputs */
+  --radius-lg: 1.25rem;      /* 20px — cards */
+  --radius-xl: 1.5rem;       /* 24px — modales, dialogs */
   --radius-pill: 9999px;
-  --radius: var(--radius-lg);   /* alias legacy → no romper consumidores viejos */
+  --radius: var(--radius-lg);   /* alias legacy */
 
   /* ── Shadows (dark-theme safe: alphas altos sobre negro) ─────── */
-  --shadow-card: 0 1px 2px 0 rgba(0,0,0,0.30), 0 1px 3px 0 rgba(0,0,0,0.18);
-  --shadow-card-hover: 0 4px 8px -2px rgba(0,0,0,0.45), 0 2px 4px -1px rgba(0,0,0,0.25);
-  --shadow-popover: 0 8px 24px -4px rgba(0,0,0,0.55), 0 4px 8px -2px rgba(0,0,0,0.30);
-  --shadow-modal: 0 24px 48px -12px rgba(0,0,0,0.70), 0 8px 16px -4px rgba(0,0,0,0.40);
-  --shadow-focus: 0 0 0 3px rgba(99,102,241,0.30);
+  --shadow-card: 0 4px 20px -2px rgba(0,0,0,0.40); /* Sombra más suave y difusa */
+  --shadow-card-hover: 0 8px 30px -4px rgba(0,0,0,0.50);
+  --shadow-popover: 0 16px 40px -8px rgba(0,0,0,0.60);
+  --shadow-modal: 0 32px 64px -16px rgba(0,0,0,0.80);
+  --shadow-focus: 0 0 0 3px rgba(59,130,246,0.35); /* Color primario más brillante */
 
   /* ── Motion ──────────────────────────────────────────────────── */
-  --ease-premium: cubic-bezier(0.16, 1, 0.3, 1);
-  --duration-fast: 120ms;
-  --duration-base: 200ms;
-  --duration-slow: 320ms;
+  /* Curva tipo resorte (spring) de iOS */
+  --ease-premium: cubic-bezier(0.23, 1, 0.32, 1);
+  --duration-fast: 150ms;
+  --duration-base: 300ms;
+  --duration-slow: 400ms;
 
   /* ── Animations ──────────────────────────────────────────────── */
   --animate-shimmer: shimmer 2s infinite linear;
@@ -104,11 +105,11 @@
     to { opacity: 1; }
   }
   @keyframes fade-in-up {
-    from { opacity: 0; transform: translateY(6px); }
+    from { opacity: 0; transform: translateY(12px); }
     to { opacity: 1; transform: translateY(0); }
   }
   @keyframes slide-in-from-top {
-    from { opacity: 0; transform: translateY(-12px); }
+    from { opacity: 0; transform: translateY(-16px); }
     to { opacity: 1; transform: translateY(0); }
   }
   @keyframes slide-in-from-right {
@@ -120,7 +121,7 @@
     to { opacity: 1; transform: translateX(0); }
   }
   @keyframes scale-in {
-    from { opacity: 0; transform: scale(0.96); }
+    from { opacity: 0; transform: scale(0.95); }
     to { opacity: 1; transform: scale(1); }
   }
   @keyframes pulse-dot {

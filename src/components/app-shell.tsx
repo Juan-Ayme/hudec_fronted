@@ -52,16 +52,14 @@ function NavLinks({
   };
 
   return (
-    <nav className={cn("flex flex-col", collapsed ? "gap-2" : "gap-4")}>
+    <nav className={cn("flex flex-col", collapsed ? "gap-2" : "gap-3")}>
       {NAV_GROUPS.map((group) => {
         const isExpanded = expandedGroups.has(group.title);
         
-        // Si el menú principal está colapsado (solo íconos), mostramos los íconos
-        // solo si el grupo está expandido. No mostramos el botón de grupo.
         if (collapsed) {
           if (!isExpanded) return null;
           return (
-            <ul key={group.title} className="flex flex-col gap-0.5 mb-2">
+            <ul key={group.title} className="flex flex-col gap-1 mb-2">
               {group.items.map((item) => {
                 const active = isActive(pathname, item.href);
                 const Icon = item.icon;
@@ -72,17 +70,14 @@ function NavLinks({
                       onClick={onNavigate}
                       title={item.label}
                       className={cn(
-                        "group relative flex items-center justify-center rounded-md px-2 py-2.5 text-body font-medium",
-                        "transition-[background,color,box-shadow] duration-[var(--duration-fast)] ease-[var(--ease-premium)]",
-                        active ? "bg-primary/12 text-fg" : "text-muted hover:bg-surface-2 hover:text-fg"
+                        "group relative flex items-center justify-center rounded-xl p-2.5 text-body font-medium",
+                        "transition-all duration-300 ease-[cubic-bezier(0.23,1,0.32,1)] active:scale-[0.95]",
+                        active ? "bg-primary/15 text-primary shadow-sm" : "text-muted hover:bg-surface-2/60 hover:text-fg"
                       )}
                     >
-                      {active && (
-                        <span className="absolute inset-y-1 left-0 w-0.5 rounded-pill bg-primary" aria-hidden="true" />
-                      )}
                       <Icon
                         className={cn(
-                          "h-[18px] w-[18px] shrink-0 transition-colors duration-[var(--duration-fast)]",
+                          "h-[18px] w-[18px] shrink-0 transition-colors duration-300",
                           active ? "text-primary" : "text-faint group-hover:text-muted"
                         )}
                         aria-hidden="true"
@@ -95,20 +90,20 @@ function NavLinks({
           );
         }
 
-        // Modo expandido (sidebar completo o onHover)
+        // Modo expandido
         return (
-          <div key={group.title} className="flex flex-col">
+          <div key={group.title} className="flex flex-col mb-1">
             <button
               onClick={() => toggleGroup(group.title)}
-              className="flex w-full items-center justify-between px-3 py-2 text-left transition-colors hover:bg-surface-2 rounded-md group/header"
+              className="flex w-full items-center justify-between px-3 py-2 text-left transition-all duration-300 ease-[cubic-bezier(0.23,1,0.32,1)] hover:bg-surface-2/40 rounded-xl group/header active:scale-[0.98]"
               title={isExpanded ? "Contraer grupo" : "Expandir grupo"}
             >
-              <span className="text-caption font-semibold uppercase tracking-[0.12em] text-faint group-hover/header:text-muted">
+              <span className="text-[11px] font-bold uppercase tracking-wider text-muted/70 group-hover/header:text-muted transition-colors">
                 {group.title}
               </span>
               <ChevronRight
                 className={cn(
-                  "h-3.5 w-3.5 text-faint transition-transform duration-[var(--duration-base)]",
+                  "h-3.5 w-3.5 text-muted/50 transition-transform duration-300 ease-[cubic-bezier(0.23,1,0.32,1)] group-hover/header:text-muted",
                   isExpanded ? "rotate-90" : ""
                 )}
               />
@@ -116,8 +111,8 @@ function NavLinks({
             
             <div
               className={cn(
-                "grid transition-all duration-[var(--duration-base)] ease-[var(--ease-premium)]",
-                isExpanded ? "grid-rows-[1fr] opacity-100 mt-1" : "grid-rows-[0fr] opacity-0 mt-0"
+                "grid transition-all duration-300 ease-[cubic-bezier(0.23,1,0.32,1)]",
+                isExpanded ? "grid-rows-[1fr] opacity-100 mt-0.5" : "grid-rows-[0fr] opacity-0 mt-0"
               )}
             >
               <ul className="flex flex-col gap-0.5 overflow-hidden">
@@ -130,17 +125,14 @@ function NavLinks({
                         href={item.href}
                         onClick={onNavigate}
                         className={cn(
-                          "group relative flex items-center gap-3 rounded-md px-3 py-2 text-body font-medium",
-                          "transition-[background,color,box-shadow] duration-[var(--duration-fast)] ease-[var(--ease-premium)]",
-                          active ? "bg-primary/12 text-fg" : "text-muted hover:bg-surface-2 hover:text-fg"
+                          "group relative flex items-center gap-3 rounded-xl px-3 py-2.5 text-sm font-medium mx-1",
+                          "transition-all duration-300 ease-[cubic-bezier(0.23,1,0.32,1)] active:scale-[0.97]",
+                          active ? "bg-primary/15 text-primary shadow-sm" : "text-muted hover:bg-surface-2/60 hover:text-fg"
                         )}
                       >
-                        {active && (
-                          <span className="absolute inset-y-1 left-0 w-0.5 rounded-pill bg-primary" aria-hidden="true" />
-                        )}
                         <Icon
                           className={cn(
-                            "h-[18px] w-[18px] shrink-0 transition-colors duration-[var(--duration-fast)]",
+                            "h-[18px] w-[18px] shrink-0 transition-colors duration-300",
                             active ? "text-primary" : "text-faint group-hover:text-muted"
                           )}
                           aria-hidden="true"
@@ -483,9 +475,9 @@ export function AppShell({ children }: { children: React.ReactNode }) {
         onMouseEnter={() => setSidebarHovered(true)}
         onMouseLeave={() => setSidebarHovered(false)}
         className={cn(
-          "fixed inset-y-0 left-0 z-30 hidden flex-col border-r border-border-soft bg-bg-soft py-5 transition-[width] duration-[var(--duration-base)] ease-[var(--ease-premium)] lg:flex",
+          "fixed inset-y-0 left-0 z-30 hidden flex-col border-r border-white/5 bg-surface/30 backdrop-blur-2xl py-5 transition-all duration-300 ease-[cubic-bezier(0.23,1,0.32,1)] lg:flex",
           isEffectivelyCollapsed ? "w-[68px]" : "w-64",
-          sidebarHovered && sidebarCollapsed ? "shadow-modal border-r-0" : ""
+          sidebarHovered && sidebarCollapsed ? "shadow-[20px_0_40px_-10px_rgba(0,0,0,0.5)] border-r-0" : ""
         )}
       >
         <div className={cn("flex items-center", isEffectivelyCollapsed ? "justify-center" : "px-5")}>
@@ -496,12 +488,12 @@ export function AppShell({ children }: { children: React.ReactNode }) {
           <NavLinks collapsed={isEffectivelyCollapsed} />
         </div>
 
-        <div className={cn("border-t border-border-soft pt-4 flex flex-col gap-3 w-full", isEffectivelyCollapsed ? "px-1 items-center" : "px-4")}>
+        <div className={cn("border-t border-white/5 pt-4 flex flex-col gap-3 w-full", isEffectivelyCollapsed ? "px-1 items-center" : "px-4")}>
           <button
             onClick={toggleSidebar}
             className={cn(
-              "flex items-center justify-center rounded-md p-2 text-muted transition-colors hover:bg-surface-2 hover:text-fg",
-              isEffectivelyCollapsed ? "" : "w-full gap-2 justify-start"
+              "flex items-center justify-center rounded-xl p-2 text-muted transition-all duration-300 ease-[cubic-bezier(0.23,1,0.32,1)] hover:bg-surface-2/40 hover:text-fg active:scale-[0.95]",
+              isEffectivelyCollapsed ? "" : "w-full gap-2 justify-start mx-1"
             )}
             title={isEffectivelyCollapsed ? "Expandir menú" : "Colapsar menú"}
           >
@@ -520,7 +512,7 @@ export function AppShell({ children }: { children: React.ReactNode }) {
           />
           <aside
             className={cn(
-              "absolute inset-y-0 left-0 flex w-72 flex-col border-r border-border-soft bg-bg-soft px-3 py-5 shadow-modal",
+              "absolute inset-y-0 left-0 flex w-72 flex-col border-r border-white/5 bg-surface/50 backdrop-blur-3xl px-3 py-5 shadow-modal",
               "animate-[slide-in-from-left_var(--duration-slow)_var(--ease-premium)_both]",
             )}
           >

@@ -42,12 +42,11 @@ export function Button({
       type={type}
       aria-busy={loading || undefined}
       className={cn(
-        "inline-flex items-center justify-center rounded-md font-medium",
-        "transition-[background,color,box-shadow,transform,border-color]",
-        "duration-[var(--duration-fast)] ease-[var(--ease-premium)]",
+        "inline-flex items-center justify-center rounded-xl font-medium",
+        "transition-all duration-[var(--duration-base)] ease-[var(--ease-premium)]",
         "focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-primary/40 focus-visible:ring-offset-2 focus-visible:ring-offset-bg",
-        "active:scale-[0.98]",
-        "disabled:cursor-not-allowed disabled:opacity-50 disabled:active:scale-100 disabled:hover:shadow-card",
+        "active:scale-[0.96]",
+        "disabled:cursor-not-allowed disabled:opacity-50 disabled:active:scale-100",
         variants[variant],
         sizes[size],
         className,
