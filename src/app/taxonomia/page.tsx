@@ -12,6 +12,7 @@ import {
   Trash2,
   Tag,
   Upload,
+  Search,
 } from "lucide-react";
 import {
   getTaxonomyTree,
@@ -70,6 +71,7 @@ export default function TaxonomiaPage() {
   });
 
   const [expanded, setExpanded] = useState<Set<string>>(new Set());
+  const [searchQuery, setSearchQuery] = useState("");
   const [form, setForm] = useState<FormState | null>(null);
   const [nameInput, setNameInput] = useState("");
   const [del, setDel] = useState<DeleteState | null>(null);
@@ -203,6 +205,48 @@ export default function TaxonomiaPage() {
     return Object.entries(arbol).sort(([a], [b]) => a.localeCompare(b));
   }, [tree.data]);
 
+  const filteredDepartments = useMemo(() => {
+    if (!searchQuery.trim()) return departments;
+    const q = searchQuery.toLowerCase();
+
+    return departments
+      .map(([depName, dep]) => {
+        const depMatch = depName.toLowerCase().includes(q);
+        
+        const filteredCategories = Object.entries(dep.categorias)
+          .map(([catName, cat]) => {
+            const catMatch = catName.toLowerCase().includes(q);
+            const filteredSubs = cat.subcategorias.filter((sub) =>
+              sub.nombre.toLowerCase().includes(q),
+            );
+
+            if (depMatch || catMatch || filteredSubs.length > 0) {
+              return [
+                catName,
+                {
+                  ...cat,
+                  subcategorias: (depMatch || catMatch) ? cat.subcategorias : filteredSubs,
+                },
+              ] as const;
+            }
+            return null;
+          })
+          .filter((x): x is NonNullable<typeof x> => x !== null);
+
+        if (depMatch || filteredCategories.length > 0) {
+          return [
+            depName,
+            {
+              ...dep,
+              categorias: Object.fromEntries(filteredCategories),
+            },
+          ] as const;
+        }
+        return null;
+      })
+      .filter((x): x is NonNullable<typeof x> => x !== null);
+  }, [departments, searchQuery]);
+
   const stats = useMemo(() => {
     let cats = 0;
     let subs = 0;
@@ -279,6 +323,16 @@ export default function TaxonomiaPage() {
         <Badge tone="neutral">{num(stats.prods)} productos clasificados</Badge>
       </div>
 
+      <div className="mb-4 relative max-w-md">
+        <Search className="absolute left-3 top-1/2 h-4 w-4 -translate-y-1/2 text-muted-foreground opacity-50" />
+        <Input
+          placeholder="Buscar departamento, categoría o subcategoría..."
+          value={searchQuery}
+          onChange={(e) => setSearchQuery(e.target.value)}
+          className="pl-9 w-full"
+        />
+      </div>
+
       <Card className="p-2">
         {tree.isLoading ? (
           <LoadingState />
@@ -289,11 +343,16 @@ export default function TaxonomiaPage() {
             title="Taxonomía vacía"
             hint="Crea el primer departamento para empezar."
           />
+        ) : filteredDepartments.length === 0 ? (
+          <EmptyState
+            title="Sin resultados"
+            hint={`No se encontró nada para "${searchQuery}".`}
+          />
         ) : (
           <ul className="divide-y divide-border/50">
-            {departments.map(([depName, dep]) => {
+            {filteredDepartments.map(([depName, dep]) => {
               const depKey = `d-${dep.id}`;
-              const depOpen = expanded.has(depKey);
+              const depOpen = searchQuery ? true : expanded.has(depKey);
               const cats = Object.entries(dep.categorias).sort(([a], [b]) =>
                 a.localeCompare(b),
               );
@@ -355,7 +414,7 @@ export default function TaxonomiaPage() {
                       )}
                       {cats.map(([catName, cat]) => {
                         const catKey = `c-${cat.id}`;
-                        const catOpen = expanded.has(catKey);
+                        const catOpen = searchQuery ? true : expanded.has(catKey);
                         const subs = cat.subcategorias;
                         return (
                           <li key={catKey}>

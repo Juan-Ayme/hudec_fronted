@@ -3,14 +3,16 @@
 import { useEffect, useState, useRef } from "react";
 import Link from "next/link";
 import { usePathname, useRouter } from "next/navigation";
-import { Building2, ChevronLeft, ChevronRight, LogOut, Menu, ShieldCheck, X } from "lucide-react";
+import { Building2, ChevronLeft, ChevronRight, LogOut, Menu, ShieldCheck, X, Check, Store, RotateCw, ChevronDown } from "lucide-react";
 import { NAV_GROUPS, ALL_NAV_ITEMS } from "./nav";
 import { ApiStatus } from "./api-status";
-import { SucursalSelector } from "./sucursal-context";
-import { CompanySelector, useCompany } from "./company-context";
+import { useSucursal } from "./sucursal-context";
+import { useCompany } from "./company-context";
 import { Toaster } from "./ui/toaster";
 import { useAuth } from "./auth-context";
 import { cn } from "@/lib/utils";
+import { useQuery } from "@tanstack/react-query";
+import { getStockValuation, ApiError } from "@/lib/api";
 
 function isActive(pathname: string, href: string): boolean {
   if (href === "/") return pathname === "/";
@@ -187,8 +189,10 @@ function Brand({ collapsed = false }: { collapsed?: boolean }) {
   );
 }
 
-function UserMenu() {
+function UnifiedHeaderMenu() {
   const { user, companies, signOut } = useAuth();
+  const { activeCompanyId, setActiveCompany, activeRole } = useCompany();
+  const { officeId, setSucursal } = useSucursal();
   const router = useRouter();
   const [open, setOpen] = useState(false);
   const containerRef = useRef<HTMLDivElement>(null);
@@ -204,6 +208,16 @@ function UserMenu() {
     return () => document.removeEventListener("mousedown", handle);
   }, [open]);
 
+  const valuation = useQuery({
+    queryKey: ["stock-valuation"],
+    queryFn: ({ signal }) => getStockValuation(signal),
+    staleTime: 10 * 60_000,
+    retry: 2,
+    retryDelay: (i) => Math.min(1000 * 2 ** i, 4000),
+  });
+
+  const sucursales = valuation.data?.por_sucursal ?? [];
+
   if (!user) return null;
 
   const handleLogout = async () => {
@@ -211,18 +225,11 @@ function UserMenu() {
     router.replace("/login");
   };
 
-  const handleChangeCompany = () => {
-    setOpen(false);
-    router.push("/select-company");
-  };
-
   const roleStyle: Record<string, string> = {
-    admin: "bg-primary/15 text-primary",
-    operador: "bg-success/15 text-success",
-    viewer: "bg-surface-3 text-muted",
+    admin: "bg-primary text-primary-fg font-semibold shadow-sm",
+    operador: "bg-success text-success-fg font-semibold shadow-sm",
+    viewer: "bg-surface-3 text-fg border border-border-soft font-semibold",
   };
-
-  const { activeRole } = useCompany();
 
   const displayRole = activeRole ?? companies[0]?.role ?? "viewer";
 
@@ -230,37 +237,153 @@ function UserMenu() {
     <div className="relative" ref={containerRef}>
       <button
         onClick={() => setOpen((v) => !v)}
-        className="flex items-center gap-2 rounded-md px-2 py-1.5 text-sm font-medium text-fg hover:bg-surface-2"
+        className={cn(
+          "group flex items-center gap-3 rounded-[20px] border border-border/40 bg-surface-2/60 backdrop-blur-md pl-2 pr-3 py-1.5 text-sm font-medium text-fg shadow-sm",
+          "transition-all duration-300 ease-[cubic-bezier(0.23,1,0.32,1)] active:scale-[0.95]",
+          "hover:bg-surface-3/80 hover:border-border/60 hover:shadow-md",
+          "focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-primary/40",
+          open && "bg-surface-3/90 border-border/80 shadow-inner scale-[0.98]"
+        )}
       >
-        <span className="inline-flex h-7 w-7 items-center justify-center rounded-full bg-primary/20 text-primary text-xs font-bold uppercase">
-          {user.username.slice(0, 2)}
-        </span>
-        <span className="hidden flex-col items-start leading-tight sm:flex">
-          <span>{user.username}</span>
-          <span
-            className={cn(
-              "rounded px-1 py-0.5 text-[0.62rem] uppercase tracking-wider",
-              roleStyle[displayRole] ?? "",
-            )}
-          >
-            {displayRole}
+        <div className="flex items-center gap-2">
+          <span className="inline-flex h-8 w-8 items-center justify-center rounded-full bg-primary/15 text-primary text-xs font-bold uppercase shadow-[inset_0_1px_2px_rgba(0,0,0,0.1)] border border-primary/20">
+            {user.username.slice(0, 2)}
           </span>
-        </span>
+          <span className="hidden flex-col items-start leading-tight sm:flex">
+            <span>{user.username}</span>
+            <span
+              className={cn(
+                "rounded-full px-2 py-0.5 text-[0.62rem] uppercase tracking-wider",
+                roleStyle[displayRole] ?? "",
+              )}
+            >
+              {displayRole}
+            </span>
+          </span>
+        </div>
+        <ChevronDown 
+          className={cn(
+            "h-4 w-4 text-muted/70 transition-transform duration-300 ease-[cubic-bezier(0.23,1,0.32,1)] group-hover:text-fg",
+            open && "rotate-180 text-fg"
+          )} 
+        />
       </button>
+
       {open && (
-          <div className="absolute right-0 z-40 mt-1 w-48 overflow-hidden rounded-md border border-border-soft bg-surface shadow-card-hover">
-            <div className="border-b border-border/30 px-3 py-2 text-xs text-muted">
-              <p className="font-semibold text-fg">{user.username}</p>
-              <p>{displayRole}</p>
+        <div className="absolute right-0 top-full z-50 mt-2 w-72 max-h-[85vh] overflow-y-auto rounded-xl border border-border-soft bg-surface/95 backdrop-blur-xl shadow-2xl animate-[scale-in_var(--duration-fast)_var(--ease-out)_both] origin-top-right p-1.5 flex flex-col">
+          
+          {/* Header del Menú */}
+          <div className="px-3 py-2.5 mb-1 flex flex-col gap-0.5">
+            <p className="font-semibold text-fg leading-tight">{user.username}</p>
+            <p className="text-xs text-muted leading-tight">{displayRole}</p>
+          </div>
+
+          <div className="h-px bg-border/40 mx-2 my-1" />
+
+          {/* Sección de Empresas */}
+          {companies.length > 1 && (
+            <div className="flex flex-col gap-0.5 py-1">
+              <div className="px-3 pb-1 pt-1.5">
+                <p className="text-[10px] font-bold uppercase tracking-wider text-muted/70 flex items-center gap-1.5">
+                  <Building2 className="h-3.5 w-3.5" /> Empresas
+                </p>
+              </div>
+              {companies.map((c) => {
+                const selected = c.id === activeCompanyId;
+                return (
+                  <button
+                    key={c.id}
+                    onClick={() => {
+                      setActiveCompany(c.id);
+                      setOpen(false);
+                      if (typeof window !== "undefined") {
+                        window.location.reload();
+                      }
+                    }}
+                    className={cn(
+                      "flex w-full items-center justify-between gap-2 px-3 py-2.5 rounded-lg text-left text-sm transition-all duration-200 active:scale-[0.98]",
+                      selected ? "bg-primary/15 text-primary font-medium" : "hover:bg-surface-2 text-fg"
+                    )}
+                  >
+                    <div className="flex flex-col gap-0.5">
+                      <span className="leading-none">{c.name}</span>
+                      <span className="text-[10px] uppercase opacity-60 leading-none">{c.role}</span>
+                    </div>
+                    {selected && <Check className="h-4 w-4 shrink-0 text-primary" />}
+                  </button>
+                );
+              })}
             </div>
-            {/* Removed redundant Cambiar empresa button */}
+          )}
+
+          {companies.length > 1 && <div className="h-px bg-border/40 mx-2 my-1" />}
+
+          {/* Sección de Sucursales */}
+          <div className="flex flex-col gap-0.5 py-1">
+            <div className="px-3 pb-1 pt-1.5">
+              <p className="text-[10px] font-bold uppercase tracking-wider text-muted/70 flex items-center gap-1.5">
+                <Store className="h-3.5 w-3.5" /> Sucursales
+              </p>
+            </div>
+            
+            <button
+              onClick={() => {
+                setSucursal(null);
+                setOpen(false);
+              }}
+              className={cn(
+                "flex w-full items-center justify-between gap-2 px-3 py-2.5 rounded-lg text-left text-sm transition-all duration-200 active:scale-[0.98]",
+                officeId === null ? "bg-primary/15 text-primary font-medium" : "hover:bg-surface-2 text-fg"
+              )}
+            >
+              <span className="leading-none">Todas las tiendas</span>
+              {officeId === null && <Check className="h-4 w-4 shrink-0 text-primary" />}
+            </button>
+
+            {valuation.isLoading ? (
+              <div className="px-3 py-3 text-xs text-muted flex items-center gap-2">
+                <RotateCw className="h-3.5 w-3.5 animate-spin" /> Cargando tiendas...
+              </div>
+            ) : valuation.isError ? (
+              <div className="px-3 py-3 text-xs text-danger flex items-center gap-2">
+                <RotateCw className="h-3.5 w-3.5" /> Error al cargar
+              </div>
+            ) : (
+              sucursales.map((s) => {
+                const selected = officeId === s.bsale_office_id;
+                return (
+                  <button
+                    key={s.bsale_office_id}
+                    onClick={() => {
+                      setSucursal({ officeId: s.bsale_office_id, sucursalName: s.sucursal });
+                      setOpen(false);
+                    }}
+                    className={cn(
+                      "flex w-full items-center justify-between gap-2 px-3 py-2.5 rounded-lg text-left text-sm transition-all duration-200 active:scale-[0.98]",
+                      selected ? "bg-primary/15 text-primary font-medium" : "hover:bg-surface-2 text-fg"
+                    )}
+                  >
+                    <span className="truncate leading-none">{s.sucursal}</span>
+                    {selected && <Check className="h-4 w-4 shrink-0 text-primary" />}
+                  </button>
+                );
+              })
+            )}
+          </div>
+
+          <div className="h-px bg-border/40 mx-2 my-1" />
+
+          {/* Pie: Cerrar Sesión */}
+          <div className="pt-1 pb-0.5">
             <button
               onClick={handleLogout}
-              className="flex w-full items-center gap-2 px-3 py-2 text-sm text-fg hover:bg-surface-2"
+              className="flex w-full items-center gap-2 rounded-lg px-3 py-2.5 text-sm font-medium text-danger hover:bg-danger/10 transition-all duration-200 active:scale-[0.98]"
             >
               <LogOut className="h-4 w-4" /> Cerrar sesión
             </button>
           </div>
+
+        </div>
       )}
     </div>
   );
@@ -440,12 +563,10 @@ export function AppShell({ children }: { children: React.ReactNode }) {
             {current?.label ?? "Resumen Ejecutivo"}
           </h1>
           <div className="ml-auto flex items-center gap-3">
-            <CompanySelector />
-            <SucursalSelector />
             <div className="lg:hidden">
               <ApiStatus />
             </div>
-            <UserMenu />
+            <UnifiedHeaderMenu />
           </div>
         </header>
 

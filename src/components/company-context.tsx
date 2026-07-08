@@ -150,17 +150,19 @@ export function CompanySelector() {
         aria-haspopup="listbox"
         aria-expanded={open}
         className={cn(
-          "flex items-center gap-1.5 rounded-md border border-primary/50 bg-primary/12 px-3 py-1.5 text-caption font-semibold text-primary shadow-card",
+          "flex items-center gap-1.5 rounded-md border border-border-soft bg-surface-2 px-3 py-1.5 text-caption font-medium text-fg shadow-sm",
           "transition-[background,color,border-color,box-shadow] duration-[var(--duration-fast)] ease-[var(--ease-premium)]",
+          "hover:bg-surface-3 hover:border-border",
           "focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-primary/40",
+          open && "bg-surface-3 border-border"
         )}
-        title="Cambiar de empresa"
+        title={`Cambiar de empresa: ${label}`}
       >
-        <Building2 className="h-3.5 w-3.5" aria-hidden="true" />
-        <span className="truncate max-w-[160px]">{label}</span>
+        <Building2 className="h-3.5 w-3.5 text-muted" aria-hidden="true" />
+        <span className="truncate max-w-[200px] font-semibold">{label}</span>
         <ChevronDown
           className={cn(
-            "h-3 w-3 opacity-60 transition-transform duration-[var(--duration-fast)]",
+            "h-3 w-3 text-muted transition-transform duration-[var(--duration-fast)]",
             open && "rotate-180",
           )}
           aria-hidden="true"

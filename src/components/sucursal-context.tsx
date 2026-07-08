@@ -128,20 +128,20 @@ export function SucursalSelector() {
         aria-haspopup="listbox"
         aria-expanded={open}
         className={cn(
-          "flex items-center gap-1.5 rounded-md border px-3 py-1.5 text-caption font-semibold",
+          "flex items-center gap-1.5 rounded-md border border-border-soft bg-surface-2 px-3 py-1.5 text-caption font-medium text-fg shadow-sm",
           "transition-[background,color,border-color,box-shadow] duration-[var(--duration-fast)] ease-[var(--ease-premium)]",
+          "hover:bg-surface-3 hover:border-border",
           "focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-primary/40",
-          isActive
-            ? "border-primary/50 bg-primary/12 text-primary shadow-card"
-            : "border-border-soft bg-surface-2 text-fg hover:bg-surface-3 hover:border-border",
+          open && "bg-surface-3 border-border",
+          isActive && "border-primary/30"
         )}
-        title="Filtrar todas las páginas por sucursal"
+        title={isActive ? `Filtro activo: ${label}` : "Filtrar todas las páginas por sucursal"}
       >
-        <Store className="h-3.5 w-3.5" aria-hidden="true" />
-        <span className="truncate max-w-[140px]">{label}</span>
+        <Store className={cn("h-3.5 w-3.5", isActive ? "text-primary" : "text-muted")} aria-hidden="true" />
+        <span className="truncate max-w-[200px] font-semibold">{label}</span>
         <ChevronDown
           className={cn(
-            "h-3 w-3 opacity-60 transition-transform duration-[var(--duration-fast)]",
+            "h-3 w-3 text-muted transition-transform duration-[var(--duration-fast)]",
             open && "rotate-180",
           )}
           aria-hidden="true"

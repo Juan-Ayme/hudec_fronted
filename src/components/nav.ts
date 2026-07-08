@@ -32,6 +32,7 @@ export const NAV_GROUPS: NavGroup[] = [
     title: "Análisis",
     items: [
       { href: "/", label: "Resumen Ejecutivo", icon: LayoutDashboard },
+      { href: "/graficos", label: "Gráficos Avanzados", icon: Activity },
       // ENLACES COMENTADOS (2026-06-20) — apuntan a páginas que no existen en src/app/.
       // Reactivar cuando se creen las páginas correspondientes.
       // { href: "/stock", label: "Stock", icon: Boxes },
