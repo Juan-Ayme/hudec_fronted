@@ -187,9 +187,11 @@ export function CompanySelector() {
                   onClick={() => {
                     setActiveCompany(c.id);
                     setOpen(false);
-                    // La cache de React Query queda con datos de la empresa
-                    // anterior. Al cambiar, hay que refetchear todo.
+                    // La cache persistente de React Query queda con datos
+                    // de la empresa anterior (los keys no tienen el companyId).
+                    // Hay que limpiar la caché en localStorage y recargar.
                     if (typeof window !== "undefined") {
+                      window.localStorage.removeItem("kawii-query-cache");
                       window.location.reload();
                     }
                   }}
