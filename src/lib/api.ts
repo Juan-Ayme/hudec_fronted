@@ -98,9 +98,10 @@ export async function request<T>(path: string, opts: RequestOptions = {}): Promi
   const companyId = readActiveCompanyId();
   if (companyId !== null) headers["X-Company-Id"] = String(companyId);
 
-  // ★ Timeout: si el backend no responde en 10s (ej. cold start en hosting
-  //   gratuito), abortamos la petición en vez de esperar 60-120s del browser.
-  const TIMEOUT_MS = 10_000;
+  // ★ Timeout: si el backend no responde en 120s (2 min), abortamos la petición.
+  //   Da margen a endpoints muy pesados (ventas-jerarquicas, rotación, auditorías)
+  //   y al cold start de Render.
+  const TIMEOUT_MS = 120_000;
   const timeoutCtrl = new AbortController();
   const timer = setTimeout(() => timeoutCtrl.abort(), TIMEOUT_MS);
 
