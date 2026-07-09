@@ -98,25 +98,13 @@ export async function request<T>(path: string, opts: RequestOptions = {}): Promi
   const companyId = readActiveCompanyId();
   if (companyId !== null) headers["X-Company-Id"] = String(companyId);
 
-  // ★ Timeout: si el backend no responde en 120s (2 min), abortamos la petición.
-  //   Da margen a endpoints muy pesados (ventas-jerarquicas, rotación, auditorías)
-  //   y al cold start de Render.
-  const TIMEOUT_MS = 120_000;
-  const timeoutCtrl = new AbortController();
-  const timer = setTimeout(() => timeoutCtrl.abort(), TIMEOUT_MS);
-
-  // Combinar el signal del caller (React Query) con nuestro timeout.
-  const combinedSignal = signal
-    ? AbortSignal.any([signal, timeoutCtrl.signal])
-    : timeoutCtrl.signal;
-
   let res: Response;
   try {
     res = await fetch(url, {
       method,
       headers,
       body: body ? JSON.stringify(body) : undefined,
-      signal: combinedSignal,
+      signal,
       // ★ Auth: el backend usa cookies httpOnly. `credentials: 'include'`
       //   manda esa cookie en cada request a la API y permite que el
       //   backend setee la cookie de sesión en /auth/login. Requiere CORS
@@ -124,17 +112,10 @@ export async function request<T>(path: string, opts: RequestOptions = {}): Promi
       credentials: "include",
     });
   } catch (err) {
-    clearTimeout(timer);
-    const isTimeout =
-      err instanceof DOMException && err.name === "AbortError" && timeoutCtrl.signal.aborted;
     throw new ApiError(
       0,
-      isTimeout
-        ? `La API no respondió en ${TIMEOUT_MS / 1000}s (${API_BASE_URL}). El servidor puede estar iniciando, reintenta en unos segundos.`
-        : `No se pudo conectar con la API (${API_BASE_URL}). ¿Está corriendo el backend?`,
+      `No se pudo conectar con la API (${API_BASE_URL}). ¿Está corriendo el backend?`,
     );
-  } finally {
-    clearTimeout(timer);
   }
 
   const text = await res.text();

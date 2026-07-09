@@ -6,8 +6,6 @@ import {
   QueryClientProvider,
   type QueryClientConfig,
 } from "@tanstack/react-query";
-import { PersistQueryClientProvider } from "@tanstack/react-query-persist-client";
-import { createSyncStoragePersister } from "@tanstack/query-sync-storage-persister";
 import { ApiError } from "@/lib/api";
 import { SucursalProvider } from "@/components/sucursal-context";
 import { AuthProvider } from "@/components/auth-context";
@@ -16,10 +14,7 @@ import { CompanyProvider } from "@/components/company-context";
 const config: QueryClientConfig = {
   defaultOptions: {
     queries: {
-      staleTime: 300_000,
-      // ★ gcTime debe ser >= maxAge del persister para que la cache
-      //   sobreviva entre recargas de página. 24h es un buen balance.
-      gcTime: 1000 * 60 * 60 * 24, // 24 horas
+      staleTime: 300_000, // 5 min
       refetchOnWindowFocus: false,
       retry: (failureCount, error) => {
         // No reintentar si la API no responde o devuelve 4xx.
@@ -32,20 +27,6 @@ const config: QueryClientConfig = {
     },
   },
 };
-
-const PERSIST_MAX_AGE = 1000 * 60 * 60 * 24; // 24 horas
-
-// ★ Persistencia: guarda la caché de React Query en localStorage.
-//   Al recargar la página, el usuario ve la app AL INSTANTE con los
-//   datos cacheados, mientras React Query revalida en background.
-//   Se crea sólo en el browser; en SSR (prerender) usamos QueryClientProvider normal.
-const persister =
-  typeof window !== "undefined"
-    ? createSyncStoragePersister({
-        storage: window.localStorage,
-        key: "kawii-query-cache",
-      })
-    : null;
 
 function AppProviders({ children }: { children: React.ReactNode }) {
   return (
@@ -60,22 +41,9 @@ function AppProviders({ children }: { children: React.ReactNode }) {
 export function Providers({ children }: { children: React.ReactNode }) {
   const [client] = useState(() => new QueryClient(config));
 
-  // En SSR/prerender (window === undefined) no hay persister;
-  // usamos QueryClientProvider estándar como fallback seguro.
-  if (!persister) {
-    return (
-      <QueryClientProvider client={client}>
-        <AppProviders>{children}</AppProviders>
-      </QueryClientProvider>
-    );
-  }
-
   return (
-    <PersistQueryClientProvider
-      client={client}
-      persistOptions={{ persister, maxAge: PERSIST_MAX_AGE }}
-    >
+    <QueryClientProvider client={client}>
       <AppProviders>{children}</AppProviders>
-    </PersistQueryClientProvider>
+    </QueryClientProvider>
   );
 }
