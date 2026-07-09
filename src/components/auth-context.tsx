@@ -90,6 +90,15 @@ export function AuthProvider({ children }: { children: ReactNode }) {
     }
     qc.setQueryData(AUTH_KEY, null);
     qc.clear();
+
+    // Destruir las variables cacheadas de la sesión
+    if (typeof window !== "undefined") {
+      window.localStorage.removeItem("kawii.company");
+      window.localStorage.removeItem("kawii.sucursal");
+      window.localStorage.removeItem("kawii-query-cache");
+      // Force hard-redirect para resetear todo el estado de React/Next
+      window.location.href = "/login";
+    }
   }, [qc]);
 
   const me: MeResponse | null = q.data ?? null;
