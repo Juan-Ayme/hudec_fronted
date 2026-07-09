@@ -11,7 +11,7 @@
 
 import { Suspense, useEffect, useState, type FormEvent } from "react";
 import { useRouter, useSearchParams } from "next/navigation";
-import { LogIn, Lock, User as UserIcon } from "lucide-react";
+import { Eye, EyeOff } from "lucide-react";
 import { useAuth } from "@/components/auth-context";
 import { ApiError } from "@/lib/api";
 
@@ -23,6 +23,7 @@ function LoginForm() {
   const { signIn, isAuthenticated, isLoading } = useAuth();
   const [username, setUsername] = useState("");
   const [password, setPassword] = useState("");
+  const [showPassword, setShowPassword] = useState(false);
   const [submitting, setSubmitting] = useState(false);
   const [error, setError] = useState<string | null>(null);
 
@@ -62,163 +63,205 @@ function LoginForm() {
     }
   };
 
+  const canSubmit = username.trim().length > 0 && password.length > 0 && !submitting;
+
   return (
-    <main className="min-h-screen flex flex-col items-center justify-center bg-bg">
-      <div className="py-4 px-4 md:px-8 w-full">
-        <div className="grid items-center gap-6 max-w-6xl w-full mx-auto lg:grid-cols-2">
-          
-          <div className="border border-border rounded-lg p-6 max-w-md mx-auto shadow-sm md:p-8 lg:mx-0 bg-surface">
-            <div className="mb-8">
-              <h1 className="text-fg text-3xl font-bold mb-4">
-                Iniciar sesión
-              </h1>
-              <p className="text-muted text-base leading-relaxed">
-                Ingresá con tu usuario para acceder al panel y gestionar tus proyectos.
-              </p>
+    <main className="min-h-screen flex items-center justify-center bg-bg relative overflow-hidden">
+      {/* ── Fondo: gradientes radiales sutiles ── */}
+      <div
+        className="pointer-events-none absolute inset-0"
+        style={{
+          background: [
+            "radial-gradient(ellipse 50% 40% at 50% 30%, rgba(59,130,246,0.07) 0%, transparent 70%)",
+            "radial-gradient(ellipse 40% 30% at 70% 80%, rgba(14,165,233,0.04) 0%, transparent 70%)",
+          ].join(", "),
+        }}
+        aria-hidden="true"
+      />
+
+      {/* ── Card principal con glassmorphism ── */}
+      <div
+        className="relative z-10 w-full max-w-[400px] mx-4 animate-splash-fade-up"
+      >
+        {/* ── Logo + Brand ── */}
+        <div
+          className="flex flex-col items-center mb-10 animate-splash-fade-up"
+          style={{ animationDelay: "0.05s" }}
+        >
+          {/* Logo app estilo iOS */}
+          <div className="relative mb-5">
+            <div
+              className="absolute -inset-3 rounded-3xl animate-splash-glow"
+              style={{
+                background:
+                  "radial-gradient(circle, rgba(59,130,246,0.15) 0%, transparent 70%)",
+              }}
+              aria-hidden="true"
+            />
+            <div className="relative flex h-[60px] w-[60px] items-center justify-center rounded-[16px] bg-gradient-to-br from-primary to-accent shadow-[0_6px_24px_-4px_rgba(59,130,246,0.35)]">
+              <span className="relative z-10 text-[22px] font-bold text-primary-fg tracking-tight select-none">
+                K
+              </span>
+              <span
+                className="absolute inset-0 rounded-[16px] bg-gradient-to-b from-white/20 via-white/5 to-transparent"
+                aria-hidden="true"
+              />
+            </div>
+          </div>
+          <h1 className="text-[22px] font-semibold text-fg tracking-[-0.02em]">
+            Iniciar sesión
+          </h1>
+          <p className="mt-1.5 text-[14px] text-muted/70 text-center leading-relaxed max-w-[280px]">
+            Ingresa con tu cuenta para acceder al panel
+          </p>
+        </div>
+
+        {/* ── Formulario con glassmorphism card ── */}
+        <div
+          className="rounded-2xl border border-white/[0.06] bg-white/[0.03] backdrop-blur-xl p-7 shadow-[0_8px_40px_-8px_rgba(0,0,0,0.5)] animate-splash-fade-up"
+          style={{ animationDelay: "0.15s" }}
+        >
+          <form onSubmit={onSubmit} className="flex flex-col gap-5">
+            {/* ── Username ── */}
+            <div className="flex flex-col gap-1.5">
+              <label
+                htmlFor="login-username"
+                className="text-[13px] font-medium text-fg/80 pl-0.5"
+              >
+                Usuario
+              </label>
+              <input
+                type="text"
+                id="login-username"
+                autoFocus
+                autoComplete="username"
+                value={username}
+                onChange={(e) => setUsername(e.target.value)}
+                required
+                placeholder="Tu usuario"
+                className="w-full rounded-xl border border-white/[0.08] bg-white/[0.04] px-4 py-3 text-[15px] text-fg placeholder:text-muted/40 outline-none transition-all duration-300 ease-[cubic-bezier(0.23,1,0.32,1)] focus:border-primary/40 focus:bg-white/[0.06] focus:shadow-[0_0_0_3px_rgba(59,130,246,0.12)]"
+              />
             </div>
 
-            <form onSubmit={onSubmit} className="space-y-6">
-              <div>
-                <label
-                  htmlFor="username"
-                  className="mb-2 text-fg font-medium text-sm inline-block"
+            {/* ── Password ── */}
+            <div className="flex flex-col gap-1.5">
+              <label
+                htmlFor="login-password"
+                className="text-[13px] font-medium text-fg/80 pl-0.5"
+              >
+                Contraseña
+              </label>
+              <div className="relative">
+                <input
+                  type={showPassword ? "text" : "password"}
+                  id="login-password"
+                  autoComplete="current-password"
+                  value={password}
+                  onChange={(e) => setPassword(e.target.value)}
+                  required
+                  placeholder="••••••••"
+                  className="w-full rounded-xl border border-white/[0.08] bg-white/[0.04] px-4 py-3 pr-11 text-[15px] text-fg placeholder:text-muted/40 outline-none transition-all duration-300 ease-[cubic-bezier(0.23,1,0.32,1)] focus:border-primary/40 focus:bg-white/[0.06] focus:shadow-[0_0_0_3px_rgba(59,130,246,0.12)]"
+                />
+                <button
+                  type="button"
+                  onClick={() => setShowPassword((v) => !v)}
+                  tabIndex={-1}
+                  className="absolute right-3 top-1/2 -translate-y-1/2 p-0.5 text-muted/40 hover:text-muted transition-colors duration-200"
+                  aria-label={showPassword ? "Ocultar contraseña" : "Mostrar contraseña"}
                 >
-                  Usuario
-                </label>
-                <div className="relative">
-                  <UserIcon className="pointer-events-none absolute left-3 top-1/2 h-4 w-4 -translate-y-1/2 text-faint" />
-                  <input
-                    type="text"
-                    id="username"
-                    autoFocus
-                    autoComplete="username"
-                    value={username}
-                    onChange={(e) => setUsername(e.target.value)}
-                    required
-                    placeholder="Tu usuario"
-                    className="pl-10 px-3 py-2.5 text-sm text-fg rounded-md bg-surface-2 w-full outline-1 -outline-offset-1 outline-border focus:outline-2 focus:-outline-offset-2 focus:outline-primary transition-all"
-                  />
-                </div>
+                  {showPassword ? (
+                    <EyeOff className="h-[18px] w-[18px]" />
+                  ) : (
+                    <Eye className="h-[18px] w-[18px]" />
+                  )}
+                </button>
               </div>
-              
-              <div>
-                <label
-                  htmlFor="password"
-                  className="mb-2 text-fg font-medium text-sm inline-block"
-                >
-                  Contraseña
-                </label>
-                <div className="relative">
-                  <Lock className="pointer-events-none absolute left-3 top-1/2 h-4 w-4 -translate-y-1/2 text-faint" />
-                  <input
-                    type="password"
-                    id="password"
-                    autoComplete="current-password"
-                    value={password}
-                    onChange={(e) => setPassword(e.target.value)}
-                    required
-                    placeholder="••••••••"
-                    className="pl-10 px-3 py-2.5 text-sm text-fg rounded-md bg-surface-2 w-full outline-1 -outline-offset-1 outline-border focus:outline-2 focus:-outline-offset-2 focus:outline-primary transition-all"
-                  />
-                </div>
+            </div>
+
+            {/* ── Error ── */}
+            {error && (
+              <div
+                role="alert"
+                className="flex items-start gap-2.5 rounded-xl border border-danger/20 bg-danger/[0.06] px-4 py-3 text-[13px] text-danger/90 leading-snug animate-splash-fade-up"
+              >
+                <svg className="h-4 w-4 shrink-0 mt-0.5" viewBox="0 0 16 16" fill="currentColor" aria-hidden="true">
+                  <path fillRule="evenodd" d="M8 15A7 7 0 1 0 8 1a7 7 0 0 0 0 14ZM8 4a.75.75 0 0 1 .75.75v3.5a.75.75 0 0 1-1.5 0v-3.5A.75.75 0 0 1 8 4Zm0 8a.75.75 0 1 0 0-1.5.75.75 0 0 0 0 1.5Z" clipRule="evenodd" />
+                </svg>
+                <span>{error}</span>
               </div>
+            )}
 
-              {error && (
-                <div
-                  role="alert"
-                  className="rounded-md border border-danger/40 bg-danger-dim/30 px-3 py-2 text-sm text-danger"
+            {/* ── Recordarme + Olvidé contraseña ── */}
+            <div className="flex items-center justify-between">
+              <label className="flex items-center gap-2.5 cursor-pointer group">
+                <input
+                  id="remember"
+                  name="remember"
+                  type="checkbox"
+                  className="sr-only peer"
+                />
+                <span
+                  className="flex h-[18px] w-[18px] shrink-0 items-center justify-center rounded-md border border-white/[0.12] bg-white/[0.04] transition-all duration-200 peer-checked:bg-primary peer-checked:border-primary/60 peer-focus-visible:shadow-[0_0_0_3px_rgba(59,130,246,0.2)]"
+                  aria-hidden="true"
                 >
-                  {error}
-                </div>
-              )}
-
-              <div className="flex items-start flex-wrap gap-2">
-                <label className="flex items-center group has-[input:checked]:text-fg cursor-pointer">
-                  <input
-                    id="remember"
-                    name="remember"
-                    type="checkbox"
-                    className="sr-only"
-                  />
-                  <span
-                    className="flex h-4 w-4 shrink-0 items-center justify-center rounded outline-1 outline-border bg-surface-2 group-has-[input:checked]:bg-primary group-has-[input:checked]:outline-primary group-focus-within:outline-2 group-focus-within:outline-primary transition-all"
-                    aria-hidden="true"
+                  <svg
+                    className="h-3 w-3 text-primary-fg opacity-0 peer-checked:group-[]:opacity-100 transition-opacity duration-150"
+                    viewBox="0 0 12 10"
+                    fill="none"
+                    stroke="currentColor"
+                    strokeWidth="2"
                   >
-                    <svg
-                      className="size-3 text-primary-fg opacity-0 group-has-[input:checked]:opacity-100"
-                      viewBox="0 0 12 10"
-                      fill="none"
-                      stroke="currentColor"
-                      strokeWidth="2"
-                    >
-                      <path d="M1 5l3 3 7-7" />
-                    </svg>
-                  </span>
-                  <span className="ml-3 text-sm text-muted">
-                    Recordarme
-                  </span>
-                </label>
-
-                <div className="ml-auto text-sm text-faint hover:text-fg transition-colors cursor-pointer">
-                  ¿Olvidaste tu contraseña?
-                </div>
-              </div>
+                    <path d="M1 5l3 3 7-7" />
+                  </svg>
+                </span>
+                <span className="text-[13px] text-muted/60 group-hover:text-muted transition-colors duration-200">
+                  Recordarme
+                </span>
+              </label>
 
               <button
-                type="submit"
-                disabled={submitting || !username.trim() || !password}
-                className="w-full py-2 px-3.5 text-sm rounded-md font-semibold cursor-pointer tracking-wide text-primary-fg bg-primary hover:bg-primary-soft transition-all focus:outline-none focus-visible:ring-2 focus-visible:ring-primary/40 disabled:opacity-50 disabled:cursor-not-allowed flex items-center justify-center gap-2"
+                type="button"
+                className="text-[13px] text-primary/70 hover:text-primary transition-colors duration-200"
               >
-                <LogIn className="h-4 w-4" />
-                {submitting ? "Ingresando…" : "Ingresar"}
+                ¿Olvidaste tu contraseña?
               </button>
-            </form>
-          </div>
+            </div>
 
-          <div className="aspect-[71/50] max-lg:w-4/5 mx-auto flex items-center justify-center p-6 bg-surface-2 rounded-2xl border border-border-soft shadow-sm">
-            <svg
-              className="w-full h-auto text-primary"
-              viewBox="0 0 400 300"
-              fill="none"
-              xmlns="http://www.w3.org/2000/svg"
-              aria-label="Dashboard Illustration"
-              role="img"
+            {/* ── Submit ── */}
+            <button
+              type="submit"
+              disabled={!canSubmit}
+              className="group relative w-full mt-1 rounded-xl bg-primary py-3 px-4 text-[15px] font-semibold text-primary-fg tracking-[-0.01em] cursor-pointer transition-all duration-300 ease-[cubic-bezier(0.23,1,0.32,1)] hover:bg-primary-soft hover:shadow-[0_4px_20px_-4px_rgba(59,130,246,0.4)] active:scale-[0.98] focus-visible:outline-none focus-visible:shadow-[0_0_0_3px_rgba(59,130,246,0.3)] disabled:opacity-40 disabled:cursor-not-allowed disabled:hover:shadow-none disabled:active:scale-100"
             >
-              {/* Background Card */}
-              <rect x="40" y="50" width="320" height="200" rx="16" fill="currentColor" fillOpacity="0.05" stroke="currentColor" strokeWidth="2" strokeOpacity="0.15"/>
-              
-              {/* Top Bar */}
-              <path d="M40 66C40 57.1634 47.1634 50 56 50H344C352.837 50 360 57.1634 360 66V90H40V66Z" className="text-surface-4" fill="currentColor" />
-              <circle cx="70" cy="70" r="5" fill="currentColor" className="text-danger" />
-              <circle cx="90" cy="70" r="5" fill="currentColor" className="text-warning" />
-              <circle cx="110" cy="70" r="5" fill="currentColor" className="text-success" />
-              
-              {/* Sidebar */}
-              <rect x="60" y="110" width="60" height="120" rx="8" fill="currentColor" fillOpacity="0.08" />
-              <rect x="70" y="125" width="40" height="8" rx="4" fill="currentColor" fillOpacity="0.15" />
-              <rect x="70" y="145" width="30" height="8" rx="4" fill="currentColor" fillOpacity="0.15" />
-              <rect x="70" y="165" width="35" height="8" rx="4" fill="currentColor" fillOpacity="0.15" />
-              
-              {/* Chart Area */}
-              <rect x="140" y="110" width="200" height="120" rx="8" fill="currentColor" fillOpacity="0.03" />
-              
-              {/* Bar Chart */}
-              <rect x="160" y="170" width="20" height="40" rx="4" fill="currentColor" fillOpacity="0.8" />
-              <rect x="195" y="140" width="20" height="70" rx="4" fill="currentColor" fillOpacity="0.5" />
-              <rect x="230" y="185" width="20" height="25" rx="4" fill="currentColor" fillOpacity="0.6" />
-              <rect x="265" y="120" width="20" height="90" rx="4" fill="currentColor" />
-              <rect x="300" y="155" width="20" height="55" rx="4" fill="currentColor" fillOpacity="0.7" />
-              
-              {/* Floating Element */}
-              <g transform="translate(250, 30)">
-                <rect width="90" height="40" rx="8" fill="currentColor" className="text-surface-2" stroke="currentColor" strokeWidth="1" strokeOpacity="0.2"/>
-                <rect x="15" y="16" width="30" height="8" rx="4" fill="currentColor" className="text-accent" />
-                <circle cx="65" cy="20" r="8" fill="currentColor" className="text-primary" fillOpacity="0.2"/>
-                <circle cx="65" cy="20" r="4" fill="currentColor" className="text-primary" />
-              </g>
-            </svg>
-          </div>
+              {/* Reflejo superior tipo botón iOS */}
+              <span
+                className="absolute inset-x-0 top-0 h-1/2 rounded-t-xl bg-gradient-to-b from-white/10 to-transparent pointer-events-none"
+                aria-hidden="true"
+              />
+              <span className="relative z-10 flex items-center justify-center gap-2">
+                {submitting ? (
+                  <>
+                    <svg className="h-4 w-4 animate-splash-spinner" viewBox="0 0 32 32" fill="none" aria-hidden="true">
+                      <circle cx="16" cy="16" r="13" stroke="currentColor" strokeWidth="2.5" className="opacity-20" />
+                      <path d="M16 3a13 13 0 0 1 13 13" stroke="currentColor" strokeWidth="2.5" strokeLinecap="round" />
+                    </svg>
+                    Ingresando…
+                  </>
+                ) : (
+                  "Ingresar"
+                )}
+              </span>
+            </button>
+          </form>
         </div>
+
+        {/* ── Footer ── */}
+        <p
+          className="mt-8 text-center text-[12px] text-muted/30 tracking-wide animate-splash-fade-up"
+          style={{ animationDelay: "0.3s" }}
+        >
+          KAWII · Business Intelligence
+        </p>
       </div>
     </main>
   );
@@ -226,7 +269,16 @@ function LoginForm() {
 
 export default function LoginPage() {
   return (
-    <Suspense fallback={<div className="flex min-h-screen items-center justify-center">Cargando...</div>}>
+    <Suspense
+      fallback={
+        <div className="flex min-h-screen items-center justify-center bg-bg">
+          <svg className="h-6 w-6 animate-splash-spinner text-primary" viewBox="0 0 32 32" fill="none">
+            <circle cx="16" cy="16" r="13" stroke="currentColor" strokeWidth="2.5" className="opacity-20" />
+            <path d="M16 3a13 13 0 0 1 13 13" stroke="currentColor" strokeWidth="2.5" strokeLinecap="round" />
+          </svg>
+        </div>
+      }
+    >
       <LoginForm />
     </Suspense>
   );

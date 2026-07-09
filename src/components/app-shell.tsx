@@ -3,7 +3,7 @@
 import { useEffect, useState, useRef } from "react";
 import Link from "next/link";
 import { usePathname, useRouter } from "next/navigation";
-import { Building2, ChevronLeft, ChevronRight, LogOut, Menu, ShieldCheck, X, Check, Store, RotateCw, ChevronDown } from "lucide-react";
+import { Building2, ChevronLeft, ChevronRight, LogOut, Menu, X, Check, Store, RotateCw, ChevronDown } from "lucide-react";
 import { NAV_GROUPS, ALL_NAV_ITEMS } from "./nav";
 import { ApiStatus } from "./api-status";
 import { useSucursal } from "./sucursal-context";
@@ -459,10 +459,87 @@ export function AppShell({ children }: { children: React.ReactNode }) {
 
   if (isLoading || !user) {
     return (
-      <div className="flex min-h-screen items-center justify-center">
-        <div className="flex flex-col items-center gap-3 text-muted">
-          <ShieldCheck className="h-8 w-8 animate-pulse text-primary" />
-          <p className="text-sm">Verificando sesión…</p>
+      <div className="flex min-h-screen items-center justify-center bg-bg relative overflow-hidden">
+        {/* Fondo: radial gradient sutil — como el boot de macOS */}
+        <div
+          className="pointer-events-none absolute inset-0"
+          style={{
+            background:
+              "radial-gradient(ellipse 60% 50% at 50% 40%, rgba(59,130,246,0.08) 0%, transparent 70%)",
+          }}
+          aria-hidden="true"
+        />
+
+        <div className="relative z-10 flex flex-col items-center gap-8">
+          {/* Logo con glow pulsante */}
+          <div className="relative">
+            {/* Glow halo detrás del logo */}
+            <div
+              className="absolute -inset-4 rounded-3xl animate-splash-glow"
+              style={{
+                background:
+                  "radial-gradient(circle, rgba(59,130,246,0.2) 0%, transparent 70%)",
+              }}
+              aria-hidden="true"
+            />
+            <div className="relative flex h-16 w-16 items-center justify-center rounded-[18px] bg-gradient-to-br from-primary to-accent shadow-[0_8px_32px_-4px_rgba(59,130,246,0.4)]">
+              <span className="relative z-10 text-2xl font-bold text-primary-fg tracking-tight select-none">
+                K
+              </span>
+              {/* Reflejo interior tipo vidrio Apple */}
+              <span
+                className="absolute inset-0 rounded-[18px] bg-gradient-to-b from-white/20 via-white/5 to-transparent"
+                aria-hidden="true"
+              />
+            </div>
+          </div>
+
+          {/* Spinner circular tipo Apple Watch — conic gradient */}
+          <div className="relative flex items-center justify-center">
+            <svg
+              className="h-8 w-8 animate-splash-spinner"
+              viewBox="0 0 32 32"
+              fill="none"
+              aria-hidden="true"
+            >
+              <circle
+                cx="16"
+                cy="16"
+                r="13"
+                stroke="currentColor"
+                strokeWidth="2.5"
+                className="text-surface-2"
+              />
+              <path
+                d="M16 3a13 13 0 0 1 13 13"
+                stroke="url(#splash-grad)"
+                strokeWidth="2.5"
+                strokeLinecap="round"
+              />
+              <defs>
+                <linearGradient id="splash-grad" x1="16" y1="3" x2="29" y2="16">
+                  <stop stopColor="var(--color-primary)" />
+                  <stop offset="1" stopColor="var(--color-accent)" />
+                </linearGradient>
+              </defs>
+            </svg>
+          </div>
+
+          {/* Texto con fade-in escalonado + blur */}
+          <div className="flex flex-col items-center gap-2">
+            <p
+              className="text-[15px] font-medium text-fg/90 tracking-[-0.01em] animate-splash-fade-up"
+              style={{ animationDelay: "0.15s" }}
+            >
+              Verificando sesión
+            </p>
+            <p
+              className="text-[13px] text-muted/60 font-normal animate-splash-fade-up"
+              style={{ animationDelay: "0.35s" }}
+            >
+              Un momento, por favor…
+            </p>
+          </div>
         </div>
       </div>
     );

@@ -129,6 +129,22 @@
     50% { opacity: 0.6; transform: scale(0.85); }
   }
 
+  /* ── Session splash (Apple-style) ─────────────────────────────── */
+  @keyframes splash-spinner {
+    to { transform: rotate(360deg); }
+  }
+  @keyframes splash-fade-up {
+    from { opacity: 0; transform: translateY(8px); filter: blur(4px); }
+    to   { opacity: 1; transform: translateY(0);  filter: blur(0); }
+  }
+  @keyframes splash-glow {
+    0%, 100% { opacity: 0.6; }
+    50%      { opacity: 1; }
+  }
+  --animate-splash-spinner: splash-spinner 1s linear infinite;
+  --animate-splash-fade-up: splash-fade-up 0.8s var(--ease-premium) both;
+  --animate-splash-glow: splash-glow 3s ease-in-out infinite;
+
   /* Hierarchy tree expand/collapse */
   @keyframes tree-expand {
     from { opacity: 0; max-height: 0; transform: translateY(-4px); }
