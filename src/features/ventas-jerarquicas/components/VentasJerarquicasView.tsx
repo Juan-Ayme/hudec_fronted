@@ -1,7 +1,8 @@
 "use client";
 
+import { useState } from "react";
 import {
-  Download, Search, Sparkles,
+  Download, Search, MoreHorizontal, Sparkles,
   ChevronRight, ChevronLeft, ChevronsLeft, ChevronsRight, FolderOpen, Tag, Layers, Filter,
   X, Calendar, Package, Timer, Target, BarChart2, ShieldAlert
 } from "lucide-react";
@@ -14,6 +15,8 @@ import { Input } from "@/components/ui/input";
 import { LoadingState, ErrorState } from "@/components/ui/states";
 import { ProductDetailPanel } from "@/components/product-detail-panel";
 import { cn } from "@/lib/utils";
+import { PremiumLoaderOverlay, shmr } from "@/components/ui/premium-skeleton";
+import { FloatingPagination } from "@/components/ui/floating-pagination";
 
 import { useVentasJerarquicas } from "../hooks/useVentasJerarquicas";
 import { n, s } from "../utils";
@@ -28,6 +31,7 @@ import { AnimeLoader } from "@/components/ui/anime-loader";
 export function VentasJerarquicasView() {
   const { sucursalName } = useSucursal();
   const state = useVentasJerarquicas(sucursalName);
+  const [showActionMenu, setShowActionMenu] = useState(false);
 
   const {
     q, allRows, busqueda, setBusqueda, deptoSel, catSel, subcatSel,
@@ -39,6 +43,14 @@ export function VentasJerarquicasView() {
     hasActiveFilters, similarityIndex, sortedCols,
   } = state;
 
+
+  const LOADING_MESSAGES = [
+    "Construyendo el árbol de jerarquías...",
+    "Analizando la salud del inventario...",
+    "Calculando cobertura y rotación...",
+    "Procesando el historial de 90 días..."
+  ];
+
   const selectedSimilares = selectedSku
     ? similarityIndex.get(s(selectedSku["Código SKU"]))
     : undefined;
@@ -49,7 +61,86 @@ export function VentasJerarquicasView() {
   };
 
   if (q.isError) return <ErrorState error={q.error} />;
-  if (q.isLoading) return <AnimeLoader label="Analizando jerarquías..." />;
+  if (q.isLoading) {
+    return (
+      <div className="relative">
+        <div className={cn("grid grid-cols-1 gap-4", "lg:grid-cols-[420px_1fr]")}>
+          {/* Sidebar Skeleton */}
+        <aside className="flex flex-col gap-3">
+          <Card className="bg-surface/30 backdrop-blur-xl border-white/5 shadow-[0_8px_32px_rgba(0,0,0,0.3)]">
+            <CardBody className="p-3">
+              <div className="mb-2 flex items-center gap-2">
+                <div className={cn("h-8 w-8 rounded-md", shmr)} />
+                <div className="flex-1 space-y-2">
+                  <div className={cn("h-2.5 w-24 rounded-full", shmr)} />
+                  <div className={cn("h-1.5 w-16 rounded-full", shmr)} />
+                </div>
+                <div className={cn("h-6 w-20 rounded-md", shmr)} />
+              </div>
+              <div className={cn("mt-3 h-1.5 w-full rounded-full", shmr)} />
+            </CardBody>
+          </Card>
+
+          <Card className="bg-surface/30 backdrop-blur-xl border-white/5 shadow-[0_8px_32px_rgba(0,0,0,0.3)]">
+            <CardBody className="p-2">
+              <div className={cn("h-10 w-full rounded-xl mb-4", shmr)} />
+              <div className="flex flex-col gap-4 px-3 pb-2">
+                {Array.from({ length: 8 }).map((_, i) => (
+                  <div key={i} className="flex flex-col gap-2.5">
+                    <div className="flex items-center justify-between">
+                      <div className="flex items-center gap-2">
+                        <div className={cn("h-3 w-3 rounded-sm", shmr)} />
+                        <div className={cn("h-2.5 w-28 rounded-full", shmr)} />
+                      </div>
+                      <div className={cn("h-2.5 w-12 rounded-full", shmr)} />
+                    </div>
+                    <div className={cn("h-1.5 w-full rounded-full", shmr)} />
+                  </div>
+                ))}
+              </div>
+            </CardBody>
+          </Card>
+        </aside>
+
+        {/* Main Content Skeleton */}
+        <div className="flex h-[calc(100vh-7rem)] flex-col overflow-hidden bg-surface-2/30 backdrop-blur-2xl rounded-2xl border border-white/5 shadow-[0_12px_48px_rgba(0,0,0,0.4)]">
+          {/* Toolbar Skeleton */}
+          <div className="border-b border-white/5 bg-surface/60 px-5 py-2.5 flex flex-col xl:flex-row xl:items-center justify-between gap-4">
+            <div className={cn("h-8 w-full xl:w-48 rounded-full shrink-0", shmr)} />
+            <div className="flex gap-1.5 flex-1 overflow-hidden">
+              {Array.from({ length: 5 }).map((_, i) => (
+                <div key={i} className={cn("h-7 w-28 rounded-full shrink-0", shmr)} />
+              ))}
+            </div>
+            <div className={cn("h-8 w-8 rounded-full shrink-0", shmr)} />
+          </div>
+          
+          {/* List Skeleton - simulating detailed rows */}
+          <div className="flex-1 p-5 flex flex-col gap-3 overflow-hidden">
+            {Array.from({ length: 6 }).map((_, i) => (
+              <div key={i} className="flex items-center justify-between p-4 rounded-xl border border-white/5 bg-surface/10">
+                <div className="flex items-center gap-4 flex-1">
+                  <div className={cn("h-10 w-10 rounded-lg shrink-0", shmr)} />
+                  <div className="flex flex-col gap-2.5 flex-1">
+                    <div className={cn("h-3.5 w-1/3 rounded-full", shmr)} />
+                    <div className={cn("h-2 w-1/4 rounded-full", shmr)} />
+                  </div>
+                </div>
+                <div className="flex flex-col items-end gap-2.5">
+                  <div className={cn("h-4 w-24 rounded-full", shmr)} />
+                  <div className={cn("h-2 w-16 rounded-full", shmr)} />
+                </div>
+              </div>
+            ))}
+          </div>
+        </div>
+
+        {/* Mensajes Flotantes (Overlay Centrado) */}
+        <PremiumLoaderOverlay messages={LOADING_MESSAGES} />
+        </div>
+      </div>
+    );
+  }
 
   return (
     <div className={cn("grid grid-cols-1 gap-4", "lg:grid-cols-[420px_1fr]")}>
@@ -83,27 +174,27 @@ export function VentasJerarquicasView() {
 
         <Card className="bg-surface/30 backdrop-blur-xl border-white/5 shadow-[0_8px_32px_rgba(0,0,0,0.3)]">
           <CardBody className="p-2">
-            <button onClick={clearSelection} className={cn("flex w-full items-center justify-between rounded-md px-3 py-2.5 text-left transition-colors", "duration-[var(--duration-fast)] ease-[var(--ease-premium)]", deptoSel === null ? "bg-primary/12 text-fg" : "text-fg hover:bg-surface-2")}>
+            <button onClick={clearSelection} className={cn("flex w-full items-center justify-between rounded-xl px-3 py-2.5 text-left transition-all", "duration-300 ease-[cubic-bezier(0.23,1,0.32,1)] active:scale-[0.98]", deptoSel === null ? "bg-primary/15 text-primary shadow-[inset_0_1px_2px_rgba(0,0,0,0.1)]" : "text-fg hover:bg-surface-2/60")}>
               <span className="flex items-center gap-2">
                 <Layers className={cn("h-4 w-4", deptoSel === null ? "text-primary" : "text-faint")} />
-                <span className="text-body font-semibold">Todos los productos</span>
+                <span className={cn("text-body font-semibold", deptoSel === null ? "text-primary" : "")}>Todos los productos</span>
               </span>
               <span className="text-caption tabular-nums text-muted">{num(allRows.length)} SKUs</span>
             </button>
 
-            <ul className="mt-1 flex max-h-[65vh] flex-col gap-1 overflow-y-auto pr-1 custom-scrollbar">
+            <ul className="mt-2 flex max-h-[65vh] flex-col gap-1 overflow-y-auto pr-1 custom-scrollbar">
               {jerarquia.map((dept, deptIdx) => {
                 const isDeptSel = deptoSel === dept.name;
                 const isDeptExpanded = expandedDeptos.has(dept.name);
                 const deptTone = DEPT_COLORS[deptIdx % DEPT_COLORS.length];
                 return (
                   <li key={dept.name}>
-                    <div className={cn("group flex w-full items-start gap-0.5 rounded-xl transition-all border border-transparent", "duration-[var(--duration-fast)] ease-[var(--ease-premium)]", isDeptSel && !catSel ? `${deptTone.bgActive} border-white/10 shadow-sm` : "hover:bg-surface-2")}>
-                      <button onClick={() => state.toggleDepto(dept.name)} className="mt-1 flex h-7 w-7 shrink-0 items-center justify-center rounded-lg text-faint transition-all hover:bg-surface-3 hover:text-muted">
-                        <ChevronRight className={cn("h-4 w-4 transition-transform duration-[var(--duration-base)] ease-[var(--ease-premium)]", isDeptExpanded && "rotate-90")} />
+                    <div className={cn("group flex w-full items-start gap-0.5 rounded-xl transition-all border border-transparent", "duration-300 ease-[cubic-bezier(0.23,1,0.32,1)]", isDeptSel && !catSel ? `${deptTone.bgActive} border-white/10 shadow-sm` : "hover:bg-surface-2/50")}>
+                      <button onClick={() => state.toggleDepto(dept.name)} className="mt-1 flex h-7 w-7 shrink-0 items-center justify-center rounded-lg text-faint transition-all hover:bg-surface-3 hover:text-muted active:scale-[0.95]">
+                        <ChevronRight className={cn("h-4 w-4 transition-transform duration-300 ease-[cubic-bezier(0.23,1,0.32,1)]", isDeptExpanded && "rotate-90")} />
                       </button>
 
-                      <button onClick={() => state.selectDepto(dept.name)} className="relative flex min-w-0 flex-1 flex-col justify-center py-2.5 pr-3 text-left overflow-hidden">
+                      <button onClick={() => state.selectDepto(dept.name)} className="relative flex min-w-0 flex-1 flex-col justify-center py-2.5 pr-3 text-left overflow-hidden active:scale-[0.98] transition-transform">
                         <div className="flex items-center justify-between gap-3 w-full mb-1">
                           <div className="flex items-center gap-2 min-w-0">
                             <span className={cn("h-2.5 w-2.5 shrink-0 rounded-full shadow-sm", deptTone.dot)} />
@@ -131,11 +222,11 @@ export function VentasJerarquicasView() {
                           const isCatExpanded = expandedCats.has(catKey);
                           return (
                             <li key={cat.name}>
-                              <div className={cn("group flex w-full items-start gap-0.5 rounded-lg transition-all", "duration-[var(--duration-fast)] ease-[var(--ease-premium)]", isCatSel && !subcatSel ? "bg-info/10 shadow-[inset_3px_0_0_var(--color-info)]" : "hover:bg-surface-2")}>
-                                <button onClick={() => state.toggleCat(dept.name, cat.name)} className="mt-1 flex h-6 w-6 shrink-0 items-center justify-center rounded text-faint transition-colors hover:bg-surface-3 hover:text-muted">
-                                  <ChevronRight className={cn("h-3 w-3 transition-transform duration-[var(--duration-base)] ease-[var(--ease-premium)]", isCatExpanded && "rotate-90")} />
+                              <div className={cn("group flex w-full items-start gap-0.5 rounded-lg transition-all", "duration-300 ease-[cubic-bezier(0.23,1,0.32,1)]", isCatSel && !subcatSel ? "bg-info/10 shadow-[inset_3px_0_0_var(--color-info)]" : "hover:bg-surface-2/50")}>
+                                <button onClick={() => state.toggleCat(dept.name, cat.name)} className="mt-1 flex h-6 w-6 shrink-0 items-center justify-center rounded text-faint transition-colors hover:bg-surface-3 hover:text-muted active:scale-[0.95]">
+                                  <ChevronRight className={cn("h-3 w-3 transition-transform duration-300 ease-[cubic-bezier(0.23,1,0.32,1)]", isCatExpanded && "rotate-90")} />
                                 </button>
-                                <button onClick={() => state.selectCat(dept.name, cat.name)} className="relative flex min-w-0 flex-1 flex-col justify-center py-2 pr-3 text-left">
+                                <button onClick={() => state.selectCat(dept.name, cat.name)} className="relative flex min-w-0 flex-1 flex-col justify-center py-2 pr-3 text-left active:scale-[0.98] transition-transform">
                                   <div className="flex items-center justify-between gap-2 w-full mb-1">
                                     <div className="flex items-center gap-2 min-w-0">
                                       <FolderOpen className={cn("h-3 w-3 shrink-0 transition-colors", isCatSel ? "text-info" : "text-faint")} />
@@ -161,7 +252,7 @@ export function VentasJerarquicasView() {
                                     const isSubcatSel = isCatSel && subcatSel === subcat.name;
                                     return (
                                       <li key={subcat.name}>
-                                        <button onClick={() => state.selectSubcat(dept.name, cat.name, subcat.name)} className={cn("group relative flex w-full flex-col justify-center py-2 pl-4 pr-3 text-left transition-all rounded-md", "duration-[var(--duration-fast)] ease-[var(--ease-premium)]", isSubcatSel ? "bg-violet/10 shadow-[inset_3px_0_0_var(--color-violet)]" : "hover:bg-surface-2")}>
+                                        <button onClick={() => state.selectSubcat(dept.name, cat.name, subcat.name)} className={cn("group relative flex w-full flex-col justify-center py-2 pl-4 pr-3 text-left transition-all rounded-md", "duration-300 ease-[cubic-bezier(0.23,1,0.32,1)] active:scale-[0.98]", isSubcatSel ? "bg-violet/10 shadow-[inset_3px_0_0_var(--color-violet)]" : "hover:bg-surface-2/50")}>
                                           <div className="flex items-center justify-between gap-2 w-full mb-0.5">
                                             <div className="flex items-center gap-2 min-w-0">
                                               <Tag className={cn("h-3 w-3 shrink-0 transition-colors", isSubcatSel ? "text-violet" : "text-faint")} />
@@ -201,63 +292,95 @@ export function VentasJerarquicasView() {
       <div className="flex h-[calc(100vh-7rem)] flex-col overflow-hidden bg-surface-2/30 backdrop-blur-2xl rounded-2xl border border-white/5 shadow-[0_12px_48px_rgba(0,0,0,0.4)] relative">
         <div className="absolute inset-0 bg-gradient-to-br from-primary/5 via-transparent to-violet/5 pointer-events-none" />
         
-        {/* Kanban Tabs */}
-        <div className="border-b border-white/5 bg-surface-2/40 relative z-10">
-          <div className="flex gap-2 overflow-x-auto px-5 py-3 custom-scrollbar">
-            {sortedCols.map((col) => {
-              const count = tabCounts[col.id];
-              const isActive = activeTab === col.id;
-              const Icon = col.icon;
-              return (
-                <button
-                  key={col.id}
-                  onClick={() => setActiveTab(col.id)}
-                  className={cn(
-                    "group flex shrink-0 items-center gap-2 rounded-xl border px-3 py-2 text-sm font-semibold transition-all duration-[var(--duration-fast)]",
-                    isActive ? TAB_ACTIVE_BORDER[col.tone] : "border-transparent text-muted hover:bg-surface-2 hover:text-fg hover:border-white/10",
-                    isActive && "shadow-sm"
-                  )}
-                >
-                  <span className={cn("flex h-7 w-7 shrink-0 items-center justify-center rounded-lg transition-colors", isActive ? TAB_TONE_ACTIVE[col.tone] : TAB_TONE_INACTIVE[col.tone])}>
-                    <Icon className="h-4 w-4" strokeWidth={2.25} />
-                  </span>
-                  <span className={cn("overflow-hidden whitespace-nowrap transition-all duration-300 ease-in-out", isActive ? "max-w-[200px] opacity-100 text-fg" : "max-w-0 opacity-0 group-hover:max-w-[200px] group-hover:opacity-100")}>
-                    <span className="hidden md:inline">{col.label}</span><span className="md:hidden">{col.short}</span>
-                  </span>
-                  <span className={cn("rounded-full px-2 py-0.5 text-[0.65rem] font-bold tabular-nums", isActive ? TAB_BADGE_ACTIVE[col.tone] : TAB_BADGE_INACTIVE[col.tone])}>
-                    {num(count)}
-                  </span>
-                </button>
-              );
-            })}
-          </div>
-        </div>
-
-        {/* Toolbar superior (Búsqueda, Filtros, Excel) */}
-        <div className="flex flex-col gap-3 border-b border-white/5 bg-surface/60 px-5 py-3 relative z-10 backdrop-blur-md">
-          <div className="flex items-center gap-3">
-            <div className="relative flex-1">
-              <Search className="absolute left-3 top-1/2 h-4 w-4 -translate-y-1/2 text-primary" />
+        {/* Unified Toolbar (Tabs + Search/Actions) */}
+        <div className="flex flex-col gap-3 border-b border-white/5 bg-surface/60 px-5 py-2.5 relative z-30 backdrop-blur-md">
+          <div className="flex flex-col xl:flex-row xl:items-center justify-between gap-4">
+            {/* Left: Búsqueda */}
+            <div className="relative w-full xl:w-56 max-w-xs shrink-0 group xl:mr-2">
+              <Search className="absolute left-3 top-1/2 h-3.5 w-3.5 -translate-y-1/2 text-white/50 transition-colors group-focus-within:text-white" />
               <Input
                 placeholder="Buscar SKU o producto..."
                 value={busqueda}
                 onChange={(e) => setBusqueda(e.target.value)}
-                className="h-10 bg-black/20 pl-9 border-white/10 hover:border-white/20 focus:border-primary focus:ring-primary/30 transition-all rounded-lg shadow-inner text-sm"
+                className="h-8 bg-white/5 pl-8 pr-3 border-white/5 hover:bg-white/10 focus:bg-white/10 focus:border-primary/50 focus:ring-2 focus:ring-primary/20 transition-all rounded-full text-xs placeholder:text-white/40 shadow-sm text-white"
               />
             </div>
-            <Button variant="outline" size="sm" onClick={() => setShowFilters((v) => !v)} className={cn("h-10 shrink-0 transition-colors rounded-lg px-4", showFilters ? "border-violet bg-violet text-white shadow-sm shadow-violet/30 hover:bg-violet/90" : hasActiveFilters ? "border-violet/50 bg-violet/20 text-violet hover:bg-violet/30 hover:border-violet/70" : "border-violet/30 bg-violet/10 text-violet hover:bg-violet/20 hover:border-violet/50")}>
-              <Filter className="h-4 w-4" />
-              <span className="hidden sm:inline font-semibold">Filtros</span>
-              {hasActiveFilters && <span className={cn("ml-1 inline-flex h-4 w-4 items-center justify-center rounded-full text-[0.6rem] font-bold", showFilters ? "bg-white text-violet" : "bg-violet text-white")}>!</span>}
-            </Button>
-            <Button
-              variant="outline" size="sm"
-              className="h-10 shrink-0 rounded-lg border-success/40 bg-success/12 text-success transition-colors hover:bg-success/25 hover:border-success/60 px-4 font-semibold"
-              onClick={() => downloadExcelFile(matrixExcelUrl("04b", { sucursal: sucursalName ?? undefined }), "ventas_jerarquicas.xlsx").catch(console.error)}
-            >
-                <Download className="h-4 w-4" />
-                <span className="hidden sm:inline">Excel</span>
-            </Button>
+
+            {/* Right: Kanban Tabs */}
+            <div className="flex gap-1.5 overflow-x-auto pb-1 xl:pb-0 flex-1 min-w-0 [&::-webkit-scrollbar]:hidden [-ms-overflow-style:'none'] [scrollbar-width:'none']">
+              {sortedCols.map((col) => {
+                const count = tabCounts[col.id];
+                const isActive = activeTab === col.id;
+                const Icon = col.icon;
+                return (
+                  <button
+                    key={col.id}
+                    onClick={() => setActiveTab(col.id)}
+                    className={cn(
+                      "group flex shrink-0 items-center gap-1.5 rounded-full border px-2.5 py-1.5 text-xs font-semibold transition-all duration-300 ease-[cubic-bezier(0.23,1,0.32,1)] active:scale-[0.95]",
+                      isActive ? TAB_ACTIVE_BORDER[col.tone] : "border-transparent text-muted hover:bg-surface-2 hover:text-fg hover:border-white/10",
+                      isActive && "shadow-sm"
+                    )}
+                  >
+                    <span className={cn("flex h-6 w-6 shrink-0 items-center justify-center rounded-full transition-colors", isActive ? TAB_TONE_ACTIVE[col.tone] : TAB_TONE_INACTIVE[col.tone])}>
+                      <Icon className="h-3.5 w-3.5" strokeWidth={2.25} />
+                    </span>
+                    <span className={cn("overflow-hidden whitespace-nowrap transition-all duration-300 ease-[cubic-bezier(0.23,1,0.32,1)]", isActive ? "max-w-[200px] opacity-100 text-fg" : "max-w-0 opacity-0 group-hover:max-w-[200px] group-hover:opacity-100")}>
+                      <span className="hidden md:inline">{col.label}</span><span className="md:hidden">{col.short}</span>
+                    </span>
+                    <span className={cn("rounded-full px-1.5 py-0.5 text-[0.6rem] font-bold tabular-nums", isActive ? TAB_BADGE_ACTIVE[col.tone] : TAB_BADGE_INACTIVE[col.tone])}>
+                      {num(count)}
+                    </span>
+                  </button>
+                );
+              })}
+            </div>
+
+            {/* Right: Actions */}
+            <div className="relative shrink-0 flex items-center self-end xl:self-auto">
+              <Button 
+                variant="outline" 
+                size="sm" 
+                onClick={() => setShowActionMenu((v) => !v)} 
+                className={cn(
+                  "h-8 w-8 p-0 shrink-0 flex items-center justify-center transition-all duration-300 ease-[cubic-bezier(0.23,1,0.32,1)] active:scale-[0.95] rounded-full shadow-sm text-xs font-medium", 
+                  showActionMenu || hasActiveFilters 
+                    ? "bg-primary/15 border-primary/20 text-primary hover:bg-primary/20" 
+                    : "bg-surface-2 border-border-soft text-muted hover:text-fg hover:bg-surface-3 hover:border-border"
+                )}
+              >
+                <MoreHorizontal className="h-4 w-4" />
+                {hasActiveFilters && (
+                  <span className="absolute -top-1 -right-1 flex h-3.5 w-3.5 items-center justify-center rounded-full bg-primary border-2 border-[#09090b] text-[8px] font-bold text-white">
+                    !
+                  </span>
+                )}
+              </Button>
+
+              {showActionMenu && (
+                <>
+                  <div className="fixed inset-0 z-40" onClick={() => setShowActionMenu(false)} />
+                  <div className="absolute right-0 top-full mt-2 w-48 bg-[#1e293b]/95 backdrop-blur-md border border-white/10 rounded-xl shadow-[0_16px_40px_-8px_rgba(0,0,0,0.6)] flex flex-col p-1.5 z-50 animate-[fade-in-up_var(--duration-fast)_ease-out]">
+                    <button 
+                      onClick={() => { setShowFilters(true); setShowActionMenu(false); }} 
+                      className="flex items-center gap-2.5 px-3 py-2.5 text-[0.75rem] font-medium text-fg/90 hover:bg-surface-3 hover:text-primary rounded-lg transition-colors w-full text-left active:scale-[0.98]"
+                    >
+                      <Filter className="h-3.5 w-3.5" />
+                      Filtros Avanzados
+                      {hasActiveFilters && <span className="ml-auto flex h-2 w-2 rounded-full bg-primary" />}
+                    </button>
+                    <div className="h-px w-full bg-white/5 my-0.5" />
+                    <button 
+                      onClick={() => { downloadExcelFile(matrixExcelUrl("04b", { sucursal: sucursalName ?? undefined }), "ventas_jerarquicas.xlsx").catch(console.error); setShowActionMenu(false); }} 
+                      className="flex items-center gap-2.5 px-3 py-2.5 text-[0.75rem] font-medium text-fg/90 hover:bg-surface-3 hover:text-emerald-400 rounded-lg transition-colors w-full text-left active:scale-[0.98]"
+                    >
+                      <Download className="h-3.5 w-3.5" />
+                      Exportar Excel
+                    </button>
+                  </div>
+                </>
+              )}
+            </div>
           </div>
 
           {hasActiveFilters && (
@@ -341,7 +464,7 @@ export function VentasJerarquicasView() {
                   </div>
 
                   <div className="mt-2 border-t border-white/5 pt-4">
-                    <button onClick={() => setShowAdvancedFilters(!showAdvancedFilters)} className="flex items-center gap-2 text-sm font-semibold text-muted hover:text-fg transition-colors w-full group">
+                    <button onClick={() => setShowAdvancedFilters(!showAdvancedFilters)} className="flex items-center gap-2 text-sm font-semibold text-muted hover:text-fg transition-all duration-300 ease-[cubic-bezier(0.23,1,0.32,1)] active:scale-[0.98] w-full group rounded-xl p-2 -ml-2 hover:bg-surface-2/40">
                       <span className="flex-1 text-left">Búsqueda Avanzada</span>
                       <ChevronRight className={cn("h-4 w-4 transition-transform group-hover:text-fg", showAdvancedFilters && "rotate-90")} />
                     </button>
@@ -389,11 +512,11 @@ export function VentasJerarquicasView() {
               </div>
               <div className="border-t border-white/10 p-4 bg-surface/80 backdrop-blur-md flex justify-end gap-3">
                 {hasActiveFilters && (
-                  <Button variant="ghost" onClick={() => { setFStock("todos"); setFDias("todos"); setFMesIngreso(new Set()); setFXYZ("todos"); setFTendencia("todos"); setFCobertura("todos"); }} className="text-danger hover:bg-danger/10 hover:text-danger">
+                  <Button variant="ghost" onClick={() => { setFStock("todos"); setFDias("todos"); setFMesIngreso(new Set()); setFXYZ("todos"); setFTendencia("todos"); setFCobertura("todos"); }} className="text-danger hover:bg-danger/10 hover:text-danger rounded-xl active:scale-[0.95] transition-all">
                     Limpiar
                   </Button>
                 )}
-                <Button onClick={() => setShowFilters(false)} className="bg-violet hover:bg-violet/90 text-white shadow-md shadow-violet/20">
+                <Button onClick={() => setShowFilters(false)} className="bg-violet hover:bg-violet/90 text-white shadow-md shadow-violet/20 rounded-xl active:scale-[0.95] transition-all">
                   Ver Resultados
                 </Button>
               </div>
@@ -408,7 +531,7 @@ export function VentasJerarquicasView() {
               No hay productos en esta categoría con los filtros actuales.
             </div>
           ) : (
-            <div className="flex flex-col py-2">
+            <div className="flex flex-col pt-2 pb-20">
               {pageItems.map((sku, i) => (
                 <ProductListItem
                   key={`${s(sku["Código SKU"])}-${(safePage - 1) * ITEMS_PER_PAGE + i}`}
@@ -424,29 +547,13 @@ export function VentasJerarquicasView() {
           )}
         </div>
 
-        {/* Pie de paginación */}
-        {tabItems.length > 0 && (
-          <div className="flex flex-col gap-2 border-t border-white/5 bg-surface-2/50 backdrop-blur-md px-5 py-3 sm:flex-row sm:items-center sm:justify-between relative z-10">
-            <p className="text-xs text-muted">
-              Mostrando <span className="font-bold text-fg tabular-nums">{(safePage - 1) * ITEMS_PER_PAGE + 1}–{Math.min(safePage * ITEMS_PER_PAGE, tabItems.length)}</span> de <span className="font-bold text-fg tabular-nums">{num(tabItems.length)}</span> SKUs
-            </p>
-            <div className="flex items-center gap-1">
-              <button onClick={() => setCurrentPage(1)} disabled={safePage === 1} className="inline-flex h-7 w-7 items-center justify-center rounded-md border border-border-soft bg-surface-2 text-muted transition-colors hover:bg-surface-3 hover:text-fg disabled:opacity-40">
-                <ChevronsLeft className="h-3.5 w-3.5" />
-              </button>
-              <button onClick={() => setCurrentPage((p) => Math.max(1, p - 1))} disabled={safePage === 1} className="inline-flex h-7 items-center gap-1 rounded-md border border-border-soft bg-surface-2 px-2 text-xs font-medium text-muted transition-colors hover:bg-surface-3 hover:text-fg disabled:opacity-40">
-                <ChevronLeft className="h-3.5 w-3.5" /> Anterior
-              </button>
-              <span className="px-2 text-xs font-semibold tabular-nums text-fg">{safePage} / {totalPages}</span>
-              <button onClick={() => setCurrentPage((p) => Math.min(totalPages, p + 1))} disabled={safePage === totalPages} className="inline-flex h-7 items-center gap-1 rounded-md border border-border-soft bg-surface-2 px-2 text-xs font-medium text-muted transition-colors hover:bg-surface-3 hover:text-fg disabled:opacity-40">
-                Siguiente <ChevronRight className="h-3.5 w-3.5" />
-              </button>
-              <button onClick={() => setCurrentPage(totalPages)} disabled={safePage === totalPages} className="inline-flex h-7 w-7 items-center justify-center rounded-md border border-border-soft bg-surface-2 text-muted transition-colors hover:bg-surface-3 hover:text-fg disabled:opacity-40">
-                <ChevronsRight className="h-3.5 w-3.5" />
-              </button>
-            </div>
-          </div>
-        )}
+        {/* Pie de paginación flotante (estilo Compras) */}
+        <FloatingPagination
+          total={tabItems.length}
+          limit={ITEMS_PER_PAGE}
+          offset={(safePage - 1) * ITEMS_PER_PAGE}
+          onChange={(newOffset) => setCurrentPage(Math.floor(newOffset / ITEMS_PER_PAGE) + 1)}
+        />
       </div>
 
       <ProductDetailPanel

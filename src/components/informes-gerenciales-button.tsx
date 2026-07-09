@@ -13,7 +13,7 @@ import { Button } from "@/components/ui/button";
  * Cada Excel abre con una hoja 🎯 Resumen en lenguaje simple (KPIs + "cómo
  * leer este informe") pensada para gerencia, seguida de una pestaña por
  * departamento con semáforos y autofiltro. */
-const INFORMES_GERENCIALES: {
+export const INFORMES_GERENCIALES: {
   tipo: ReporteGerencialTipo;
   label: string;
   desc: string;

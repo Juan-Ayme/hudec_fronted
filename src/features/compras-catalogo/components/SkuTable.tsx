@@ -20,16 +20,16 @@ export function SkuTable({
 }) {
   return (
     <div className="overflow-x-auto">
-      <table className="w-full border-collapse text-left text-xs">
+      <table className="w-full border-separate text-left text-xs" style={{ borderSpacing: 0 }}>
         <thead>
-          <tr className="border-b border-border/40 text-[10px] font-bold uppercase tracking-wider text-faint">
-            <th className="py-2 pr-2">Producto</th>
-            <th className="py-2 px-2">Clasif.</th>
-            <th className="py-2 px-2 text-right">Stock</th>
-            <th className="py-2 px-2 text-right">Vendido 90d</th>
-            <th className="py-2 px-2 text-right">Sugerido</th>
-            <th className="py-2 px-2 text-right">Margen</th>
-            <th className="py-2 pl-2 text-center no-print">Acción</th>
+          <tr className="text-[10px] font-medium uppercase tracking-wider text-faint">
+            <th className="py-2.5 pl-3 pr-2 font-medium border-b border-border-soft/40">Producto</th>
+            <th className="py-2.5 px-2 font-medium border-b border-border-soft/40">Clasif.</th>
+            <th className="py-2.5 px-2 text-right font-medium border-b border-border-soft/40">Stock</th>
+            <th className="py-2.5 px-2 text-right font-medium border-b border-border-soft/40">Vendido 90d</th>
+            <th className="py-2.5 px-2 text-right font-medium border-b border-border-soft/40">Sugerido</th>
+            <th className="py-2.5 px-2 text-right font-medium border-b border-border-soft/40">Margen</th>
+            <th className="py-2.5 pl-2 pr-3 text-center font-medium no-print border-b border-border-soft/40">Acción</th>
           </tr>
         </thead>
         <tbody>
@@ -61,30 +61,30 @@ const SkuTableRow = React.memo(function SkuTableRow({
 }) {
   return (
     <tr
-      className="group border-b border-border/20 transition-colors hover:bg-surface-3/45"
+      className="group transition-colors duration-300"
     >
       <td
-        className="cursor-pointer py-2.5 pr-2 min-w-[220px] max-w-[340px]"
+        className="cursor-pointer py-3 pl-3 pr-2 min-w-[220px] max-w-[340px] border-b border-border-soft/40 group-hover:border-border-soft/0 group-hover:bg-surface-3/30 transition-all duration-300 first:rounded-l-2xl"
         onClick={() => onSelect(s)}
         title="Ver detalle"
       >
-        <p className="truncate font-semibold text-fg group-hover:text-primary">
+        <p className="truncate font-medium text-[13px] text-fg transition-colors group-hover:text-primary">
           {s.producto}
         </p>
-        <p className="font-mono text-[9px] text-faint">
+        <p className="font-mono text-[10px] text-muted/70 mt-0.5">
           {s.sku}
           {s.subcategoria ? ` · ${s.subcategoria}` : ""}
         </p>
         {s.similares && s.similares.items.length > 0 && (
           <span
             title="Ya tienes productos parecidos con stock en esta subcategoría — revisar antes de comprar"
-            className="mt-1 inline-flex items-center gap-1 rounded border border-warning/30 bg-warning/15 px-1.5 py-0.5 text-[9px] font-bold uppercase tracking-widest text-warning"
+            className="mt-1.5 inline-flex items-center gap-1 rounded-full border border-warning/20 bg-warning/10 px-2 py-0.5 text-[9px] font-semibold uppercase tracking-widest text-warning/90"
           >
             <AlertTriangle className="h-2.5 w-2.5" /> {similaresLabel(s.similares)}
           </span>
         )}
       </td>
-      <td className="py-2.5 px-2">
+      <td className="py-2.5 px-2 border-b border-border-soft/40 group-hover:border-border-soft/0 group-hover:bg-surface-3/30 transition-all duration-300">
         <ClassificationCell
           clasificacion={s.clasificacion}
           severidad={s.severidad}
@@ -93,7 +93,7 @@ const SkuTableRow = React.memo(function SkuTableRow({
           proy30d={s.proyeccion_30d}
         />
       </td>
-      <td className="py-2.5 px-2 text-right tabular-nums">
+      <td className="py-2.5 px-2 text-right tabular-nums border-b border-border-soft/40 group-hover:border-border-soft/0 group-hover:bg-surface-3/30 transition-all duration-300">
         <span
           className={cn(
             s.stock_disponible === 0 ? "font-bold text-danger" : "text-muted",
@@ -107,7 +107,7 @@ const SkuTableRow = React.memo(function SkuTableRow({
           </span>
         )}
       </td>
-      <td className="py-2.5 px-2 text-right tabular-nums text-muted">
+      <td className="py-2.5 px-2 text-right tabular-nums text-muted border-b border-border-soft/40 group-hover:border-border-soft/0 group-hover:bg-surface-3/30 transition-all duration-300">
         {num(s.unds_vend_90d)}
         {s.vendido_sku_soles > 0 && (
           <span className="block text-[10px] text-faint">
@@ -115,10 +115,10 @@ const SkuTableRow = React.memo(function SkuTableRow({
           </span>
         )}
       </td>
-      <td className="py-2.5 px-2 text-right tabular-nums font-semibold text-primary">
+      <td className="py-2.5 px-2 text-right tabular-nums font-semibold text-primary border-b border-border-soft/40 group-hover:border-border-soft/0 group-hover:bg-surface-3/30 transition-all duration-300">
         {s.cantidad_sugerida > 0 ? num(s.cantidad_sugerida) : "—"}
       </td>
-      <td className="py-2.5 px-2 text-right tabular-nums">
+      <td className="py-2.5 px-2 text-right tabular-nums border-b border-border-soft/40 group-hover:border-border-soft/0 group-hover:bg-surface-3/30 transition-all duration-300">
         {s.margen_pct !== null ? (
           <span
             className={cn(
@@ -136,28 +136,28 @@ const SkuTableRow = React.memo(function SkuTableRow({
           <span className="text-faint">—</span>
         )}
       </td>
-      <td className="py-2.5 pl-2 text-center no-print">
+      <td className="py-3 pl-2 pr-3 text-center no-print border-b border-border-soft/40 group-hover:border-border-soft/0 group-hover:bg-surface-3/30 transition-all duration-300 last:rounded-r-2xl">
         <div className="inline-flex items-center gap-1">
           <button
             onClick={() => onAction(s, "ordenar")}
-            className="rounded bg-primary/10 px-2 py-1 text-[10px] font-semibold text-primary hover:bg-primary/20"
+            className="rounded-full bg-primary/10 px-3 py-1.5 text-[11px] font-medium text-primary transition-all hover:bg-primary/20 active:scale-95"
             title={`Ordenar ${s.cantidad_sugerida} uni.`}
           >
             Ordenar
           </button>
           <button
             onClick={() => onAction(s, "posponer")}
-            className="rounded p-1 text-faint hover:bg-surface-2 hover:text-warning"
+            className="rounded-full p-1.5 text-faint transition-all hover:bg-surface-2 hover:text-warning active:scale-95"
             title="Posponer"
           >
-            <Clock className="h-3 w-3" />
+            <Clock className="h-3.5 w-3.5" />
           </button>
           <button
             onClick={() => onAction(s, "ignorar")}
-            className="rounded p-1 text-faint hover:bg-surface-2 hover:text-danger"
+            className="rounded-full p-1.5 text-faint transition-all hover:bg-surface-2 hover:text-danger active:scale-95"
             title="Ignorar"
           >
-            <X className="h-3 w-3" />
+            <X className="h-3.5 w-3.5" />
           </button>
         </div>
       </td>

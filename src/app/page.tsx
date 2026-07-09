@@ -25,6 +25,8 @@ const DonutChart = dynamic(() => import("@/components/charts/donut-chart").then(
 import { useSucursal } from "@/components/sucursal-context";
 import { MetricGauge } from "@/components/ui/metric-gauge";
 import type { TopProduct } from "@/lib/types";
+import { cn } from "@/lib/utils";
+import { PremiumLoaderOverlay, shmr } from "@/components/ui/premium-skeleton";
 
 export default function DashboardPage() {
   const [days, setDays] = useState(30);
@@ -104,10 +106,59 @@ export default function DashboardPage() {
     },
   ];
 
+  const isAnyLoading = kpis.isLoading || byDay.isLoading || byDept.isLoading || valuation.isLoading || top.isLoading || byOffice.isLoading;
+
+  if (isAnyLoading) {
+    return (
+      <div className="relative">
+        <div className="flex justify-end mb-6">
+          <div className={cn("h-10 w-48 rounded-lg border border-white/5", shmr)} />
+        </div>
+        <div className="grid grid-cols-1 gap-5 md:grid-cols-12 md:grid-rows-auto opacity-50 pointer-events-none">
+          <div className="md:col-span-3 flex flex-col gap-3">
+            <div className={cn("h-[104px] rounded-xl border border-white/5", shmr)} />
+            <div className={cn("h-[104px] rounded-xl border border-white/5", shmr)} />
+            <div className={cn("h-[104px] rounded-xl border border-white/5", shmr)} />
+          </div>
+          <div className="md:col-span-9">
+            <div className={cn("h-[340px] rounded-2xl border border-white/5", shmr)} />
+          </div>
+          <div className="md:col-span-7">
+            <div className={cn("h-[340px] rounded-2xl border border-white/5", shmr)} />
+          </div>
+          <div className="md:col-span-5">
+            <div className={cn("h-[340px] rounded-2xl border border-white/5", shmr)} />
+          </div>
+          <div className="md:col-span-7">
+            <div className={cn("h-[340px] rounded-2xl border border-white/5", shmr)} />
+          </div>
+          <div className="md:col-span-5 flex flex-col gap-5">
+            <div className={cn("h-[104px] rounded-xl border border-white/5", shmr)} />
+            <div className={cn("h-[216px] rounded-2xl border border-white/5", shmr)} />
+          </div>
+        </div>
+        <PremiumLoaderOverlay messages={[
+          "Analizando ventas del día...",
+          "Calculando ticket promedio...",
+          "Valorizando stock actual...",
+          "Consolidando métricas..."
+        ]} />
+      </div>
+    );
+  }
+
   return (
-    <div className="space-y-6">
-      <div className="flex justify-end mb-2">
-        <div className="shrink-0 relative z-10">
+    <div className="space-y-6 relative overflow-hidden">
+      {/* ── macOS-style ambient background orbs ── */}
+      <div className="pointer-events-none absolute inset-0 z-0 overflow-hidden">
+        <div className="absolute -top-40 left-1/4 h-[500px] w-[500px] rounded-full bg-primary/[0.07] blur-[120px] animate-[pulse_8s_ease-in-out_infinite]" />
+        <div className="absolute top-1/3 -right-20 h-[400px] w-[400px] rounded-full bg-accent/[0.06] blur-[120px] animate-[pulse_10s_ease-in-out_infinite_1s]" />
+        <div className="absolute bottom-0 left-10 h-[350px] w-[350px] rounded-full bg-violet/[0.05] blur-[120px] animate-[pulse_12s_ease-in-out_infinite_2s]" />
+        <div className="absolute top-2/3 left-1/2 h-[300px] w-[300px] rounded-full bg-success/[0.04] blur-[120px] animate-[pulse_9s_ease-in-out_infinite_3s]" />
+      </div>
+
+      <div className="flex justify-end mb-2 relative z-30">
+        <div className="shrink-0">
            <DateRangeSelect value={days} onChange={setDays} />
         </div>
       </div>
@@ -115,7 +166,7 @@ export default function DashboardPage() {
       {kpis.isError && <ErrorState error={kpis.error} className="mt-4" />}
 
       {/* Bento Grid Layout */}
-      <div className="grid grid-cols-1 gap-5 md:grid-cols-12 md:grid-rows-auto">
+      <div className="grid grid-cols-1 gap-5 md:grid-cols-12 md:grid-rows-auto relative z-10">
         
         {/* ROW 1: KPIs & Gauge */}
         <div className="md:col-span-3 flex flex-col gap-3">
@@ -148,7 +199,6 @@ export default function DashboardPage() {
         {/* Time Series Hero */}
         <div className="md:col-span-9">
           <Card className="h-full flex flex-col group overflow-hidden relative">
-            <div className="pointer-events-none absolute -left-10 top-10 h-40 w-40 rounded-full bg-primary/10 blur-3xl" />
             <CardHeader
               title={<span className="flex items-center gap-2"><TrendingUp className="h-5 w-5 text-primary" /> Evolución de Ingresos</span>}
               subtitle={`Flujo de ingresos en los últimos ${days} días`}
@@ -181,7 +231,6 @@ export default function DashboardPage() {
         {/* ROW 2: Departments & Donut */}
         <div className="md:col-span-7">
           <Card className="h-full flex flex-col group relative overflow-hidden">
-            <div className="pointer-events-none absolute -bottom-20 -right-10 h-48 w-48 rounded-full bg-accent/10 blur-3xl" />
             <CardHeader 
                title={<span className="flex items-center gap-2"><BarChart3 className="h-5 w-5 text-accent" /> Rendimiento Departamental</span>} 
                subtitle={`Ranking de ventas por departamento en ${days} días`} 
@@ -269,7 +318,6 @@ export default function DashboardPage() {
              sub={`${num(k?.productos_mapeados)} items mapeados (taxonomía)`}
            />
            <Card className="flex-1 overflow-hidden relative group">
-              <div className="pointer-events-none absolute -top-10 -left-10 h-32 w-32 rounded-full bg-primary/10 blur-3xl" />
               <CardHeader title={<span className="flex items-center gap-2"><Store className="h-5 w-5 text-primary" /> Desempeño Operativo de Sucursales</span>} subtitle={`Facturación comparativa en ${days} días`} />
               <CardBody className="space-y-4 pt-2 relative z-10">
                 {byOffice.isLoading ? (

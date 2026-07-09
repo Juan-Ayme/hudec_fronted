@@ -1,7 +1,7 @@
 import { cn } from "@/lib/utils";
 
 /**
- * Card primitive — superficie de contenido con borde sutil y sombra suave.
+ * Card primitive — superficie de cristal esmerilado (Glassmorphism / iOS).
  *
  * Variantes:
  *  - default     : Card estática (lo común).
@@ -19,10 +19,12 @@ export function Card({
   return (
     <div
       className={cn(
-        "rounded-xl border border-border-soft bg-surface shadow-card",
+        /* Glassmorphism base */
+        "rounded-2xl border border-white/[0.06] bg-white/[0.04] backdrop-blur-2xl",
+        "shadow-[0_8px_32px_-8px_rgba(0,0,0,0.5),inset_0_1px_0_rgba(255,255,255,0.06)]",
         "animate-[fade-in-up_var(--duration-base)_var(--ease-premium)_both]",
         variant === "interactive" &&
-          "cursor-pointer transition-[transform,box-shadow] duration-[var(--duration-base)] ease-[var(--ease-premium)] hover:-translate-y-px hover:shadow-card-hover",
+          "cursor-pointer transition-[transform,box-shadow] duration-[var(--duration-base)] ease-[var(--ease-premium)] hover:-translate-y-px hover:bg-white/[0.06] hover:shadow-[0_12px_40px_-8px_rgba(0,0,0,0.6),inset_0_1px_0_rgba(255,255,255,0.1)]",
         className,
       )}
       {...props}
@@ -49,7 +51,7 @@ export function CardHeader({
   return (
     <div
       className={cn(
-        "flex items-start justify-between gap-3 border-b border-border-soft px-5 py-4",
+        "flex items-start justify-between gap-3 border-b border-white/[0.04] px-5 py-4",
         className,
       )}
     >

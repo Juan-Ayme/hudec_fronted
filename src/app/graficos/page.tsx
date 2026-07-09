@@ -28,6 +28,8 @@ import { Card, CardHeader, CardBody } from "@/components/ui/card";
 import { ErrorState, EmptyState } from "@/components/ui/states";
 import { LineChartLoader, BarChartLoader, DonutChartLoader } from "@/components/ui/chart-loaders";
 import { useSucursal } from "@/components/sucursal-context";
+import { cn } from "@/lib/utils";
+import { PremiumLoaderOverlay, shmr } from "@/components/ui/premium-skeleton";
 
 // Dynamic imports for Recharts to avoid SSR issues
 const ComposedChart = dynamic(() => import("@/components/charts/composed-chart").then(mod => mod.ComposedChart), { ssr: false });
@@ -71,6 +73,50 @@ export default function GraficosPage() {
   });
 
   const anat = ticketAnatomy.data?.delta_pct;
+
+  const isAnyLoading = byDay.isLoading || byDept.isLoading || byCategory.isLoading || byOffice.isLoading || ticketAnatomy.isLoading || topProducts.isLoading;
+
+  if (isAnyLoading) {
+    return (
+      <div className="relative">
+        <div className="flex flex-wrap items-center justify-between gap-4 border-b border-border-soft pb-4 mb-6">
+          <div>
+            <h1 className="text-2xl font-bold tracking-tight text-fg">Analítica Visual</h1>
+            <p className="text-sm text-muted">Explora la evolución y distribución de tus ventas en detalle.</p>
+          </div>
+          <div className={cn("h-10 w-48 rounded-lg border border-white/5", shmr)} />
+        </div>
+
+        <div className="grid grid-cols-1 md:grid-cols-4 gap-4 mb-6 opacity-50 pointer-events-none">
+          {Array.from({ length: 4 }).map((_, i) => (
+            <div key={i} className={cn("h-[104px] rounded-xl border border-white/5", shmr)} />
+          ))}
+        </div>
+
+        <div className="grid grid-cols-1 gap-6 md:grid-cols-12 opacity-50 pointer-events-none">
+          <div className="md:col-span-12">
+            <div className={cn("h-[430px] rounded-2xl border border-white/5", shmr)} />
+          </div>
+          <div className="md:col-span-6">
+            <div className={cn("h-[380px] rounded-2xl border border-white/5", shmr)} />
+          </div>
+          <div className="md:col-span-6">
+            <div className={cn("h-[380px] rounded-2xl border border-white/5", shmr)} />
+          </div>
+          <div className="md:col-span-12">
+            <div className={cn("h-[480px] rounded-2xl border border-white/5", shmr)} />
+          </div>
+        </div>
+
+        <PremiumLoaderOverlay messages={[
+          "Construyendo analíticas visuales...",
+          "Cruzando datos por departamento...",
+          "Calculando anatomía del ticket...",
+          "Procesando ranking de categorías..."
+        ]} />
+      </div>
+    );
+  }
 
   return (
     <div className="space-y-6">
@@ -131,7 +177,7 @@ export default function GraficosPage() {
             <CardBody className="flex-1 relative z-10 pt-0 pb-6 min-h-[350px]">
               {byDay.isLoading ? <LineChartLoader /> : byDay.isError ? <ErrorState error={byDay.error} /> : (
                 <ComposedChart
-                  data={byDay.data ?? []}
+                  data={(byDay.data as any) ?? []}
                   xKey="dia"
                   barKey="ventas"
                   lineKey="ticket_promedio"
@@ -157,7 +203,7 @@ export default function GraficosPage() {
             <CardBody className="flex-1 flex items-center justify-center pt-0 min-h-[300px]">
               {byDept.isLoading ? <DonutChartLoader /> : byDept.isError ? <ErrorState error={byDept.error} /> : (
                 <DonutChart
-                  data={(byDept.data ?? []).map((d) => ({
+                  data={((byDept.data as any) ?? []).map((d: any) => ({
                     name: d.departamento,
                     value: d.ventas,
                   }))}
@@ -178,7 +224,7 @@ export default function GraficosPage() {
             <CardBody className="flex-1 pt-0 min-h-[300px]">
               {byOffice.isLoading ? <BarChartLoader /> : byOffice.isError ? <ErrorState error={byOffice.error} /> : (
                 <RadarChart
-                  data={byOffice.data ?? []}
+                  data={(byOffice.data as any) ?? []}
                   nameKey="sucursal"
                   dataKey="ventas"
                   valueFormatter={(v) => money(v)}
@@ -199,7 +245,7 @@ export default function GraficosPage() {
             <CardBody className="flex-1 pt-0 pb-6 min-h-[400px]">
               {byCategory.isLoading ? <BarChartLoader /> : byCategory.isError ? <ErrorState error={byCategory.error} /> : (
                 <CategoryBarChart
-                  data={(byCategory.data ?? []).sort((a, b) => b.ventas - a.ventas).slice(0, 15)}
+                  data={((byCategory.data as any) ?? []).sort((a: any, b: any) => b.ventas - a.ventas).slice(0, 15)}
                   categoryKey="categoria"
                   valueKey="ventas"
                   valueLabel="Ventas"
@@ -222,7 +268,7 @@ export default function GraficosPage() {
             <CardBody className="flex-1 pt-0 pb-6 min-h-[400px]">
               {topProducts.isLoading ? <BarChartLoader /> : topProducts.isError ? <ErrorState error={topProducts.error} /> : (
                 <ComposedChart
-                  data={(topProducts.data ?? []).map(p => ({
+                  data={((topProducts.data as any) ?? []).map((p: any) => ({
                     ...p,
                     productoCorto: p.producto.length > 20 ? p.producto.substring(0, 20) + "..." : p.producto
                   }))}
@@ -231,9 +277,9 @@ export default function GraficosPage() {
                   lineKey="unidades"
                   barLabel="Ingresos (S/)"
                   lineLabel="Unidades"
-                  xTickFormatter={(v) => v}
-                  barFormatter={(v) => moneyCompact(v)}
-                  lineFormatter={(v) => num(v)}
+                  xTickFormatter={(v: any) => String(v)}
+                  barFormatter={(v: any) => moneyCompact(Number(v))}
+                  lineFormatter={(v: any) => num(Number(v))}
                   height={400}
                 />
               )}

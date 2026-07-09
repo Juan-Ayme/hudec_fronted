@@ -213,12 +213,15 @@ export function DateRangeSelect({
       <button
         onClick={() => setOpen((o) => !o)}
         className={cn(
-          "inline-flex items-center gap-2 rounded-lg border border-border bg-surface-2",
-          "px-3 py-1.5 text-xs font-medium text-fg transition-colors hover:bg-surface-3",
-          open && "ring-2 ring-primary/40",
+          "inline-flex items-center gap-2 rounded-full border border-white/[0.08] bg-white/[0.06] backdrop-blur-xl",
+          "px-4 py-2 text-xs font-semibold text-fg/90",
+          "transition-all duration-300 ease-[cubic-bezier(0.25,1,0.5,1)]",
+          "hover:bg-white/[0.1] hover:shadow-[0_4px_16px_-4px_rgba(0,0,0,0.4)]",
+          "active:scale-[0.96]",
+          open && "ring-2 ring-primary/30 bg-white/[0.1]",
         )}
       >
-        <CalendarIcon className="h-3.5 w-3.5 text-muted" />
+        <CalendarIcon className="h-3.5 w-3.5 text-primary/80" />
         {buttonLabel}
       </button>
 
@@ -226,12 +229,13 @@ export function DateRangeSelect({
       {open && (
         <div
           className={cn(
-            "absolute right-0 top-full z-50 mt-2 flex overflow-hidden rounded-xl",
-            "border border-border bg-surface shadow-2xl shadow-black/50 animate-in",
+            "absolute right-0 top-full z-50 mt-2 flex overflow-hidden rounded-2xl",
+            "border border-white/[0.08] bg-surface/70 backdrop-blur-[40px]",
+            "shadow-[0_24px_80px_-12px_rgba(0,0,0,0.7),inset_0_1px_0_rgba(255,255,255,0.06)] animate-in",
           )}
         >
           {/* Left: presets */}
-          <div className="flex w-40 flex-col border-r border-border/60 bg-surface-2/40 py-2">
+          <div className="flex w-40 flex-col border-r border-white/[0.05] bg-white/[0.03] py-2">
             {PRESETS.map((p) => {
               const pDays = daysBetween(p.getFrom(), t);
               const active = pDays === draft;
@@ -240,10 +244,10 @@ export function DateRangeSelect({
                   key={p.label}
                   onClick={() => handlePreset(p)}
                   className={cn(
-                    "px-3 py-1.5 text-left text-xs transition-colors",
+                    "px-3 py-1.5 text-left text-xs transition-all duration-200 active:scale-[0.97]",
                     active
-                      ? "bg-primary/15 font-semibold text-primary"
-                      : "text-slate-300 hover:bg-surface-3/60 hover:text-fg",
+                      ? "bg-primary/15 font-semibold text-primary backdrop-blur-md"
+                      : "text-white/60 hover:bg-white/[0.06] hover:text-fg",
                   )}
                 >
                   {p.label}

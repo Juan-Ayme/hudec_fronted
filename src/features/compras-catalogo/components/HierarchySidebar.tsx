@@ -18,11 +18,11 @@ export function RootNode({
     <button
       onClick={onClick}
       className={cn(
-        "group flex w-full items-center gap-2 rounded-md px-2.5 py-2 text-left",
-        "transition-colors duration-[var(--duration-fast)] ease-[var(--ease-premium)]",
+        "group flex w-full items-center gap-2 rounded-xl px-3 py-2.5 text-left",
+        "transition-all duration-300 ease-[cubic-bezier(0.23,1,0.32,1)] active:scale-[0.98]",
         active
-          ? "bg-primary/15 text-primary"
-          : "text-muted hover:bg-surface-2 hover:text-fg",
+          ? "bg-primary/15 text-primary shadow-[inset_0_1px_0_rgba(255,255,255,0.05)]"
+          : "text-muted hover:bg-surface-2/60 hover:text-fg",
       )}
     >
       <Home className={cn("h-3.5 w-3.5", active ? "text-primary" : "text-faint group-hover:text-fg")} />
@@ -96,8 +96,8 @@ const DeptRow = React.memo(function DeptRow({
           )
         }
         className={cn(
-          "group block w-full rounded-md px-2.5 py-2 text-left transition-colors",
-          isOpen ? "bg-primary/10" : "hover:bg-surface-2",
+          "group block w-full rounded-xl px-3 py-2.5 text-left transition-all duration-300 ease-[cubic-bezier(0.23,1,0.32,1)] active:scale-[0.98]",
+          isOpen ? "bg-primary/10 shadow-[inset_0_1px_0_rgba(255,255,255,0.05)]" : "hover:bg-surface-2/60",
         )}
       >
         <div className="flex items-center gap-2 text-xs">
@@ -121,37 +121,44 @@ const DeptRow = React.memo(function DeptRow({
           >
             {node.name}
           </span>
-          <span className="shrink-0 text-faint tabular-nums">{num(node.skus)}</span>
+          <span className="shrink-0 text-faint tabular-nums text-[11px] font-medium">{num(node.skus)}</span>
         </div>
-        <div className="mt-1 ml-5 flex items-center gap-2">
-          <div className="h-1 flex-1 overflow-hidden rounded-full bg-surface-3">
+        <div className="mt-2 ml-5 flex items-center gap-2.5">
+          <div className="h-1.5 flex-1 overflow-hidden rounded-full bg-surface-3/50 shadow-inner">
             <div
               className={cn(
-                "h-full rounded-full transition-all",
+                "h-full rounded-full transition-all duration-1000 ease-out",
                 DEPT_COLORS[colorIdx % DEPT_COLORS.length],
               )}
-              style={{ width: `${widthPct}%` }}
+              style={{ width: `${widthPct}%`, boxShadow: 'inset 0 1px 0 rgba(255,255,255,0.2)' }}
             />
           </div>
-          <span className="shrink-0 text-[10px] tabular-nums text-muted">
+          <span className="shrink-0 text-[10px] tabular-nums text-muted font-medium tracking-wide">
             {money(node.ventaSoles)}
           </span>
         </div>
       </button>
 
-      {isOpen && node.children.length > 0 && (
-        <ul className="ml-3 mt-0.5 space-y-0.5 border-l border-border-soft pl-2 animate-[fade-in_var(--duration-fast)_var(--ease-premium)_both]">
-          {node.children.map((cat) => (
-            <CatRow
-              key={cat.name}
-              dept={node.name}
-              node={cat}
-              selection={selection}
-              onSelect={onSelect}
-            />
-          ))}
-        </ul>
-      )}
+      <div
+        className={cn(
+          "grid transition-all duration-300 ease-[cubic-bezier(0.23,1,0.32,1)]",
+          isOpen && node.children.length > 0 ? "grid-rows-[1fr] opacity-100 mt-1" : "grid-rows-[0fr] opacity-0 mt-0"
+        )}
+      >
+        <div className="overflow-hidden">
+          <ul className="ml-4 space-y-1 border-l-2 border-border-soft/40 pl-2 pb-1">
+            {node.children.map((cat) => (
+              <CatRow
+                key={cat.name}
+                dept={node.name}
+                node={cat}
+                selection={selection}
+                onSelect={onSelect}
+              />
+            ))}
+          </ul>
+        </div>
+      </div>
     </li>
   );
 });
@@ -180,8 +187,8 @@ const CatRow = React.memo(function CatRow({
           )
         }
         className={cn(
-          "group flex w-full items-center gap-2 rounded-md px-2 py-1.5 text-left transition-colors",
-          isActive ? "bg-primary/15 text-primary" : "hover:bg-surface-2 text-muted",
+          "group flex w-full items-center gap-2.5 rounded-lg px-2.5 py-2 text-left transition-all duration-300 ease-[cubic-bezier(0.23,1,0.32,1)] active:scale-[0.98]",
+          isActive ? "bg-primary/15 text-primary shadow-[inset_0_1px_0_rgba(255,255,255,0.05)]" : "hover:bg-surface-2/60 text-muted",
         )}
       >
         <ChevronRight
@@ -208,20 +215,27 @@ const CatRow = React.memo(function CatRow({
         </span>
       </button>
 
-      {isOpen && node.children.length > 0 && (
-        <ul className="ml-3 mt-0.5 space-y-0.5 border-l border-border-soft pl-2 animate-[fade-in_var(--duration-fast)_var(--ease-premium)_both]">
-          {node.children.map((sub) => (
-            <SubcatRow
-              key={sub.name}
-              dept={dept}
-              cat={node.name}
-              node={sub}
-              selection={selection}
-              onSelect={onSelect}
-            />
-          ))}
-        </ul>
-      )}
+      <div
+        className={cn(
+          "grid transition-all duration-300 ease-[cubic-bezier(0.23,1,0.32,1)]",
+          isOpen && node.children.length > 0 ? "grid-rows-[1fr] opacity-100 mt-1" : "grid-rows-[0fr] opacity-0 mt-0"
+        )}
+      >
+        <div className="overflow-hidden">
+          <ul className="ml-5 space-y-1 border-l-2 border-border-soft/40 pl-2 pb-1">
+            {node.children.map((sub) => (
+              <SubcatRow
+                key={sub.name}
+                dept={dept}
+                cat={node.name}
+                node={sub}
+                selection={selection}
+                onSelect={onSelect}
+              />
+            ))}
+          </ul>
+        </div>
+      </div>
     </li>
   );
 });

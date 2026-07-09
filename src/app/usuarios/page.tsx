@@ -11,6 +11,8 @@ import { Card, CardBody } from "@/components/ui/card";
 import { Input } from "@/components/ui/input";
 import { Dialog } from "@/components/ui/dialog";
 import { LoadingState, ErrorState } from "@/components/ui/states";
+import { cn } from "@/lib/utils";
+import { PremiumLoaderOverlay, shmr } from "@/components/ui/premium-skeleton";
 
 export default function UsuariosPage() {
   // Solo administradores pueden acceder a esta página
@@ -68,7 +70,18 @@ export default function UsuariosPage() {
       />
 
       {query.isLoading ? (
-        <LoadingState label="Cargando usuarios..." />
+        <div className="relative">
+          <div className="opacity-50 pointer-events-none space-y-4">
+             {Array.from({ length: 5 }).map((_, i) => (
+                <div key={i} className={cn("h-16 rounded-xl border border-white/5", shmr)} />
+             ))}
+          </div>
+          <PremiumLoaderOverlay messages={[
+            "Obteniendo lista de usuarios...",
+            "Verificando permisos y roles...",
+            "Construyendo tabla de accesos..."
+          ]} />
+        </div>
       ) : (
         <Card>
           <CardBody>

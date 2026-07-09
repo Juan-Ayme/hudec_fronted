@@ -2,18 +2,18 @@ import { cn } from "@/lib/utils";
 import type { LucideIcon } from "lucide-react";
 import type { BadgeTone } from "./badge";
 
-const bgTones: Record<BadgeTone, string> = {
-  neutral: "from-surface-2/20 to-transparent",
-  primary: "from-primary/10 to-transparent",
-  success: "from-success/10 to-transparent",
-  warning: "from-warning/10 to-transparent",
-  danger: "from-danger/10 to-transparent",
-  info: "from-info/10 to-transparent",
-  violet: "from-violet/10 to-transparent",
+const glowColors: Record<BadgeTone, string> = {
+  neutral: "rgba(148,163,184,0.35)",
+  primary: "rgba(59,130,246,0.35)",
+  success: "rgba(16,185,129,0.35)",
+  warning: "rgba(245,158,11,0.35)",
+  danger: "rgba(239,68,68,0.35)",
+  info: "rgba(14,165,233,0.35)",
+  violet: "rgba(139,92,246,0.35)",
 };
 
 /**
- * KpiStat — Premium Data Card
+ * KpiStat — Frosted-glass data card (iOS / macOS style).
  */
 export function KpiStat({
   label,
@@ -35,45 +35,41 @@ export function KpiStat({
   return (
     <div
       className={cn(
-        "group relative overflow-hidden rounded-xl border border-border-soft bg-surface shadow-card",
+        /* Glassmorphism shell */
+        "group relative overflow-hidden rounded-2xl border border-white/[0.06] bg-white/[0.04] backdrop-blur-2xl",
+        "shadow-[0_8px_32px_-8px_rgba(0,0,0,0.5),inset_0_1px_0_rgba(255,255,255,0.06)]",
         "animate-[fade-in-up_var(--duration-base)_var(--ease-premium)_both]",
-        "transition-all duration-500 hover:-translate-y-1 hover:shadow-card-hover",
+        "transition-all duration-500 hover:-translate-y-1 hover:bg-white/[0.07]",
+        "hover:shadow-[0_12px_40px_-8px_rgba(0,0,0,0.6),inset_0_1px_0_rgba(255,255,255,0.1)]",
       )}
     >
-      {/* 1. Dynamic Background Gradient */}
-      <div 
-        className={cn(
-          "absolute inset-0 bg-gradient-to-br opacity-60 transition-opacity duration-500 group-hover:opacity-100",
-          bgTones[tone] || "from-surface-2/20 to-transparent"
-        )} 
-      />
-
-      {/* 2. Premium Texture (Subtle Dot Pattern) */}
-      <div className="absolute inset-0 opacity-[0.04] mix-blend-overlay bg-[radial-gradient(#fff_1px,transparent_1px)] [background-size:16px_16px]" />
-
-      {/* 3. Outer Glow Orb (Top Right) */}
+      {/* Glow orb (color diffusion) */}
       <div
-        className="pointer-events-none absolute -right-10 -top-10 h-40 w-40 rounded-full opacity-20 blur-3xl transition-all duration-700 group-hover:opacity-40 group-hover:scale-125"
+        className="pointer-events-none absolute -right-8 -top-8 h-32 w-32 rounded-full opacity-30 blur-3xl transition-all duration-700 group-hover:opacity-50 group-hover:scale-125"
         style={{ backgroundColor: themeColor }}
       />
 
-      {/* 4. Top Border Highlight (Glassmorphism inset) */}
-      <div className="absolute inset-x-0 top-0 h-px bg-gradient-to-r from-transparent via-white/10 to-transparent opacity-50" />
+      {/* Subtle dot texture */}
+      <div className="absolute inset-0 opacity-[0.03] mix-blend-overlay bg-[radial-gradient(#fff_1px,transparent_1px)] [background-size:16px_16px]" />
+
+      {/* Top edge highlight */}
+      <div className="absolute inset-x-0 top-0 h-px bg-gradient-to-r from-transparent via-white/10 to-transparent" />
 
       <div className="relative z-10 p-5 flex flex-col justify-between gap-4">
         <div className="flex items-start justify-between gap-4">
-          <p className="text-xs font-bold uppercase tracking-[0.12em] text-muted drop-shadow-sm mt-1">
+          <p className="text-xs font-bold uppercase tracking-[0.12em] text-white/50 mt-1">
             {label}
           </p>
           
-          {/* Glass Icon Container */}
+          {/* Glass icon pill */}
           {Icon && (
             <div
               className={cn(
-                "flex h-10 w-10 shrink-0 items-center justify-center rounded-lg border border-white/10 bg-white/5 backdrop-blur-md",
-                "transition-all duration-500 group-hover:scale-110 group-hover:-rotate-3 shadow-lg"
+                "flex h-10 w-10 shrink-0 items-center justify-center rounded-xl",
+                "border border-white/[0.08] bg-white/[0.06] backdrop-blur-md",
+                "transition-all duration-500 group-hover:scale-110 group-hover:-rotate-3",
               )}
-              style={{ boxShadow: `0 8px 32px -8px ${themeColor}` }}
+              style={{ boxShadow: `0 8px 24px -6px ${glowColors[tone] || glowColors.primary}` }}
             >
               <Icon 
                 className="h-5 w-5 drop-shadow-lg transition-colors" 
@@ -86,7 +82,7 @@ export function KpiStat({
 
         <div>
           {loading ? (
-            <div className="mt-1 h-8 w-32 animate-pulse rounded-md bg-surface-3/50" />
+            <div className="mt-1 h-8 w-32 animate-pulse rounded-md bg-white/5" />
           ) : (
             <p
               className={cn(
@@ -100,9 +96,9 @@ export function KpiStat({
           
           <div className="mt-1.5 min-h-[20px]">
             {loading ? (
-              <div className="h-4 w-24 animate-pulse rounded bg-surface-3/30" />
+              <div className="h-4 w-24 animate-pulse rounded bg-white/5" />
             ) : sub ? (
-              <p className="text-xs font-medium text-slate-400/90 flex items-center gap-1.5">
+              <p className="text-xs font-medium text-white/40 flex items-center gap-1.5">
                 {sub}
               </p>
             ) : null}

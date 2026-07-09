@@ -21,9 +21,9 @@ import {
 
 interface Props<T> {
   data: T[];
-  xKey: keyof T;
-  barKey: keyof T;
-  lineKey: keyof T;
+  xKey: string;
+  barKey: string;
+  lineKey: string;
   barLabel?: string;
   lineLabel?: string;
   xTickFormatter?: (val: unknown) => string;

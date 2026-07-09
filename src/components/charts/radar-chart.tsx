@@ -13,8 +13,8 @@ import { useMounted, CHART_COLORS, ChartTooltip } from "./common";
 
 interface Props<T> {
   data: T[];
-  nameKey: keyof T;
-  dataKey: keyof T;
+  nameKey: string;
+  dataKey: string;
   valueFormatter?: (val: unknown) => string;
   height?: number | string;
 }

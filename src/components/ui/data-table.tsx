@@ -1,5 +1,6 @@
 import { cn } from "@/lib/utils";
 import { LoadingState, ErrorState, EmptyState } from "./states";
+import { ChevronLeft, ChevronRight, ChevronsLeft, ChevronsRight } from "lucide-react";
 
 export interface Column<T> {
   key: string;
@@ -125,37 +126,60 @@ export function Pagination({
   const canNext = offset + limit < total;
 
   return (
-    <div className="flex items-center justify-between gap-3 px-1 py-2 text-caption text-muted">
-      <span className="tabular-nums">
-        {from.toLocaleString("es-PE")}–{to.toLocaleString("es-PE")} de{" "}
-        <span className="font-semibold text-fg">{total.toLocaleString("es-PE")}</span>
-      </span>
-      <div className="flex gap-1.5">
+    <div className="flex items-center gap-0.5 px-0.5">
+        <button
+          disabled={!canPrev}
+          onClick={() => onChange(0)}
+          className={cn(
+            "p-1.5 rounded-full text-muted hover:text-fg hover:bg-white/10 active:scale-[0.97] transition-all duration-300 ease-out",
+            "disabled:opacity-40 disabled:cursor-not-allowed disabled:hover:bg-transparent disabled:active:scale-100"
+          )}
+        >
+          <ChevronsLeft className="h-4 w-4" />
+        </button>
         <button
           disabled={!canPrev}
           onClick={() => onChange(Math.max(0, offset - limit))}
           className={cn(
-            "rounded-md border border-border-soft bg-surface px-2.5 py-1",
-            "transition-[background,box-shadow,color] duration-[var(--duration-fast)] ease-[var(--ease-premium)]",
-            "hover:bg-surface-3 hover:text-fg",
-            "disabled:opacity-40 disabled:cursor-not-allowed disabled:hover:bg-surface",
+            "flex items-center gap-1 px-2.5 py-1 rounded-full text-muted text-sm font-medium hover:text-fg hover:bg-white/10 active:scale-[0.97] transition-all duration-300 ease-out",
+            "disabled:opacity-40 disabled:cursor-not-allowed disabled:hover:bg-transparent disabled:active:scale-100"
           )}
         >
+          <ChevronLeft className="h-4 w-4" />
           Anterior
         </button>
+        
+        <div className="flex items-center mx-0.5">
+          <div className="w-px h-3.5 bg-white/10" />
+          <div className="px-2.5 flex items-center gap-1">
+            <span className="text-sm font-semibold text-fg">{Math.floor(offset / limit) + 1}</span>
+            <span className="text-xs text-faint">de</span>
+            <span className="text-sm font-medium text-muted">{Math.ceil(total / limit) || 1}</span>
+          </div>
+          <div className="w-px h-3.5 bg-white/10" />
+        </div>
+
         <button
           disabled={!canNext}
           onClick={() => onChange(offset + limit)}
           className={cn(
-            "rounded-md border border-border-soft bg-surface px-2.5 py-1",
-            "transition-[background,box-shadow,color] duration-[var(--duration-fast)] ease-[var(--ease-premium)]",
-            "hover:bg-surface-3 hover:text-fg",
-            "disabled:opacity-40 disabled:cursor-not-allowed disabled:hover:bg-surface",
+            "flex items-center gap-1 px-2.5 py-1 rounded-full text-muted text-sm font-medium hover:text-fg hover:bg-white/10 active:scale-[0.97] transition-all duration-300 ease-out",
+            "disabled:opacity-40 disabled:cursor-not-allowed disabled:hover:bg-transparent disabled:active:scale-100"
           )}
         >
           Siguiente
+          <ChevronRight className="h-4 w-4" />
         </button>
-      </div>
+        <button
+          disabled={!canNext}
+          onClick={() => onChange(Math.max(0, Math.floor((total - 1) / limit) * limit))}
+          className={cn(
+            "p-1.5 rounded-full text-muted hover:text-fg hover:bg-white/10 active:scale-[0.97] transition-all duration-300 ease-out",
+            "disabled:opacity-40 disabled:cursor-not-allowed disabled:hover:bg-transparent disabled:active:scale-100"
+          )}
+        >
+          <ChevronsRight className="h-4 w-4" />
+        </button>
     </div>
   );
 }

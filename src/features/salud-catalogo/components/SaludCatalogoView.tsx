@@ -3,6 +3,8 @@
 import { useRouter } from "next/navigation";
 import { Sparkles } from "lucide-react";
 import { LoadingState, ErrorState } from "@/components/ui/states";
+import { cn } from "@/lib/utils";
+import { PremiumLoaderOverlay, shmr } from "@/components/ui/premium-skeleton";
 import {
   CoberturaBanner,
   EstacionalesInfo,
@@ -26,8 +28,29 @@ export function SaludCatalogoView() {
   const { q, preview, bootstrap } = useCatalogHealth();
 
   if (q.isError) return <ErrorState error={q.error} />;
-  if (q.isLoading || !q.data)
-    return <LoadingState label="Analizando salud del catálogo…" />;
+  if (q.isLoading || !q.data) {
+    return (
+      <div className="relative">
+        <div className={cn("h-[64px] w-full rounded-xl mb-6 border border-white/5", shmr)} />
+        <div className="flex flex-wrap items-center justify-between gap-3 mb-6">
+          <div className={cn("h-8 w-64 rounded-lg border border-white/5", shmr)} />
+          <div className={cn("h-8 w-32 rounded-lg border border-white/5", shmr)} />
+        </div>
+        <div className={cn("h-[128px] w-full rounded-2xl mb-6 border border-white/5", shmr)} />
+        <div className="grid gap-5 xl:grid-cols-2 opacity-50 pointer-events-none mb-6">
+          <div className={cn("h-[400px] rounded-2xl border border-white/5", shmr)} />
+          <div className={cn("h-[400px] rounded-2xl border border-white/5", shmr)} />
+        </div>
+        <div className={cn("h-[250px] w-full rounded-2xl border border-white/5", shmr)} />
+        <PremiumLoaderOverlay messages={[
+          "Diagnosticando catálogo...",
+          "Evaluando calidad de datos...",
+          "Calculando cobertura de costos...",
+          "Buscando anomalías de stock..."
+        ]} />
+      </div>
+    );
+  }
 
   const c = q.data;
 
