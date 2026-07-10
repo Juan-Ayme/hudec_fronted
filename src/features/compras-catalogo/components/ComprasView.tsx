@@ -23,7 +23,7 @@ import { SkuTable } from "./SkuTable";
 import { SkuDetailDrawer } from "./SkuDetailDrawer";
 import { TreeLoader, ListLoader, TableLoader } from "@/components/ui/chart-loaders";
 import { comprasCatalogoExcelUrl, downloadExcelFile, reporteGerencialExcelUrl } from "@/lib/api";
-import { INFORMES_GERENCIALES } from "@/components/informes-gerenciales-button";
+import { INFORMES_GERENCIALES } from "../constants";
 
 function FilterChip({
   label,
