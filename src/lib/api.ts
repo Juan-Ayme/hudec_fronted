@@ -893,6 +893,24 @@ export const exportTaxonomy = (signal?: AbortSignal) =>
     signal,
   });
 
+export interface WipeTaxonomyStats {
+  departments_deleted: number;
+  categories_deleted: number;
+  subcategories_deleted: number;
+  category_targets_deleted: number;
+  products_desclassified: number;
+  product_types_unmapped: number;
+}
+
+export const wipeTaxonomy = () =>
+  request<{
+    ok: boolean;
+    operation: string;
+    timestamp: string;
+    stats: WipeTaxonomyStats;
+    report: { rows_affected: number; scope: string; warnings: string[] };
+  }>("/taxonomy/all", { method: "DELETE", query: { confirm: "LIMPIAR" } });
+
 export const bootstrapTaxonomy = (taxonomy: TaxonomyDict) =>
   request<{
     ok: boolean;
