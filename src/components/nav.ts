@@ -9,12 +9,14 @@ import {
   Activity,
   CalendarClock,
   Gauge,
+  PackageSearch,
   Settings,
   ShoppingCart,
   History,
   Users,
   type LucideIcon,
 } from "lucide-react";
+import type { UserRole } from "@/lib/api";
 
 export interface NavItem {
   href: string;
@@ -36,6 +38,10 @@ export const NAV_GROUPS: NavGroup[] = [
       // Reactivar cuando se creen las páginas correspondientes.
       // { href: "/stock", label: "Stock", icon: Boxes },
       // { href: "/ventas", label: "Ventas", icon: Receipt },
+      // Fusión de Análisis de Ventas + Gestión de Compras (árbol + pestañas).
+      // Convivencia temporal: las dos páginas viejas siguen abajo hasta que
+      // gerencia valide la nueva; luego se retiran (ver plan centro-catalogo).
+      { href: "/centro-catalogo", label: "Centro de Catálogo", icon: PackageSearch },
       { href: "/ventas-jerarquicas", label: "Análisis de Ventas", icon: LayoutGrid },
       // { href: "/matrices", label: "Matrices KAWII", icon: Table2 },
     ],
@@ -76,3 +82,16 @@ export const NAV_GROUPS: NavGroup[] = [
 ];
 
 export const ALL_NAV_ITEMS: NavItem[] = NAV_GROUPS.flatMap((g) => g.items);
+
+/** Rutas que ve un `viewer` (encargado de tienda). El resto queda oculto. */
+const VIEWER_HREFS = new Set<string>(["/centro-catalogo", "/compras-catalogo", "/pulso"]);
+
+/** Grupos de navegación visibles según el rol en la empresa activa.
+ *  viewer → solo las vistas operativas de su tienda; admin/operador → todo. */
+export function navGroupsForRole(role: UserRole | null): NavGroup[] {
+  if (role !== "viewer") return NAV_GROUPS;
+  return NAV_GROUPS.map((g) => ({
+    ...g,
+    items: g.items.filter((i) => VIEWER_HREFS.has(i.href)),
+  })).filter((g) => g.items.length > 0);
+}

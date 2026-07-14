@@ -60,6 +60,21 @@ export function buildTree(skus: ComprasCatalogoSku[]): TreeNode[] {
   return tree.sort((a, b) => b.ventaSoles - a.ventaSoles);
 }
 
+/** Predicado de búsqueda sobre SKUs de compras: código, producto o categoría. */
+export function comprasSearchFilter(
+  skus: ComprasCatalogoSku[],
+  search: string,
+): ComprasCatalogoSku[] {
+  const q = search.trim().toLowerCase();
+  if (!q) return skus;
+  return skus.filter(
+    (sku) =>
+      sku.sku.toLowerCase().includes(q) ||
+      sku.producto.toLowerCase().includes(q) ||
+      (sku.categoria ?? "").toLowerCase().includes(q),
+  );
+}
+
 export function scopeTitle(sel: Selection): string {
   if (sel.subcat) return sel.subcat;
   if (sel.cat) return sel.cat;

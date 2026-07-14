@@ -360,6 +360,16 @@ export interface Company {
   name: string;
   slug: string;
   role: UserRole;
+  /** Sucursales a las que el usuario está limitado en esta empresa.
+   *  [] = sin restricción (ve todas). Acota el selector de sucursal. */
+  allowed_office_ids: number[];
+}
+
+/** Sucursal de la empresa activa (para asignar acceso al crear/editar usuarios). */
+export interface CompanyOffice {
+  id: number;
+  name: string;
+  is_active: boolean;
 }
 
 /** El usuario autenticado. NO lleva role — el role es por empresa (ver Company). */
@@ -382,6 +392,8 @@ export interface AuthUserDetailed {
   is_active: boolean;
   created_at: string;
   last_login_at: string | null;
+  /** Sucursales asignadas en esta empresa ([] = todas). */
+  office_ids: number[];
 }
 
 export const login = (username: string, password: string) =>
@@ -399,10 +411,16 @@ export const getMe = (signal?: AbortSignal) =>
 export const listUsers = (signal?: AbortSignal) =>
   request<{ total: number; users: AuthUserDetailed[] }>("/auth/users", { signal });
 
+/** Sucursales de la empresa activa (solo admin). Puebla el selector de acceso. */
+export const getOffices = (signal?: AbortSignal) =>
+  request<{ total: number; offices: CompanyOffice[] }>("/auth/offices", { signal });
+
 export const createUser = (body: {
   username: string;
   password: string;
   role: UserRole;
+  /** Sucursales permitidas. Omitir/[] = acceso a todas. */
+  office_ids?: number[];
 }) =>
   request<{
     ok: boolean;
@@ -414,7 +432,7 @@ export const createUser = (body: {
 
 export const updateUser = (
   id: number,
-  body: { role?: UserRole; is_active?: boolean; password?: string },
+  body: { role?: UserRole; is_active?: boolean; password?: string; office_ids?: number[] },
 ) =>
   request<{ ok: boolean; id: number; company_id: number }>(`/auth/users/${id}`, {
     method: "PATCH",
@@ -563,6 +581,24 @@ export const getSkuHistory = (
     signal,
   });
 
+/** Precio de venta (lista de precios BSale) + costo por sucursal + margen. */
+export interface PrecioCostoSucursal {
+  sucursal: string;
+  office_id: number;
+  precio_venta: number | null;
+  precio_con_impuestos: number | null;
+  costo: number | null;
+  costo_origen: "OFICINA" | "GLOBAL";
+  margen: number | null;
+  margen_pct: number | null;
+}
+
+export const getPrecioCostoPorSucursal = (sku: string, signal?: AbortSignal) =>
+  request<PrecioCostoSucursal[]>(
+    `/analytics/precio-costo/${encodeURIComponent(sku)}`,
+    { signal },
+  );
+
 /** URL para descargar el Informe Diario (mes en curso, 3 pestañas). */
 export function dailyReportExcelUrl(
   params: { office_id?: number | null } = {},
@@ -613,6 +649,7 @@ export const getComprasCatalogo = (
 // (Ordenar / Comprar similar / Posponer / Ignorar). Cada decisión se apila
 // al historial; la "vigente" es la más reciente por (SKU, sucursal).
 export type PurchaseDecisionKind =
+  | "solicitado"
   | "ordenar"
   | "comprar_similar"
   | "posponer"
@@ -627,6 +664,13 @@ export interface PurchaseDecision {
   notes: string | null;
   classification_snapshot: Record<string, unknown> | null;
   created_at: string;
+  // Quién registró la decisión (para "Solicitado por Deisy"). null en filas
+  // previas a la migración 2026-07-11.
+  actor_user_id: number | null;
+  actor_username: string | null;
+  // display_code del SKU, presente en la lista de decisiones vigentes para
+  // cruzar con la tabla de compras. undefined en respuestas por-SKU.
+  sku?: string | null;
 }
 
 export interface PurchaseDecisionHistory {
@@ -660,6 +704,25 @@ export const getPurchaseDecisionsBySku = (
     `/purchases/decisions/by-sku/${encodeURIComponent(sku)}`,
     { query: { office_id: office_id ?? undefined }, signal },
   );
+
+export interface ActiveDecisionsResponse {
+  total: number;
+  decisions: PurchaseDecision[];
+}
+
+/** Decisión VIGENTE (más reciente) por SKU+sucursal. Con `decision` filtra a
+ *  un tipo — ej. `"solicitado"` para la bandeja de pendientes del admin. */
+export const listPurchaseDecisions = (
+  params: { office_id?: number | null; decision?: PurchaseDecisionKind } = {},
+  signal?: AbortSignal,
+) =>
+  request<ActiveDecisionsResponse>("/purchases/decisions", {
+    query: {
+      office_id: params.office_id ?? undefined,
+      decision: params.decision ?? undefined,
+    },
+    signal,
+  });
 
 /** Rotación histórica — productos que vendieron en una ventana arbitraria.
  *  `from`/`to` en formato "YYYY-MM-DD" (inclusivos). Alimenta /rotacion-historica. */

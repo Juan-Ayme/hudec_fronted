@@ -1,20 +1,39 @@
 "use client";
 
 import { useState, useMemo } from "react";
-import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
+import { useMutation, useQueryClient } from "@tanstack/react-query";
 import { toast } from "@/lib/toast";
 import {
-  getComprasCatalogo,
   createPurchaseDecision,
-  listPurchaseDecisions,
   type PurchaseDecisionKind,
   type PurchaseDecision,
 } from "@/lib/api";
-import type { ComprasCatalogoSku } from "@/lib/types";
-import { Selection, TreeNode, SeverityFilter, TendenciaFilter, StockFilter, ROOT_SELECTION } from "../types";
-import { buildTree } from "../utils";
+import type { ComprasCatalogoSku, Selection } from "@/lib/types";
+import { SeverityFilter, TendenciaFilter, StockFilter } from "../types";
+import {
+  normDept,
+  normCat,
+  normSubcat,
+} from "@/features/centro-catalogo/utils/buildUnifiedTree";
 
-export function useComprasCatalogo(officeId: number | null) {
+/**
+ * Estado del panel Decisiones de Compra (lado derecho de /centro-catalogo).
+ * Versión recortada de useComprasCatalogo: el query, la búsqueda global, la
+ * selección del árbol y el query de solicitadas viven en el contenedor; acá
+ * quedan los filtros propios, la paginación, el SKU del drawer y la mutación.
+ */
+export function useComprasPanel({
+  skus,
+  selection,
+  solicitadasBySku,
+  officeId,
+}: {
+  /** SKUs post-búsqueda global (pre-selección). */
+  skus: ComprasCatalogoSku[];
+  selection: Selection;
+  solicitadasBySku: Map<string, PurchaseDecision>;
+  officeId: number | null;
+}) {
   const [fSeveridad, setFSeveridad] = useState<SeverityFilter>("todas");
   const [fTendencia, setFTendencia] = useState<TendenciaFilter>("todas");
   const [fStockAlmacen, setFStockAlmacen] = useState<StockFilter>("todos");
@@ -22,15 +41,14 @@ export function useComprasCatalogo(officeId: number | null) {
   const [fSolicitado, setFSolicitado] = useState(false);
   const [showFilters, setShowFilters] = useState(false);
 
-  const [selection, setSelection] = useState<Selection>(ROOT_SELECTION);
-  const [search, setSearch] = useState("");
   const [selectedSku, setSelectedSku] = useState<ComprasCatalogoSku | null>(null);
-  
+
   const [currentPage, setCurrentPage] = useState(1);
   const ITEMS_PER_PAGE = 10;
 
-  // We reset page if filters change
-  const [prevSearch, setPrevSearch] = useState(search);
+  // We reset page if filters change (patrón render-time, igual que el hook original;
+  // `skus` reemplaza a `search`: su identidad cambia cuando cambia la búsqueda global).
+  const [prevSkus, setPrevSkus] = useState(skus);
   const [prevSeverity, setPrevSeverity] = useState(fSeveridad);
   const [prevSelection, setPrevSelection] = useState(selection);
   const [prevTendencia, setPrevTendencia] = useState(fTendencia);
@@ -38,14 +56,14 @@ export function useComprasCatalogo(officeId: number | null) {
   const [prevSolicitado, setPrevSolicitado] = useState(fSolicitado);
 
   if (
-    search !== prevSearch ||
+    skus !== prevSkus ||
     fSeveridad !== prevSeverity ||
     selection !== prevSelection ||
     fTendencia !== prevTendencia ||
     fStockAlmacen !== prevStockAlmacen ||
     fSolicitado !== prevSolicitado
   ) {
-    setPrevSearch(search);
+    setPrevSkus(skus);
     setPrevSeverity(fSeveridad);
     setPrevSelection(selection);
     setPrevTendencia(fTendencia);
@@ -54,42 +72,11 @@ export function useComprasCatalogo(officeId: number | null) {
     setCurrentPage(1);
   }
 
-  const query = useQuery({
-    queryKey: ["compras-catalogo", officeId],
-    queryFn: ({ signal }) => getComprasCatalogo(officeId, signal),
-    staleTime: 5 * 60_000,
-  });
-
-  // Decisiones vigentes de tipo 'solicitado' para esta sucursal. Alimenta los
-  // badges "Solicitado · …" por fila y el filtro "Solicitados". Key con prefijo
-  // ["purchase-decisions", …] para que la invalidación de las mutaciones la alcance.
-  const solicitadasQuery = useQuery({
-    queryKey: ["purchase-decisions", "active", officeId],
-    queryFn: ({ signal }) =>
-      listPurchaseDecisions({ office_id: officeId, decision: "solicitado" }, signal),
-    enabled: officeId != null,
-    staleTime: 60_000,
-  });
-
-  const solicitadasBySku = useMemo(() => {
-    const m = new Map<string, PurchaseDecision>();
-    for (const d of solicitadasQuery.data?.decisions ?? []) {
-      if (d.sku) m.set(d.sku, d);
-    }
-    return m;
-  }, [solicitadasQuery.data]);
-
-  const tree = useMemo<TreeNode[]>(() => buildTree(query.data?.skus ?? []), [
-    query.data?.skus,
-  ]);
-
   const filteredSkus = useMemo<ComprasCatalogoSku[]>(() => {
-    const all = query.data?.skus ?? [];
-    const s = search.trim().toLowerCase();
-    return all.filter((sku) => {
+    return skus.filter((sku) => {
       if (fSeveridad === "critico" && !sku.severidad.includes("Crítico")) return false;
       if (fSeveridad === "alta" && !sku.severidad.includes("Alta")) return false;
-      
+
       if (fTendencia === "creciente" && sku.tendencia !== "Creciente") return false;
       if (fTendencia === "estable" && sku.tendencia !== "Estable") return false;
       if (fTendencia === "decreciente" && sku.tendencia !== "Decreciente") return false;
@@ -99,37 +86,15 @@ export function useComprasCatalogo(officeId: number | null) {
 
       if (fSolicitado && !solicitadasBySku.has(sku.sku)) return false;
 
-      if (selection.dept && sku.departamento !== selection.dept) return false;
-      if (selection.cat && sku.categoria !== selection.cat) return false;
-      if (selection.subcat && sku.subcategoria !== selection.subcat) return false;
+      // Nombres normalizados — los nodos fallback del árbol ("Sin
+      // departamento", …) también deben matchear sus SKUs.
+      if (selection.dept && normDept(sku.departamento) !== selection.dept) return false;
+      if (selection.cat && normCat(sku.categoria) !== selection.cat) return false;
+      if (selection.subcat && normSubcat(sku.subcategoria) !== selection.subcat) return false;
 
-      if (s) {
-        const hay =
-          sku.sku.toLowerCase().includes(s) ||
-          sku.producto.toLowerCase().includes(s) ||
-          (sku.categoria ?? "").toLowerCase().includes(s);
-        if (!hay) return false;
-      }
       return true;
     });
-  }, [query.data?.skus, fSeveridad, fTendencia, fStockAlmacen, fSolicitado, solicitadasBySku, selection, search]);
-
-  const scopeKpis = useMemo(() => {
-    const all = query.data?.skus ?? [];
-    const subset = all.filter((sku) => {
-      if (selection.dept && sku.departamento !== selection.dept) return false;
-      if (selection.cat && sku.categoria !== selection.cat) return false;
-      if (selection.subcat && sku.subcategoria !== selection.subcat) return false;
-      return true;
-    });
-    return {
-      total: subset.length,
-      critico: subset.filter((s) => s.severidad.includes("Crítico")).length,
-      alta: subset.filter((s) => s.severidad.includes("Alta")).length,
-      venta: subset.reduce((acc, s) => acc + s.vendido_sku_soles, 0),
-      reponer: subset.reduce((acc, s) => acc + s.cantidad_sugerida, 0),
-    };
-  }, [query.data?.skus, selection]);
+  }, [skus, fSeveridad, fTendencia, fStockAlmacen, fSolicitado, solicitadasBySku, selection]);
 
   const qc = useQueryClient();
   const quickAction = useMutation({
@@ -169,29 +134,23 @@ export function useComprasCatalogo(officeId: number | null) {
   const safePage = Math.min(currentPage, totalPages);
   const pageItems = useMemo(
     () => filteredSkus.slice((safePage - 1) * ITEMS_PER_PAGE, safePage * ITEMS_PER_PAGE),
-    [filteredSkus, safePage]
+    [filteredSkus, safePage],
   );
 
   return {
-    query,
-    tree,
     filteredSkus,
-    scopeKpis,
     quickAction,
     handleAction,
     fSeveridad, setFSeveridad,
     fTendencia, setFTendencia,
     fStockAlmacen, setFStockAlmacen,
     fSolicitado, setFSolicitado,
-    solicitadasBySku,
     showFilters, setShowFilters,
-    selection, setSelection,
-    search, setSearch,
     selectedSku, setSelectedSku,
     currentPage: safePage,
     setCurrentPage,
     totalPages,
     pageItems,
-    ITEMS_PER_PAGE
+    ITEMS_PER_PAGE,
   };
 }

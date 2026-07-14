@@ -4,7 +4,7 @@ import { useEffect, useState, useRef } from "react";
 import Link from "next/link";
 import { usePathname, useRouter } from "next/navigation";
 import { Building2, ChevronLeft, ChevronRight, LogOut, Menu, X, Check, Store, RotateCw, ChevronDown } from "lucide-react";
-import { NAV_GROUPS, ALL_NAV_ITEMS } from "./nav";
+import { ALL_NAV_ITEMS, navGroupsForRole } from "./nav";
 import { ApiStatus } from "./api-status";
 import { useSucursal } from "./sucursal-context";
 import { useCompany } from "./company-context";
@@ -27,17 +27,20 @@ function NavLinks({
   collapsed?: boolean;
 }) {
   const pathname = usePathname();
+  const { activeRole } = useCompany();
+  // Navegación acotada por rol: un viewer solo ve las vistas de su tienda.
+  const groups = navGroupsForRole(activeRole);
   const [expandedGroups, setExpandedGroups] = useState<Set<string>>(() => {
     const initial = new Set<string>();
     // Por defecto expandir el grupo que contiene la ruta actual
-    for (const g of NAV_GROUPS) {
+    for (const g of groups) {
       if (g.items.some(i => isActive(pathname, i.href))) {
         initial.add(g.title);
       }
     }
     // Si no hay ninguno activo, expandimos el primero
-    if (initial.size === 0 && NAV_GROUPS.length > 0) {
-      initial.add(NAV_GROUPS[0].title);
+    if (initial.size === 0 && groups.length > 0) {
+      initial.add(groups[0].title);
     }
     return initial;
   });
@@ -53,7 +56,7 @@ function NavLinks({
 
   return (
     <nav className={cn("flex flex-col", collapsed ? "gap-2" : "gap-3")}>
-      {NAV_GROUPS.map((group) => {
+      {groups.map((group) => {
         const isExpanded = expandedGroups.has(group.title);
         
         if (collapsed) {

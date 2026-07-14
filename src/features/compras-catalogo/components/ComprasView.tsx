@@ -2,11 +2,12 @@
 
 import { useState } from "react";
 
-import { AlertTriangle, Archive, Boxes, ChevronDown, ChevronRight, Download, Filter, Home, Layers, Package, Percent, Search, ShoppingCart, SlidersHorizontal, TrendingDown, TrendingUp, Wallet, X, AlertCircle, ArrowRight, MoreHorizontal, FileSpreadsheet } from "lucide-react";
+import { AlertTriangle, Archive, Boxes, ChevronDown, ChevronRight, Download, Filter, Home, Layers, Package, Percent, Search, Send, ShoppingCart, SlidersHorizontal, TrendingDown, TrendingUp, Wallet, X, AlertCircle, ArrowRight, MoreHorizontal, FileSpreadsheet } from "lucide-react";
 import { cn } from "@/lib/utils";
 import { PremiumLoaderOverlay, shmr } from "@/components/ui/premium-skeleton";
 import { money, num, pct } from "@/lib/format";
 import { useSucursal } from "@/components/sucursal-context";
+import { useCompany } from "@/components/company-context";
 import { PageHeader } from "@/components/ui/page-header";
 import { Card, CardHeader, CardBody } from "@/components/ui/card";
 import { KpiStat } from "@/components/ui/kpi-stat";
@@ -179,6 +180,9 @@ function Breadcrumb({
 
 export function ComprasView() {
   const { officeId, sucursalName } = useSucursal();
+  const { activeRole } = useCompany();
+  // operador/admin deciden compras; viewer (encargado de tienda) solo solicita.
+  const canDecidir = activeRole === "admin" || activeRole === "operador";
   const {
     query,
     tree,
@@ -188,6 +192,8 @@ export function ComprasView() {
     fSeveridad, setFSeveridad,
     fTendencia, setFTendencia,
     fStockAlmacen, setFStockAlmacen,
+    fSolicitado, setFSolicitado,
+    solicitadasBySku,
     showFilters, setShowFilters,
     selection, setSelection,
     search, setSearch,
@@ -353,14 +359,14 @@ export function ComprasView() {
                           size="sm"
                           className={cn(
                             "h-8 w-8 p-0 shrink-0 flex items-center justify-center transition-all duration-300 ease-[cubic-bezier(0.23,1,0.32,1)] active:scale-[0.95] rounded-full shadow-sm text-xs font-medium",
-                            showActionMenu || fSeveridad !== "todas" || fTendencia !== "todas" || fStockAlmacen !== "todos"
+                            showActionMenu || fSeveridad !== "todas" || fTendencia !== "todas" || fStockAlmacen !== "todos" || fSolicitado
                               ? "bg-primary/15 border-primary/20 text-primary hover:bg-primary/20"
                               : "bg-surface-2 border-border-soft text-muted hover:text-fg hover:bg-surface-3 hover:border-border"
                           )}
                           title="Más opciones"
                         >
                           <MoreHorizontal className="h-4 w-4" />
-                          {(fSeveridad !== "todas" || fTendencia !== "todas" || fStockAlmacen !== "todos") && (
+                          {(fSeveridad !== "todas" || fTendencia !== "todas" || fStockAlmacen !== "todos" || fSolicitado) && (
                             <span className="absolute -top-1 -right-1 h-3 w-3 rounded-full bg-primary flex items-center justify-center border-2 border-surface shadow-sm">
                             </span>
                           )}
@@ -376,7 +382,7 @@ export function ComprasView() {
                               >
                                 <Filter className="h-3.5 w-3.5" />
                                 Filtros Avanzados
-                                {(fSeveridad !== "todas" || fTendencia !== "todas" || fStockAlmacen !== "todos") && <span className="ml-auto flex h-2 w-2 rounded-full bg-primary" />}
+                                {(fSeveridad !== "todas" || fTendencia !== "todas" || fStockAlmacen !== "todos" || fSolicitado) && <span className="ml-auto flex h-2 w-2 rounded-full bg-primary" />}
                               </button>
                               <div className="h-px w-full bg-white/5 my-0.5" />
                               <button 
@@ -441,6 +447,17 @@ export function ComprasView() {
                                       <FilterChip label="Sin Stock" icon={<AlertCircle className="w-3.5 h-3.5" />} active={fStockAlmacen === "sin_stock"} onClick={() => setFStockAlmacen("sin_stock")} tone="danger" />
                                     </div>
                                   </div>
+
+                                  <div className="flex flex-col gap-2.5">
+                                    <div className="flex items-center gap-2 text-faint">
+                                      <Send className="h-4 w-4" />
+                                      <span className="text-[10px] font-bold uppercase tracking-wider text-muted">Estado de solicitud</span>
+                                    </div>
+                                    <div className="flex flex-wrap gap-1.5">
+                                      <FilterChip label="Todas" active={!fSolicitado} onClick={() => setFSolicitado(false)} tone="violet" />
+                                      <FilterChip label="Solicitados" icon={<Send className="w-3.5 h-3.5" />} active={fSolicitado} onClick={() => setFSolicitado(true)} tone="warning" />
+                                    </div>
+                                  </div>
                                 </div>
                               </div>
                               <div className="shrink-0 border-t border-white/5 bg-transparent p-4 pb-2">
@@ -451,6 +468,7 @@ export function ComprasView() {
                                     setFSeveridad("todas");
                                     setFTendencia("todas");
                                     setFStockAlmacen("todos");
+                                    setFSolicitado(false);
                                   }}
                                 >
                                   Limpiar Filtros
@@ -538,6 +556,8 @@ export function ComprasView() {
                         rows={pageItems}
                         onSelect={setSelectedSku}
                         onAction={handleAction}
+                        solicitadasBySku={solicitadasBySku}
+                        canDecidir={canDecidir}
                       />
                       <FloatingPagination
                         total={filteredSkus.length}

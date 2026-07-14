@@ -1,10 +1,7 @@
-export type Selection = {
-  dept: string | null;
-  cat: string | null;
-  subcat: string | null;
-};
-
-export const ROOT_SELECTION: Selection = { dept: null, cat: null, subcat: null };
+// Selection/ROOT_SELECTION viven en @/lib/types (compartidos con centro-catalogo);
+// se re-exportan acá para no romper los imports existentes de la feature.
+export type { Selection } from "@/lib/types";
+export { ROOT_SELECTION } from "@/lib/types";
 
 export type TreeNode = {
   name: string;

@@ -1,11 +1,10 @@
 import { useState, useMemo, useEffect } from "react";
 import { useQuery } from "@tanstack/react-query";
-import { getMatrix } from "@/lib/api";
-import { getClasif } from "@/lib/matrix-classify";
 import { Row, KanbanCol, DeptNode } from "../types";
 import { getKanbanColumn, n, s } from "../utils";
 import { KANBAN_COLS } from "../utils/kanbanConfig";
 import { buildSimilarityIndex } from "../utils/similarity";
+import { matrix04bQueryOptions, matrixSearchFilter } from "./matrix04b";
 import { animate, stagger } from "animejs";
 
 export function useVentasJerarquicas(sucursalName: string | null) {
@@ -37,16 +36,7 @@ export function useVentasJerarquicas(sucursalName: string | null) {
   const [showFilters, setShowFilters] = useState(false);
   const [showAdvancedFilters, setShowAdvancedFilters] = useState(false);
 
-  const q = useQuery({
-    queryKey: ["matrix-04b", sucursalName],
-    queryFn: ({ signal }) =>
-      getMatrix(
-        "04b",
-        { sucursal: sucursalName ?? undefined },
-        signal,
-      ),
-    staleTime: 5 * 60_000,
-  });
+  const q = useQuery(matrix04bQueryOptions(sucursalName));
 
   const allRows = useMemo<Row[]>(() => q.data?.rows ?? [], [q.data]);
 
@@ -102,14 +92,7 @@ export function useVentasJerarquicas(sucursalName: string | null) {
         return cob > 30;
       });
     }
-    if (busqueda) {
-      const lowerB = busqueda.toLowerCase();
-      rows = rows.filter((r) =>
-        s(r["Producto"]).toLowerCase().includes(lowerB) ||
-        s(r["Código SKU"]).toLowerCase().includes(lowerB) ||
-        getClasif(r as Record<string, unknown>).toLowerCase().includes(lowerB)
-      );
-    }
+    rows = matrixSearchFilter(rows, busqueda);
     return rows;
   }, [allRows, busqueda, fStock, fDias, fMesIngreso, fXYZ, fTendencia, fCobertura]);
 

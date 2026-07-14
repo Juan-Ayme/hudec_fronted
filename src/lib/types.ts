@@ -641,6 +641,16 @@ export interface MatrixSummaryResponse {
   tendencia_decayendo: number;
 }
 
+// ---- Selección jerárquica (árbol Departamento → Categoría → Subcategoría) ----
+// Compartida por /compras-catalogo, /ventas-jerarquicas (paneles) y /centro-catalogo.
+export type Selection = {
+  dept: string | null;
+  cat: string | null;
+  subcat: string | null;
+};
+
+export const ROOT_SELECTION: Selection = { dept: null, cat: null, subcat: null };
+
 // ---- Compras & Catálogo (Dashboard de Compras Inteligente) ----
 // Endpoint: GET /analytics/compras-catalogo?office_id=<id>
 // Mismo universo de SKUs que el Excel `/analytics/compras-catalogo/excel`:
@@ -717,6 +727,7 @@ export interface ComprasCatalogoSku {
   margen_pct: number | null;
   margen_soles: number | null;
   costo_soles: number | null;
+  margen_origen?: "venta" | "catalogo" | null;  // "catalogo" = precio de lista − costo (sin ventas 90d)
 }
 
 export interface ComprasCatalogoResponse {

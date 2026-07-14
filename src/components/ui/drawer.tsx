@@ -1,6 +1,7 @@
 "use client";
 
-import { useEffect, useId } from "react";
+import { useEffect, useId, useState } from "react";
+import { createPortal } from "react-dom";
 import { X } from "lucide-react";
 import { cn } from "@/lib/utils";
 
@@ -20,6 +21,11 @@ export function Drawer({
   width?: string;
 }) {
   const titleId = useId();
+  const [mounted, setMounted] = useState(false);
+
+  useEffect(() => {
+    setMounted(true);
+  }, []);
 
   useEffect(() => {
     if (!open) return;
@@ -34,9 +40,9 @@ export function Drawer({
     };
   }, [open, onClose]);
 
-  if (!open) return null;
+  if (!open || !mounted || typeof document === "undefined") return null;
 
-  return (
+  return createPortal(
     <div
       role="dialog"
       aria-modal="true"
@@ -85,6 +91,7 @@ export function Drawer({
         )}
         <div className={cn("flex-1 overflow-y-auto px-5", (title || subtitle) ? "py-5" : "pt-8 pb-5")}>{children}</div>
       </div>
-    </div>
+    </div>,
+    document.body
   );
 }

@@ -12,6 +12,7 @@ import { useQuery } from "@tanstack/react-query";
 import { Store, Check, ChevronDown, RotateCw } from "lucide-react";
 import { getStockValuation, ApiError } from "@/lib/api";
 import { cn } from "@/lib/utils";
+import { useCompany } from "./company-context";
 
 /* ────────────────────────────────────────────────────────────
  * Selector global de sucursal para la sección Análisis.
@@ -117,7 +118,28 @@ export function SucursalSelector() {
     retryDelay: (i) => Math.min(1000 * 2 ** i, 4000),
   });
 
+  // Acceso por sucursal: si la empresa activa tiene sucursales permitidas,
+  // el selector solo ofrece esas y nunca "Todas las tiendas".
+  const { activeCompany } = useCompany();
+  const allowed = activeCompany?.allowed_office_ids ?? [];
+  const restricted = allowed.length > 0;
+
   const sucursales = valuation.data?.por_sucursal ?? [];
+  const visibleSucursales = restricted
+    ? sucursales.filter((s) => allowed.includes(s.bsale_office_id))
+    : sucursales;
+
+  // Con acceso restringido, forzar la selección a una sucursal permitida
+  // (nunca "Todas"). Con una sola permitida, queda fija.
+  useEffect(() => {
+    if (!restricted || visibleSucursales.length === 0) return;
+    const currentOk = officeId != null && allowed.includes(officeId);
+    if (!currentOk) {
+      const first = visibleSucursales[0];
+      setSucursal({ officeId: first.bsale_office_id, sucursalName: first.sucursal });
+    }
+  }, [restricted, visibleSucursales, officeId, allowed, setSucursal]);
+
   const label = sucursalName ?? "Todas las tiendas";
   const isActive = officeId !== null;
 
@@ -156,24 +178,28 @@ export function SucursalSelector() {
               "animate-[scale-in_var(--duration-base)_var(--ease-premium)_both] origin-top-right",
             )}
           >
-            <button
-              role="option"
-              aria-selected={officeId === null}
-              onClick={() => {
-                setSucursal(null);
-                setOpen(false);
-              }}
-              className={cn(
-                "flex w-full items-center justify-between gap-2 px-3 py-2 text-left text-xs transition-colors",
-                officeId === null
-                  ? "bg-primary/10 text-primary"
-                  : "text-slate-300 hover:bg-surface-2 hover:text-fg",
-              )}
-            >
-              <span className="font-medium">Todas las tiendas</span>
-              {officeId === null && <Check className="h-3.5 w-3.5" />}
-            </button>
-            <div className="border-t border-border/40" />
+            {!restricted && (
+              <>
+                <button
+                  role="option"
+                  aria-selected={officeId === null}
+                  onClick={() => {
+                    setSucursal(null);
+                    setOpen(false);
+                  }}
+                  className={cn(
+                    "flex w-full items-center justify-between gap-2 px-3 py-2 text-left text-xs transition-colors",
+                    officeId === null
+                      ? "bg-primary/10 text-primary"
+                      : "text-slate-300 hover:bg-surface-2 hover:text-fg",
+                  )}
+                >
+                  <span className="font-medium">Todas las tiendas</span>
+                  {officeId === null && <Check className="h-3.5 w-3.5" />}
+                </button>
+                <div className="border-t border-border/40" />
+              </>
+            )}
             {valuation.isLoading ? (
               <div className="px-3 py-2 text-[11px] text-faint">Cargando…</div>
             ) : valuation.isError ? (
@@ -197,12 +223,12 @@ export function SucursalSelector() {
                   Reintentar
                 </button>
               </div>
-            ) : sucursales.length === 0 ? (
+            ) : visibleSucursales.length === 0 ? (
               <div className="px-3 py-2 text-[11px] text-faint">
                 Sin sucursales
               </div>
             ) : (
-              sucursales.map((s) => {
+              visibleSucursales.map((s) => {
                 const selected = officeId === s.bsale_office_id;
                 return (
                   <button

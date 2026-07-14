@@ -1,5 +1,5 @@
 import React from "react";
-import { ChevronRight, Banknote, Package, Box, Target, TrendingUp, Activity, AlertTriangle } from "lucide-react";
+import { ChevronRight, Banknote, Package, Box, Target, TrendingUp, Activity, AlertTriangle, ShoppingCart, Check } from "lucide-react";
 import { cn } from "@/lib/utils";
 import { moneyCompact, num, num2, pct } from "@/lib/format";
 import { getClassificationMeta, SmoothSparkline, shortClasif } from "@/components/ui/classification";
@@ -29,6 +29,8 @@ export const ProductListItem = React.memo(function ProductListItem({
   stock,
   similares,
   onClick,
+  isSolicitado,
+  onJumpToCompras,
 }: {
   sku: Row;
   ventas: number;
@@ -36,6 +38,9 @@ export const ProductListItem = React.memo(function ProductListItem({
   stock: number;
   similares?: SimilarsInfo;
   onClick?: () => void;
+  isSolicitado?: boolean;
+  /** Salto cruzado (Centro de Catálogo): abre este SKU en Decisiones de Compra. */
+  onJumpToCompras?: () => void;
 }) {
   const clasif = getClasif(sku as Record<string, unknown>);
   const tendencia = String(sku["Tendencia"] || "");
@@ -48,7 +53,8 @@ export const ProductListItem = React.memo(function ProductListItem({
   return (
     <div className={cn(
       "flex flex-col sm:flex-row items-start sm:items-center justify-between gap-4 px-4 py-3 hover:bg-surface-3/40 hover:shadow-lg transition-all duration-300 ease-out cursor-pointer group rounded-xl mx-2 my-1 border border-transparent hover:border-white/5 relative overflow-hidden",
-      hasSimilares && "border-l-2 border-l-warning/60 rounded-l-none"
+      hasSimilares && "border-l-2 border-l-warning/60 rounded-l-none",
+      isSolicitado && "opacity-60 grayscale-[50%] hover:opacity-100 hover:grayscale-0"
     )} onClick={onClick}>
       {/* Background glow on hover */}
       <div className="absolute inset-0 bg-gradient-to-r from-primary/0 via-primary/5 to-transparent opacity-0 group-hover:opacity-100 transition-opacity duration-500 pointer-events-none" />
@@ -65,11 +71,6 @@ export const ProductListItem = React.memo(function ProductListItem({
           <span className={cn("inline-flex items-center gap-1 text-[0.6rem] font-bold uppercase tracking-widest px-1.5 py-0.5 rounded border border-white/5 shadow-sm", meta.bgClass, meta.colorClass)}>
             <Icon className="h-2.5 w-2.5" /> {shortClasif(clasif)}
           </span>
-          {s(sku["XYZ"]) && (
-            <span className="inline-flex items-center text-[0.6rem] font-bold uppercase tracking-widest px-1.5 py-0.5 rounded bg-surface-3 text-muted border border-white/5 shadow-sm">
-              XYZ: {s(sku["XYZ"]).charAt(0)}
-            </span>
-          )}
           {hasSimilares && (
             <span
               title="Ya tienes productos parecidos en otras categorías de la misma subcategoría"
@@ -88,55 +89,71 @@ export const ProductListItem = React.memo(function ProductListItem({
         </div>
       </div>
 
-      {/* 3. Métricas Numéricas Expandidas (Re-diseñadas con Iconos) */}
-      <div className="flex items-center gap-3 sm:gap-5 text-right flex-wrap justify-end relative z-10">
-        <div className="flex flex-col w-20 items-end group/metric">
-          <span className="flex items-center gap-1 text-[0.55rem] uppercase tracking-widest text-faint mb-0.5">
-            <Banknote className="h-3 w-3 group-hover/metric:text-primary transition-colors" /> Ventas
-          </span>
-          <span className="font-mono text-[0.85rem] font-medium text-fg bg-surface-3/40 backdrop-blur-sm px-2 py-0.5 rounded text-right w-full border border-white/5 shadow-inner">
+      {/* 3. Métricas SaaS Minimalistas */}
+      <div className="flex items-center gap-6 sm:gap-8 text-left flex-nowrap justify-end relative z-10 pr-2">
+        
+        {/* Bloque A: Ventas */}
+        <div className="flex flex-col justify-center min-w-[4.5rem]">
+          <span className="font-mono text-[0.95rem] font-semibold text-fg tracking-tight leading-none">
             {moneyCompact(ventas)}
           </span>
-        </div>
-        <div className="flex flex-col w-16 hidden lg:flex items-end group/metric">
-          <span className="flex items-center gap-1 text-[0.55rem] uppercase tracking-widest text-faint mb-0.5">
-            <Package className="h-3 w-3 group-hover/metric:text-info transition-colors" /> Unds
-          </span>
-          <span className="font-mono text-[0.8rem] font-medium text-fg">{num(unidades)}</span>
-        </div>
-        <div className="flex flex-col w-16 items-end group/metric">
-          <span className="flex items-center gap-1 text-[0.55rem] uppercase tracking-widest text-faint mb-0.5">
-            <Box className="h-3 w-3 group-hover/metric:text-warning transition-colors" /> Stock
-          </span>
-          <span className={cn("font-mono text-[0.85rem] font-bold px-2 py-0.5 rounded w-full text-right shadow-[inset_0_1px_1px_rgba(0,0,0,0.3)] backdrop-blur-sm", stock === 0 ? "bg-danger/20 text-danger border border-danger/20" : "bg-info/20 text-info border border-info/20")}>
-            {num(stock)}
+          <span className="text-xs text-muted flex items-center gap-1 mt-1.5 leading-none font-medium">
+             <Banknote className="h-3 w-3 opacity-40" /> {num(unidades)} unidades
           </span>
         </div>
-        <div className="flex flex-col w-16 hidden xl:flex items-end group/metric">
-          <span className="flex items-center gap-1 text-[0.55rem] uppercase tracking-widest text-faint mb-0.5">
-            <Target className="h-3 w-3 group-hover/metric:text-danger transition-colors" /> Cobert.
+
+        {/* Bloque B: Ritmo */}
+        <div className="flex flex-col justify-center min-w-[4.5rem] hidden md:flex">
+          <span className="font-mono text-[0.95rem] font-semibold text-fg tracking-tight leading-none">
+            {num2(sku["Velocidad (uds/día)"])} <span className="font-sans font-normal text-xs text-muted ml-0.5">/ día</span>
           </span>
-          <span className={cn("font-mono text-[0.8rem] font-medium", n(sku["Cobertura"]) < 15 ? "text-danger drop-shadow-[0_0_8px_rgba(240,85,109,0.5)]" : "text-fg")}>
-            {s(sku["Cobertura"]) || "—"}
+          <span className="text-xs text-muted flex items-center gap-1 mt-1.5 leading-none font-medium">
+             <TrendingUp className="h-3 w-3 opacity-40" /> {pct(sku["Sell-through Lote %"])} vendido
           </span>
         </div>
-        <div className="flex flex-col w-16 hidden xl:flex items-end group/metric">
-          <span className="flex items-center gap-1 text-[0.55rem] uppercase tracking-widest text-faint mb-0.5">
-            <TrendingUp className="h-3 w-3 group-hover/metric:text-success transition-colors" /> Veloc.
+
+        {/* Bloque C: Inventario */}
+        <div className="flex flex-col justify-center min-w-[5rem]">
+          <span className="flex items-center gap-1.5 font-mono text-[0.95rem] font-semibold tracking-tight leading-none">
+             <span className={cn("shrink-0 w-2 h-2 rounded-full", stock === 0 ? "bg-danger shadow-[0_0_8px_rgba(240,85,109,0.8)]" : "bg-info shadow-[0_0_8px_rgba(62,171,255,0.6)]")} />
+             <span className={stock === 0 ? "text-danger" : "text-fg"}>{num(stock)} <span className="font-sans font-normal text-xs text-muted ml-0.5">stock</span></span>
           </span>
-          <span className="font-mono text-[0.8rem] font-medium text-fg">{num2(sku["Velocidad (uds/día)"])} u/d</span>
-        </div>
-        <div className="flex flex-col w-16 hidden 2xl:flex items-end group/metric">
-          <span className="flex items-center gap-1 text-[0.55rem] uppercase tracking-widest text-faint mb-0.5">
-            <Activity className="h-3 w-3 group-hover/metric:text-accent transition-colors" /> S-thru
+          <span className={cn("text-xs flex items-center gap-1 mt-1.5 leading-none font-medium", n(sku["Cobertura"]) < 15 ? "text-danger drop-shadow-[0_0_8px_rgba(240,85,109,0.5)]" : "text-muted")}>
+             <Box className="h-3 w-3 opacity-40" /> {s(sku["Cobertura"]) ? `Cob: ${s(sku["Cobertura"])}` : "Sin cob."}
           </span>
-          <span className="font-mono text-[0.8rem] font-medium text-fg">{pct(sku["Sell-through Lote %"])}</span>
         </div>
+
       </div>
 
       {/* 4. Acciones */}
-      <div className="flex shrink-0 items-center justify-end w-6 text-faint group-hover:text-primary transition-all group-hover:translate-x-1 duration-300 relative z-10">
-        <ChevronRight className="h-5 w-5" />
+      <div className="flex shrink-0 items-center justify-end gap-1 min-w-6 relative z-10">
+        {onJumpToCompras && (
+          <button
+            onClick={(e) => {
+              e.stopPropagation();
+              onJumpToCompras();
+            }}
+            title={isSolicitado ? "Ver solicitud en Compras" : "Pedir en Compras — abre la sugerencia de este SKU"}
+            className={cn(
+              "flex items-center justify-center rounded-full transition-all active:scale-95",
+              isSolicitado
+                ? "h-7 px-2.5 gap-1.5 border border-primary/30 bg-primary/10 text-primary hover:bg-primary/20"
+                : "h-7 w-7 bg-warning/10 text-warning hover:bg-warning/20"
+            )}
+          >
+            {isSolicitado ? (
+              <>
+                <Check className="h-3.5 w-3.5" />
+                <span className="text-[0.65rem] font-bold tracking-widest hidden sm:inline">SOLICITADO</span>
+              </>
+            ) : (
+              <ShoppingCart className="h-3.5 w-3.5" />
+            )}
+          </button>
+        )}
+        <span className="flex items-center text-faint group-hover:text-primary transition-all group-hover:translate-x-1 duration-300">
+          <ChevronRight className="h-5 w-5" />
+        </span>
       </div>
     </div>
   );

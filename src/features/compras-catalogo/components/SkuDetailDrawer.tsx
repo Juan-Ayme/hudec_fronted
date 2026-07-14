@@ -5,10 +5,11 @@ import dynamic from "next/dynamic";
 import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
 import { Boxes, Check, Clock, ShoppingCart, Copy, X, TrendingUp, TrendingDown, Calendar } from "lucide-react";
 import { toast } from "@/lib/toast";
-import { getSkuHistory, getPurchaseDecisionsBySku, createPurchaseDecision, type PurchaseDecisionKind } from "@/lib/api";
+import { getSkuHistory, getPurchaseDecisionsBySku, createPurchaseDecision, getPrecioCostoPorSucursal, type PurchaseDecisionKind } from "@/lib/api";
 import { dateShort, money, num, pct } from "@/lib/format";
 import { cn } from "@/lib/utils";
 import type { ComprasCatalogoSku } from "@/lib/types";
+import { useCompany } from "@/components/company-context";
 import { Drawer } from "@/components/ui/drawer";
 import { Button } from "@/components/ui/button";
 import { getClassificationMeta } from "@/components/ui/classification";
@@ -74,6 +75,9 @@ export function SkuDetailDrawer({
   const [qtySyncedFor, setQtySyncedFor] = useState<string | null>(null);
   const open = sku !== null;
   const qc = useQueryClient();
+  const { activeRole } = useCompany();
+  // viewer (encargado de tienda) solo puede solicitar; operador/admin deciden.
+  const canDecidir = activeRole === "admin" || activeRole === "operador";
 
   if (sku && qtySyncedFor !== sku.sku) {
     setQtySyncedFor(sku.sku);
@@ -92,6 +96,15 @@ export function SkuDetailDrawer({
     queryFn: ({ signal }) => getPurchaseDecisionsBySku(sku!.sku, officeId, signal),
     enabled: !!sku && officeId != null,
     staleTime: 30_000,
+  });
+
+  // Precio de venta (lista BSale) + costo por sucursal — dato nuevo (no dependía
+  // de officeId: muestra TODAS las sucursales para comparar).
+  const precioCosto = useQuery({
+    queryKey: ["precio-costo", sku?.sku],
+    queryFn: ({ signal }) => getPrecioCostoPorSucursal(sku!.sku, signal),
+    enabled: !!sku,
+    staleTime: 60_000,
   });
 
   const decide = useMutation({
@@ -114,7 +127,7 @@ export function SkuDetailDrawer({
       });
     },
     onSuccess: (_data, action) => {
-      const verb = { ordenar: "Ordenar", comprar_similar: "Comprar similar", posponer: "Posponer", ignorar: "Ignorar" }[action];
+      const verb = { solicitado: "Solicitar", ordenar: "Ordenar", comprar_similar: "Comprar similar", posponer: "Posponer", ignorar: "Ignorar" }[action];
       toast.success(`${verb} guardado`, {
         description: action === "ordenar" || action === "comprar_similar" ? `${editQty} uni. · ${sku?.producto ?? ""}` : sku?.producto ?? "",
       });
@@ -128,6 +141,7 @@ export function SkuDetailDrawer({
   const current = decisions.data?.current ?? null;
   const isPurchaseQtyInvalid = editQty <= 0;
   const decisionLabel: Record<PurchaseDecisionKind, string> = {
+    solicitado: "Solicitado",
     ordenar: "Ordenado",
     comprar_similar: "Comprado similar",
     posponer: "Pospuesto",
@@ -246,6 +260,7 @@ export function SkuDetailDrawer({
             </div>
           )}
 
+          {canDecidir ? (
           <div className="space-y-2">
             <div className="flex flex-wrap items-end gap-3">
               <label className="flex flex-col gap-1">
@@ -293,6 +308,24 @@ export function SkuDetailDrawer({
               </p>
             )}
           </div>
+          ) : (
+            <div className="space-y-2">
+              <Button
+                onClick={() => decide.mutate("solicitado")}
+                variant="primary"
+                size="sm"
+                disabled={decide.isPending || officeId == null || current?.decision === "solicitado"}
+              >
+                <Check className="h-3.5 w-3.5" />
+                {current?.decision === "solicitado" ? "Ya solicitado" : "Solicitar"}
+              </Button>
+              {officeId == null && (
+                <p className="text-[0.62rem] text-warning">
+                  Seleccioná una sucursal arriba para poder solicitar.
+                </p>
+              )}
+            </div>
+          )}
 
           <div className="grid grid-cols-2 gap-3 sm:grid-cols-4">
             <Stat label="Stock disponible" value={num(sku.stock_disponible)} accent={sku.stock_disponible === 0 ? "danger" : undefined} hint={sku.stock_almacen > 0 ? `+${num(sku.stock_almacen)} en almacén` : undefined} />
@@ -304,6 +337,49 @@ export function SkuDetailDrawer({
             <Stat label="Cobertura" value={String(sku.cobertura_dias ?? "—")} />
             <Stat label="Última venta" value={sku.ultima_venta ? dateShort(sku.ultima_venta) : "—"} hint={sku.dias_sin_vender !== null ? `hace ${sku.dias_sin_vender} días` : undefined} />
           </div>
+
+          {precioCosto.data && precioCosto.data.length > 0 && (
+            <div>
+              <h4 className="mb-2 flex items-center gap-1.5 text-caption font-semibold uppercase tracking-wide text-muted">
+                <ShoppingCart className="h-3.5 w-3.5" />
+                Precio de venta y costo por sucursal
+              </h4>
+              <div className="overflow-x-auto rounded-md border border-border-soft">
+                <table className="w-full text-xs">
+                  <thead>
+                    <tr className="border-b border-border-soft bg-surface-2 text-left text-muted">
+                      <th className="px-3 py-1.5 font-medium">Sucursal</th>
+                      <th className="px-3 py-1.5 text-right font-medium">Precio venta</th>
+                      <th className="px-3 py-1.5 text-right font-medium">Costo</th>
+                      <th className="px-3 py-1.5 text-right font-medium">Margen</th>
+                    </tr>
+                  </thead>
+                  <tbody>
+                    {precioCosto.data.map((r) => (
+                      <tr key={r.office_id} className="border-b border-border-soft last:border-0">
+                        <td className="px-3 py-1.5 text-fg">{r.sucursal}</td>
+                        <td className="px-3 py-1.5 text-right tabular-nums">
+                          {r.precio_con_impuestos != null ? money(r.precio_con_impuestos) : "—"}
+                        </td>
+                        <td className="px-3 py-1.5 text-right tabular-nums">
+                          {r.costo != null ? money(r.costo) : "—"}
+                          {r.costo_origen === "GLOBAL" && (
+                            <span className="ml-1 text-[9px] text-faint" title="Costo global (sin recepción propia en esta sucursal)">(global)</span>
+                          )}
+                        </td>
+                        <td className={cn("px-3 py-1.5 text-right font-medium tabular-nums", r.margen_pct == null ? "text-muted" : r.margen_pct >= 30 ? "text-success" : r.margen_pct >= 15 ? "text-warning" : "text-danger")}>
+                          {r.margen_pct != null ? pct(r.margen_pct) : "—"}
+                        </td>
+                      </tr>
+                    ))}
+                  </tbody>
+                </table>
+              </div>
+              <p className="mt-1 text-[0.62rem] text-faint">
+                Precio con impuestos de la lista de BSale · costo por sucursal (recepciones) con fallback al costo global.
+              </p>
+            </div>
+          )}
 
           {sku.tendencia && sku.tendencia !== "—" && (
             <div className="flex items-center gap-2 rounded-md bg-surface-2 px-3 py-2 text-xs">
