@@ -451,6 +451,7 @@ export interface Bloque8020Categoria {
   meta_mensual_pen: number;
   meta_prorrateada: number;
   venta_acumulada_mes: number;
+  /** venta − meta: NEGATIVO = falta para la meta. Misma convención que /pulse. */
   gap_a_meta: number;
   avance_pct: number;
   ritmo_vs_meta_pct: number;

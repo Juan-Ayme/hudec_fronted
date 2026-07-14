@@ -51,7 +51,7 @@ export function deltaTone(
 }
 
 /**
- * Igual pero invertido: negativo es bueno (días sin vender, gap a meta, capital atrapado).
+ * Igual pero invertido: negativo es bueno (días sin vender, capital atrapado).
  */
 export function inverseDeltaTone(
   v: number | null | undefined,
