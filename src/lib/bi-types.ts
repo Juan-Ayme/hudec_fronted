@@ -820,3 +820,68 @@ export interface VariantCostBackfillResult {
   sample?: VariantCostBackfillSample[];
   nota: string;
 }
+
+export interface VariantCostByOfficeParams {
+  office_id?: number | null;
+  page?: number;
+  page_size?: number;
+  days?: number;
+  umbral_margen_bajo?: number;
+  umbral_margen_alto?: number;
+  umbral_outlier_pct?: number;
+  umbral_desactualizado_pct?: number;
+  umbral_ratio_max_min?: number;
+  solo_problemas?: boolean;
+}
+
+export interface VariantCostHealthDetail {
+  sucursal: string;
+  codigo_sku: string;
+  producto: string;
+  costo_efectivo: number;
+  costo_origen: string;
+  tabla_costo: string;
+  precio_venta: number;
+  tabla_precio: string;
+  margen_soles: number;
+  margen_pct: number;
+  costo_avg_sucursales: number;
+  costo_min_sucursales: number;
+  costo_max_sucursales: number;
+  diff_vs_avg_pct: number;
+  ratio_max_min: number;
+  ultimo_costo_recepcion: number | null;
+  n_recepciones: number;
+  uds_vendidas_periodo: number;
+  impacto_soles: number;
+  severidad: "ERROR" | "WARNING" | "OK";
+  alertas: string[];
+}
+
+export interface VariantCostHealthSummary {
+  ventana_dias: number;
+  variantes_analizadas: number;
+  filas_total: number;
+  salud: {
+    ok: number;
+    warning: number;
+    error: number;
+    pct_ok: number;
+  };
+  problemas_por_tipo: Record<string, number>;
+  impacto_total_soles: number;
+}
+
+export interface VariantCostHealthResponse {
+  resumen: VariantCostHealthSummary;
+  paginacion: {
+    page: number;
+    page_size: number;
+    total_items: number;
+    total_pages: number;
+    has_next: boolean;
+    has_prev: boolean;
+  };
+  detalle: VariantCostHealthDetail[];
+  nota?: string;
+}

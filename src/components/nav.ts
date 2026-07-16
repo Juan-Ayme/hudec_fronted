@@ -14,6 +14,7 @@ import {
   ShoppingCart,
   History,
   Users,
+  CircleDollarSign,
   type LucideIcon,
 } from "lucide-react";
 import type { UserRole } from "@/lib/api";
@@ -39,18 +40,7 @@ export const NAV_GROUPS: NavGroup[] = [
       // { href: "/stock", label: "Stock", icon: Boxes },
       // { href: "/ventas", label: "Ventas", icon: Receipt },
       // Fusión de Análisis de Ventas + Gestión de Compras (árbol + pestañas).
-      // Convivencia temporal: las dos páginas viejas siguen abajo hasta que
-      // gerencia valide la nueva; luego se retiran (ver plan centro-catalogo).
       { href: "/centro-catalogo", label: "Centro de Catálogo", icon: PackageSearch },
-      { href: "/ventas-jerarquicas", label: "Análisis de Ventas", icon: LayoutGrid },
-      // { href: "/matrices", label: "Matrices KAWII", icon: Table2 },
-    ],
-  },
-  {
-    title: "Reportes",
-    items: [
-      { href: "/compras-catalogo", label: "Gestión de Compras", icon: ShoppingCart },
-      { href: "/rotacion-historica", label: "Análisis de Rotación", icon: History },
     ],
   },
   {
@@ -68,15 +58,24 @@ export const NAV_GROUPS: NavGroup[] = [
       { href: "/diagnostico", label: "Diagnóstico Inteligente", icon: Gauge },
       { href: "/salud-catalogo", label: "Auditoría de Salud", icon: ShieldCheck },
       { href: "/plan-mes", label: "Planificación Estratégica", icon: CalendarClock },
+      { href: "/rotacion-historica", label: "Análisis de Rotación", icon: History },
     ],
   },
   {
     title: "Operaciones",
     items: [
       { href: "/auditorias", label: "Auditorías", icon: ShieldCheck },
+      { href: "/auditoria-costos", label: "Auditoría de Costos", icon: CircleDollarSign },
       { href: "/sync", label: "Sincronización", icon: RefreshCw },
       { href: "/configuracion", label: "Configuración", icon: Settings },
       { href: "/usuarios", label: "Usuarios", icon: Users },
+    ],
+  },
+  {
+    title: "Legacy",
+    items: [
+      { href: "/ventas-jerarquicas", label: "Análisis de Ventas", icon: LayoutGrid },
+      { href: "/compras-catalogo", label: "Gestión de Compras", icon: ShoppingCart },
     ],
   },
 ];

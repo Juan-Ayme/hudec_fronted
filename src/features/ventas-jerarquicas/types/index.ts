@@ -1,12 +1,8 @@
 export type Row = Record<string, unknown>;
 
-/* 5 Columnas del Action Board (Kanban) */
-export type KanbanCol =
-  | "comprar"
-  | "alertas"
-  | "vigilar"
-  | "lentos"
-  | "liquidar";
+/* 5 Columnas del Action Board (Kanban). Definidas junto al clasificador que
+ * las asigna (lib/clasificacion), espejo del backend. */
+export type { KanbanCol } from "@/lib/clasificacion";
 
 export type KanbanTone = "primary" | "danger" | "success" | "warning" | "neutral";
 

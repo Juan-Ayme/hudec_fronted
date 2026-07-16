@@ -49,7 +49,7 @@ export class ApiError extends Error {
 
 type Query = Record<string, string | number | boolean | null | undefined>;
 
-function buildQuery(params?: Query): string {
+export function buildQuery(params?: Query): string {
   if (!params) return "";
   const sp = new URLSearchParams();
   for (const [k, v] of Object.entries(params)) {
@@ -73,7 +73,7 @@ const COMPANY_STORAGE_KEY = "kawii.company";
  * en cada request. NO es un hook: se puede llamar fuera de React.
  * Ver CompanyProvider (src/components/company-context.tsx) para el estado UI.
  */
-function readActiveCompanyId(): number | null {
+export function readActiveCompanyId(): number | null {
   if (typeof window === "undefined") return null;
   try {
     const raw = window.localStorage.getItem(COMPANY_STORAGE_KEY);

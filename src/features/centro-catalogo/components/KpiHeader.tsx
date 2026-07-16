@@ -47,7 +47,18 @@ export function KpiHeader({
   showVentasMetrics: boolean;
 }) {
   if (!node) return null;
-  const pendientes = node.criticos + node.altas;
+
+  // "Por reponer" = universo de compras (severidad Crítico + Alta). Con la
+  // matriz disponible se cuenta sobre ella (`paraComprar` usa hoy la MISMA
+  // taxonomía que el backend), así el KPI sigue siendo correcto con "Todas las
+  // tiendas", donde /compras-catalogo no se consulta y criticos/altas son 0.
+  // En modo viewer (sin matriz) la única fuente es compras.
+  const pendientes = showVentasMetrics ? node.paraComprar : node.criticos + node.altas;
+  const desglose =
+    node.criticos + node.altas > 0
+      ? `${num(node.criticos)} críticos · ${num(node.altas)} alta`
+      : "SKUs en quiebre (Crítico + Alta), igual que Decisiones de Compra";
+
   return (
     <div className="flex flex-wrap items-center gap-1.5">
       <KpiChip
@@ -62,7 +73,7 @@ export function KpiHeader({
         label="Por reponer"
         value={num(pendientes)}
         tone={pendientes > 0 ? "danger" : undefined}
-        title={`${num(node.criticos)} críticos · ${num(node.altas)} alta`}
+        title={desglose}
       />
       {node.sugeridos > 0 && (
         <KpiChip label="Sugerido" value={`${num(node.sugeridos)} uds`} tone="primary" />

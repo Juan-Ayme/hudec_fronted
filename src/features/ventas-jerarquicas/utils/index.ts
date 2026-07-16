@@ -1,5 +1,6 @@
 import { KanbanCol, Row } from "../types";
 import { getClasif } from "@/lib/matrix-classify";
+import { clasificarSku } from "@/lib/clasificacion";
 
 export const s = (v: unknown): string => (v == null ? "" : String(v));
 
@@ -15,59 +16,12 @@ export const n = (v: unknown): number => {
   return 0;
 };
 
+/**
+ * Columna del kanban de una fila de la matriz. Delega en `clasificarSku`, el
+ * espejo del clasificador del backend, para que "comprar" sea exactamente el
+ * universo de /compras-catalogo (severidad Crítico + Alta) y ninguna etiqueta
+ * caiga por descarte en "liquidar".
+ */
 export function getKanbanColumn(row: Row): KanbanCol {
-  const clasif = getClasif(row as Record<string, unknown>).toUpperCase();
-  
-  if (
-    clasif.includes("BESTSELLER ACTIVO") ||
-    clasif.includes("BESTSELLER RÁPIDO AGOTADO") ||
-    clasif.includes("OPORTUNIDAD PERDIDA") ||
-    clasif.includes("QUIEBRE DE BESTSELLER") ||
-    clasif.includes("AGOTADO CON DEMANDA") ||
-    clasif.includes("ALTA ROTACIÓN POR LOTE") ||
-    clasif.includes("ALTA ROTACIÓN") ||
-    clasif.includes("ROTACIÓN ACTIVA AL BORDE") ||
-    clasif.includes("POCO STOCK CON DEMANDA")
-  ) {
-    return "comprar";
-  }
-
-  if (
-    clasif.includes("PÉRDIDA DE STOCK") ||
-    clasif.includes("VENTAS CON PÉRDIDA") ||
-    clasif.includes("VENDIÓ Y SE PERDIÓ") ||
-    clasif.includes("STOCK BAJO QUIETO") ||
-    clasif.includes("RITMO PERDIDO") ||
-    clasif.includes("EX-BESTSELLER ENFRIADO") ||
-    clasif.includes("CASO ATÍPICO")
-  ) {
-    return "alertas";
-  }
-
-  if (
-    clasif.includes("PRODUCTO NUEVO") ||
-    clasif.includes("EMERGENTE") ||
-    clasif.includes("STOCK RECIÉN LLEGADO") ||
-    clasif.includes("LOTE NUEVO VENDIENDO") ||
-    clasif.includes("RECIÉN REABASTECIDO") ||
-    clasif.includes("ROTACIÓN ACTIVA") ||
-    clasif.includes("INVENTARIO SANO") ||
-    clasif.includes("VENDIENDO MÁS") ||
-    clasif.includes("RECIBIDO Y NO VENDIDO")
-  ) {
-    return "vigilar";
-  }
-
-  if (
-    clasif.includes("LENTO PERO CONSTANTE") ||
-    clasif.includes("BAJA ROTACIÓN") ||
-    clasif.includes("EXCESO") ||
-    clasif.includes("STOCK EXCESIVO") ||
-    clasif.includes("ROTACIÓN BAJANDO")
-  ) {
-    return "lentos";
-  }
-
-  // Fallback a liquidar
-  return "liquidar";
+  return clasificarSku(getClasif(row as Record<string, unknown>)).kanban;
 }

@@ -5,7 +5,7 @@
 // X-Company-Id desde localStorage. NO hay que pasar company_id acá.
 // El único filtro por sucursal es `office_id` (null = todas las tiendas del scope).
 
-import { request } from "@/lib/api";
+import { request, API_BASE_URL, buildQuery, readActiveCompanyId } from "./api";
 import type {
   CatalogHealthResponse,
   CategoryTargetPatch,
@@ -152,6 +152,65 @@ export const backfillVariantCosts = (dry_run: boolean) =>
     { method: "POST", query: { dry_run } },
   );
 
+/** Análisis de salud de costos por sucursal. */
+export const getVariantCostsByOffice = (
+  params: import("@/lib/bi-types").VariantCostByOfficeParams = {},
+  signal?: AbortSignal,
+) =>
+  request<import("@/lib/bi-types").VariantCostHealthResponse>("/config/variant-costs/by-office", {
+    query: {
+      office_id: params.office_id ?? undefined,
+      page: params.page ?? 1,
+      page_size: params.page_size ?? 100,
+      days: params.days,
+      umbral_margen_bajo: params.umbral_margen_bajo,
+      umbral_margen_alto: params.umbral_margen_alto,
+      umbral_outlier_pct: params.umbral_outlier_pct,
+      umbral_desactualizado_pct: params.umbral_desactualizado_pct,
+      umbral_ratio_max_min: params.umbral_ratio_max_min,
+      solo_problemas: params.solo_problemas,
+    },
+    signal,
+  });
+
+/** Descarga el reporte de Excel con problemas de costos. */
+export const exportVariantCostsExcel = async (
+  params: import("@/lib/bi-types").VariantCostByOfficeParams = {},
+  signal?: AbortSignal,
+) => {
+  const query = {
+    office_id: params.office_id ?? undefined,
+    days: params.days,
+    umbral_margen_bajo: params.umbral_margen_bajo,
+    umbral_margen_alto: params.umbral_margen_alto,
+    umbral_outlier_pct: params.umbral_outlier_pct,
+    umbral_desactualizado_pct: params.umbral_desactualizado_pct,
+    umbral_ratio_max_min: params.umbral_ratio_max_min,
+    solo_problemas: params.solo_problemas,
+  };
+  const url = `${API_BASE_URL}/config/variant-costs/by-office/export${buildQuery(query as Record<string, string | number | boolean | null | undefined>)}`;
+  const headers: Record<string, string> = {};
+  const companyId = readActiveCompanyId();
+  if (companyId !== null) headers["X-Company-Id"] = String(companyId);
+
+  const res = await fetch(url, {
+    headers,
+    signal,
+    credentials: "include",
+  });
+  if (!res.ok) throw new Error("No se pudo exportar el Excel");
+  
+  const blob = await res.blob();
+  const downloadUrl = window.URL.createObjectURL(blob);
+  const a = document.createElement("a");
+  a.href = downloadUrl;
+  a.download = `auditoria_costos_${new Date().toISOString().split("T")[0]}.xlsx`;
+  document.body.appendChild(a);
+  a.click();
+  a.remove();
+  window.URL.revokeObjectURL(downloadUrl);
+};
+
 // ──────────────────────── Query keys (para @tanstack/react-query) ────────────────────────
 // Centralizados para invalidar todo el módulo BI de una sola vez cuando cambia la
 // empresa activa. Usan un array simple; sumarles el office_id/params en cada page.
@@ -169,6 +228,7 @@ export const biQueryKeys = {
     ["bi", "category-targets", office_id] as const,
   categoryTargetsPreview: () => ["bi", "category-targets", "preview"] as const,
   variantCostsAudit: () => ["bi", "variant-costs", "audit"] as const,
+  variantCostsByOffice: (params: import("@/lib/bi-types").VariantCostByOfficeParams) => ["bi", "variant-costs", "by-office", params] as const,
 } as const;
 
 /** Re-export tipos crudos por conveniencia (evita 2 imports desde las páginas). */
@@ -185,4 +245,6 @@ export type {
   PulseResponse,
   VariantCostAudit,
   VariantCostBackfillResult,
+  VariantCostByOfficeParams,
+  VariantCostHealthResponse,
 } from "@/lib/bi-types";
