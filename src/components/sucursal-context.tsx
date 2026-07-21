@@ -4,6 +4,7 @@ import {
   createContext,
   useContext,
   useEffect,
+  useMemo,
   useState,
   useRef,
   type ReactNode,
@@ -71,9 +72,26 @@ export function SucursalProvider({ children }: { children: ReactNode }) {
     }
   }, [state]);
 
+  // ★ Fix race condition: si el usuario tiene acceso restringido
+  // (allowed_office_ids no vacío), invalidamos sincronamente cualquier
+  // officeId que no esté en la lista. Esto evita que los hooks de datos
+  // disparen queries con officeId=null (datos consolidados) en el primer
+  // render, antes de que el useEffect del SucursalSelector lo corrija.
+  const { activeCompany } = useCompany();
+  const allowed = activeCompany?.allowed_office_ids ?? [];
+  const isRestricted = allowed.length > 0;
+
+  const safeState = useMemo(() => {
+    if (!isRestricted) return state;
+    // Con acceso restringido: si el officeId actual no está permitido, retornar null.
+    // El SucursalSelector corregirá esto a una sucursal válida vía su useEffect.
+    if (state && allowed.includes(state.officeId)) return state;
+    return null;
+  }, [state, isRestricted, allowed]);
+
   const value: SucursalCtx = {
-    officeId: state?.officeId ?? null,
-    sucursalName: state?.sucursalName ?? null,
+    officeId: safeState?.officeId ?? null,
+    sucursalName: safeState?.sucursalName ?? null,
     setSucursal: setState,
   };
 

@@ -83,12 +83,12 @@ export const NAV_GROUPS: NavGroup[] = [
 export const ALL_NAV_ITEMS: NavItem[] = NAV_GROUPS.flatMap((g) => g.items);
 
 /** Rutas que ve un `viewer` (encargado de tienda). El resto queda oculto. */
-const VIEWER_HREFS = new Set<string>(["/centro-catalogo", "/compras-catalogo", "/pulso"]);
+const VIEWER_HREFS = new Set<string>(["/", "/centro-catalogo", "/compras-catalogo", "/pulso", "/taxonomia"]);
 
 /** Grupos de navegación visibles según el rol en la empresa activa.
  *  viewer → solo las vistas operativas de su tienda; admin/operador → todo. */
 export function navGroupsForRole(role: UserRole | null): NavGroup[] {
-  if (role !== "viewer") return NAV_GROUPS;
+  if (role !== "viewer" && role !== null) return NAV_GROUPS;
   return NAV_GROUPS.map((g) => ({
     ...g,
     items: g.items.filter((i) => VIEWER_HREFS.has(i.href)),

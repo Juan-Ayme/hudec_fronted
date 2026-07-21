@@ -24,6 +24,7 @@ export default function AuditoriaCostosPage() {
     umbral_desactualizado_pct: 20.0,
     umbral_ratio_max_min: 2.0,
     solo_problemas: false,
+    incluir_igv_en_margen: true,
     page: 1,
     page_size: 100,
   });
@@ -52,7 +53,7 @@ export default function AuditoriaCostosPage() {
   const handleExport = async () => {
     try {
       setIsExporting(true);
-      await exportVariantCostsExcel(params);
+      await exportVariantCostsExcel(queryParams);
     } catch (err) {
       console.error(err);
       // Aqui podrías mostrar un toast con el error
@@ -233,6 +234,18 @@ export default function AuditoriaCostosPage() {
           
           <div className="flex flex-col gap-1.5 md:col-span-2 lg:col-span-2 justify-end pb-1">
             <label className="flex items-center gap-2 text-sm font-medium text-fg cursor-pointer select-none">
+              <input
+                type="checkbox"
+                className="h-4 w-4 rounded border-border-soft text-primary focus:ring-primary"
+                checked={params.incluir_igv_en_margen}
+                onChange={(e) => handleParamChange("incluir_igv_en_margen", e.target.checked)}
+              />
+              <span className="flex items-center gap-1.5">
+                Incluir IGV en Rentabilidad
+                <span className="text-xs text-muted font-normal">(Usa precio bruto)</span>
+              </span>
+            </label>
+            <label className="flex items-center gap-2 text-sm font-medium text-fg cursor-pointer select-none mt-2">
               <input
                 type="checkbox"
                 className="h-4 w-4 rounded border-border-soft text-primary focus:ring-primary"

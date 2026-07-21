@@ -832,6 +832,7 @@ export interface VariantCostByOfficeParams {
   umbral_desactualizado_pct?: number;
   umbral_ratio_max_min?: number;
   solo_problemas?: boolean;
+  incluir_igv_en_margen?: boolean;
 }
 
 export interface VariantCostHealthDetail {

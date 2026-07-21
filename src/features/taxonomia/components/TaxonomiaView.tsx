@@ -9,6 +9,7 @@ import { Input } from "@/components/ui/input";
 import { Badge } from "@/components/ui/badge";
 import { LoadingState, ErrorState, EmptyState } from "@/components/ui/states";
 import { useTaxonomia } from "../hooks/useTaxonomia";
+import { useCompany } from "@/components/company-context";
 import { TaxonomiaTree } from "./TaxonomiaTree";
 import { TaxonomiaFormDialog } from "./TaxonomiaFormDialog";
 import { TaxonomiaDeleteDialog } from "./TaxonomiaDeleteDialog";
@@ -56,6 +57,9 @@ export function TaxonomiaView() {
     wipeMut,
   } = useTaxonomia();
 
+  const { activeRole } = useCompany();
+  const readOnly = activeRole === "viewer" || activeRole === null;
+
   return (
     <div>
       <PageHeader
@@ -66,33 +70,37 @@ export function TaxonomiaView() {
             <Button variant="ghost" onClick={handleExport} title="Descargar el árbol actual como JSON">
               <Download className="h-4 w-4" /> Exportar
             </Button>
-            <Button
-              variant="ghost"
-              onClick={() => {
-                setImportText("");
-                setImportResult(null);
-                setImportOpen(true);
-              }}
-              title="Pegar un JSON e importar los deptos/categorías/subcategorías que falten"
-            >
-              <Upload className="h-4 w-4" /> Importar
-            </Button>
-            <Button
-              variant="danger"
-              onClick={() => {
-                setWipeConfirm("");
-                setWipeResult(null);
-                setWipeOpen(true);
-                wipeMut.reset();
-              }}
-              disabled={stats.deps === 0}
-              title="Borrar TODA la taxonomía y empezar desde cero"
-            >
-              <Eraser className="h-4 w-4" /> Limpiar todo
-            </Button>
-            <Button onClick={() => openCreate("department")}>
-              <Plus className="h-4 w-4" /> Departamento
-            </Button>
+            {!readOnly && (
+              <>
+                <Button
+                  variant="ghost"
+                  onClick={() => {
+                    setImportText("");
+                    setImportResult(null);
+                    setImportOpen(true);
+                  }}
+                  title="Pegar un JSON e importar los deptos/categorías/subcategorías que falten"
+                >
+                  <Upload className="h-4 w-4" /> Importar
+                </Button>
+                <Button
+                  variant="danger"
+                  onClick={() => {
+                    setWipeConfirm("");
+                    setWipeResult(null);
+                    setWipeOpen(true);
+                    wipeMut.reset();
+                  }}
+                  disabled={stats.deps === 0}
+                  title="Borrar TODA la taxonomía y empezar desde cero"
+                >
+                  <Eraser className="h-4 w-4" /> Limpiar todo
+                </Button>
+                <Button onClick={() => openCreate("department")}>
+                  <Plus className="h-4 w-4" /> Departamento
+                </Button>
+              </>
+            )}
           </div>
         }
       />
@@ -138,6 +146,7 @@ export function TaxonomiaView() {
             openCreate={openCreate}
             openRename={openRename}
             openDelete={openDelete}
+            readOnly={readOnly}
           />
         )}
       </Card>

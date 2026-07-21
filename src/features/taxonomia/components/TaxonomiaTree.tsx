@@ -51,6 +51,7 @@ export function TaxonomiaTree({
   openCreate,
   openRename,
   openDelete,
+  readOnly,
 }: {
   filteredDepartments: FilteredDepartments;
   searchQuery: string;
@@ -59,6 +60,7 @@ export function TaxonomiaTree({
   openCreate: (level: Level, parentId?: number) => void;
   openRename: (level: Level, id: number, currentName: string) => void;
   openDelete: (d: DeleteState) => void;
+  readOnly?: boolean;
 }) {
   return (
     <ul className="divide-y divide-border/50">
@@ -91,29 +93,33 @@ export function TaxonomiaTree({
                 {cats.length} cat · {num(depProds)} prod
               </Badge>
               <div className="ml-auto flex items-center gap-0.5">
-                <ActionBtn
-                  icon={Plus}
-                  title="Agregar categoría"
-                  onClick={() => openCreate("category", dep.id)}
-                />
-                <ActionBtn
-                  icon={Pencil}
-                  title="Renombrar"
-                  onClick={() => openRename("department", dep.id, depName)}
-                />
-                <ActionBtn
-                  icon={Trash2}
-                  title="Eliminar"
-                  danger
-                  onClick={() =>
-                    openDelete({
-                      level: "department",
-                      id: dep.id,
-                      name: depName,
-                      childCount: cats.length,
-                    })
-                  }
-                />
+                {!readOnly && (
+                  <>
+                    <ActionBtn
+                      icon={Plus}
+                      title="Agregar categoría"
+                      onClick={() => openCreate("category", dep.id)}
+                    />
+                    <ActionBtn
+                      icon={Pencil}
+                      title="Renombrar"
+                      onClick={() => openRename("department", dep.id, depName)}
+                    />
+                    <ActionBtn
+                      icon={Trash2}
+                      title="Eliminar"
+                      danger
+                      onClick={() =>
+                        openDelete({
+                          level: "department",
+                          id: dep.id,
+                          name: depName,
+                          childCount: cats.length,
+                        })
+                      }
+                    />
+                  </>
+                )}
               </div>
             </div>
 
@@ -146,33 +152,37 @@ export function TaxonomiaTree({
                           ({subs.length})
                         </span>
                         <div className="ml-auto flex items-center gap-0.5">
-                          <ActionBtn
-                            icon={Plus}
-                            title="Agregar subcategoría"
-                            onClick={() =>
-                              openCreate("subcategory", cat.id)
-                            }
-                          />
-                          <ActionBtn
-                            icon={Pencil}
-                            title="Renombrar"
-                            onClick={() =>
-                              openRename("category", cat.id, catName)
-                            }
-                          />
-                          <ActionBtn
-                            icon={Trash2}
-                            title="Eliminar"
-                            danger
-                            onClick={() =>
-                              openDelete({
-                                level: "category",
-                                id: cat.id,
-                                name: catName,
-                                childCount: subs.length,
-                              })
-                            }
-                          />
+                          {!readOnly && (
+                            <>
+                              <ActionBtn
+                                icon={Plus}
+                                title="Agregar subcategoría"
+                                onClick={() =>
+                                  openCreate("subcategory", cat.id)
+                                }
+                              />
+                              <ActionBtn
+                                icon={Pencil}
+                                title="Renombrar"
+                                onClick={() =>
+                                  openRename("category", cat.id, catName)
+                                }
+                              />
+                              <ActionBtn
+                                icon={Trash2}
+                                title="Eliminar"
+                                danger
+                                onClick={() =>
+                                  openDelete({
+                                    level: "category",
+                                    id: cat.id,
+                                    name: catName,
+                                    childCount: subs.length,
+                                  })
+                                }
+                              />
+                            </>
+                          )}
                         </div>
                       </div>
 
@@ -203,30 +213,34 @@ export function TaxonomiaTree({
                                   </Badge>
                                 )}
                                 <div className="ml-auto flex items-center gap-0.5">
-                                  <ActionBtn
-                                    icon={Pencil}
-                                    title="Renombrar"
-                                    onClick={() =>
-                                      openRename(
-                                        "subcategory",
-                                        sub.id,
-                                        sub.nombre,
-                                      )
-                                    }
-                                  />
-                                  <ActionBtn
-                                    icon={Trash2}
-                                    title="Eliminar"
-                                    danger
-                                    onClick={() =>
-                                      openDelete({
-                                        level: "subcategory",
-                                        id: sub.id,
-                                        name: sub.nombre,
-                                        childCount: sub.productos,
-                                      })
-                                    }
-                                  />
+                                  {!readOnly && (
+                                    <>
+                                      <ActionBtn
+                                        icon={Pencil}
+                                        title="Renombrar"
+                                        onClick={() =>
+                                          openRename(
+                                            "subcategory",
+                                            sub.id,
+                                            sub.nombre,
+                                          )
+                                        }
+                                      />
+                                      <ActionBtn
+                                        icon={Trash2}
+                                        title="Eliminar"
+                                        danger
+                                        onClick={() =>
+                                          openDelete({
+                                            level: "subcategory",
+                                            id: sub.id,
+                                            name: sub.nombre,
+                                            childCount: sub.productos,
+                                          })
+                                        }
+                                      />
+                                    </>
+                                  )}
                                 </div>
                               </li>
                             ))}

@@ -211,7 +211,15 @@ function UnifiedHeaderMenu() {
     retryDelay: (i) => Math.min(1000 * 2 ** i, 4000),
   });
 
-  const sucursales = valuation.data?.por_sucursal ?? [];
+  const allSucursales = valuation.data?.por_sucursal ?? [];
+
+  // Filtrar sucursales según allowed_office_ids (igual que SucursalSelector)
+  const { activeCompany: menuCompany } = useCompany();
+  const allowedIds = menuCompany?.allowed_office_ids ?? [];
+  const isRestricted = allowedIds.length > 0;
+  const sucursales = isRestricted
+    ? allSucursales.filter((s) => allowedIds.includes(s.bsale_office_id))
+    : allSucursales;
 
   if (!user) return null;
 
@@ -226,7 +234,7 @@ function UnifiedHeaderMenu() {
     viewer: "bg-surface-3 text-fg border border-border-soft font-semibold",
   };
 
-  const displayRole = activeRole ?? companies[0]?.role ?? "viewer";
+  const displayRole = activeRole ?? "viewer";
 
   return (
     <div className="relative" ref={containerRef}>
@@ -321,19 +329,21 @@ function UnifiedHeaderMenu() {
               </p>
             </div>
             
-            <button
-              onClick={() => {
-                setSucursal(null);
-                setOpen(false);
-              }}
-              className={cn(
-                "flex w-full items-center justify-between gap-2 px-3 py-2.5 rounded-lg text-left text-sm transition-all duration-200 active:scale-[0.98]",
-                officeId === null ? "bg-primary/15 text-primary font-medium" : "hover:bg-surface-2 text-fg"
-              )}
-            >
-              <span className="leading-none">Todas las tiendas</span>
-              {officeId === null && <Check className="h-4 w-4 shrink-0 text-primary" />}
-            </button>
+            {!isRestricted && (
+              <button
+                onClick={() => {
+                  setSucursal(null);
+                  setOpen(false);
+                }}
+                className={cn(
+                  "flex w-full items-center justify-between gap-2 px-3 py-2.5 rounded-lg text-left text-sm transition-all duration-200 active:scale-[0.98]",
+                  officeId === null ? "bg-primary/15 text-primary font-medium" : "hover:bg-surface-2 text-fg"
+                )}
+              >
+                <span className="leading-none">Todas las tiendas</span>
+                {officeId === null && <Check className="h-4 w-4 shrink-0 text-primary" />}
+              </button>
+            )}
 
             {valuation.isLoading ? (
               <div className="px-3 py-3 text-xs text-muted flex items-center gap-2">

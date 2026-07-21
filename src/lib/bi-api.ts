@@ -169,6 +169,7 @@ export const getVariantCostsByOffice = (
       umbral_desactualizado_pct: params.umbral_desactualizado_pct,
       umbral_ratio_max_min: params.umbral_ratio_max_min,
       solo_problemas: params.solo_problemas,
+      incluir_igv_en_margen: params.incluir_igv_en_margen,
     },
     signal,
   });
@@ -187,6 +188,7 @@ export const exportVariantCostsExcel = async (
     umbral_desactualizado_pct: params.umbral_desactualizado_pct,
     umbral_ratio_max_min: params.umbral_ratio_max_min,
     solo_problemas: params.solo_problemas,
+    incluir_igv_en_margen: params.incluir_igv_en_margen,
   };
   const url = `${API_BASE_URL}/config/variant-costs/by-office/export${buildQuery(query as Record<string, string | number | boolean | null | undefined>)}`;
   const headers: Record<string, string> = {};

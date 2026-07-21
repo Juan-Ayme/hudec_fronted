@@ -27,7 +27,7 @@ export function useCentroCatalogo(selection: Selection) {
   const { officeId, sucursalName } = useSucursal();
   const { activeRole } = useCompany();
   const isViewer = activeRole === "viewer";
-  const canVerRendimiento = activeRole === "admin" || activeRole === "operador";
+  const canVerRendimiento = activeRole !== null;
 
   // Matriz 04b (universo completo). NO se consulta para viewer — hoy tampoco
   // tiene acceso a /ventas-jerarquicas. Gate estricto contra rol null.

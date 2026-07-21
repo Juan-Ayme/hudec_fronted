@@ -29,7 +29,7 @@ import { ExportMenu } from "./ExportMenu";
  */
 export function CentroCatalogoView() {
   const { activeRole } = useCompany();
-  const canVerRendimiento = activeRole === "admin" || activeRole === "operador";
+  const canVerRendimiento = activeRole !== null;
   const { tab, selection, setTab, setSelection } = useCentroUrlState(canVerRendimiento);
   const state = useCentroCatalogo(selection);
 
@@ -77,7 +77,7 @@ export function CentroCatalogoView() {
         <Tabs items={tabItems} value={tab} onChange={setTab} />
         <div className="flex items-center gap-2">
           <div className="group relative flex-1 xl:w-72">
-            <Search className="absolute left-3 top-1/2 h-3.5 w-3.5 -translate-y-1/2 text-white/50 transition-colors group-focus-within:text-white" />
+            <Search className="pointer-events-none absolute left-3 top-1/2 z-10 h-3.5 w-3.5 -translate-y-1/2 text-white/50 transition-colors group-focus-within:text-white" />
             <Input
               placeholder="Buscar SKU, producto o clasificación..."
               value={state.search}
