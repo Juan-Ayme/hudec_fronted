@@ -1,7 +1,5 @@
 import {
   LayoutDashboard,
-
-  LayoutGrid,
   FolderTree,
   Tags,
   ShieldCheck,
@@ -11,9 +9,8 @@ import {
   Gauge,
   PackageSearch,
   Settings,
-  ShoppingCart,
-  History,
   Users,
+  History,
   CircleDollarSign,
   type LucideIcon,
 } from "lucide-react";
@@ -71,19 +68,12 @@ export const NAV_GROUPS: NavGroup[] = [
       { href: "/usuarios", label: "Usuarios", icon: Users },
     ],
   },
-  {
-    title: "Legacy",
-    items: [
-      { href: "/ventas-jerarquicas", label: "Análisis de Ventas", icon: LayoutGrid },
-      { href: "/compras-catalogo", label: "Gestión de Compras", icon: ShoppingCart },
-    ],
-  },
 ];
 
 export const ALL_NAV_ITEMS: NavItem[] = NAV_GROUPS.flatMap((g) => g.items);
 
 /** Rutas que ve un `viewer` (encargado de tienda). El resto queda oculto. */
-const VIEWER_HREFS = new Set<string>(["/", "/centro-catalogo", "/compras-catalogo", "/pulso", "/taxonomia"]);
+const VIEWER_HREFS = new Set<string>(["/", "/centro-catalogo", "/pulso", "/taxonomia"]);
 
 /** Grupos de navegación visibles según el rol en la empresa activa.
  *  viewer → solo las vistas operativas de su tienda; admin/operador → todo. */
