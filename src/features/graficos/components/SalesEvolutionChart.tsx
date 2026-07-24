@@ -15,14 +15,29 @@ const ComposedChart = dynamic(() => import("@/components/charts/composed-chart")
 /** Evolución de ventas vs ticket promedio. */
 export function SalesEvolutionChart({
   query: byDay,
+  onSelectDay,
+  selectedDate,
 }: {
   query: UseQueryResult<SalesByDay[], Error>;
+  onSelectDay?: (day: SalesByDay) => void;
+  selectedDate?: string | null;
 }) {
   return (
     <Card className="h-full flex flex-col overflow-hidden relative">
       <div className="pointer-events-none absolute top-0 left-0 h-full w-full bg-gradient-to-b from-primary/5 to-transparent opacity-50" />
       <CardHeader
-        title={<span className="flex items-center gap-2"><TrendingUp className="h-5 w-5 text-primary" /> Evolución de Ventas vs Ticket Promedio</span>}
+        title={
+          <div className="flex items-center justify-between flex-wrap gap-2">
+            <span className="flex items-center gap-2">
+              <TrendingUp className="h-5 w-5 text-primary" /> Evolución de Ventas vs Ticket Promedio
+            </span>
+            {onSelectDay && (
+              <span className="text-xs font-normal text-primary/80 bg-primary/10 border border-primary/20 px-2.5 py-1 rounded-full animate-pulse">
+                💡 Haz clic en cualquier pico o barra para ver el detalle de productos
+              </span>
+            )}
+          </div>
+        }
         subtitle="Analiza la correlación entre el volumen ingresado y el valor promedio de compra"
       />
       <CardBody className="flex-1 relative z-10 pt-0 pb-6 min-h-[350px]">
@@ -38,6 +53,7 @@ export function SalesEvolutionChart({
             barFormatter={(v) => moneyCompact(v)}
             lineFormatter={(v) => money(v)}
             height="100%"
+            onClick={(entry) => onSelectDay?.(entry as SalesByDay)}
           />
         )}
       </CardBody>

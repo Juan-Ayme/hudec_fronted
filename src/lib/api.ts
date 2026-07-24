@@ -16,6 +16,7 @@ import type {
   RotacionHistoricaResponse,
   SalesByCategory,
   SalesByDay,
+  DailySalesDetail,
   SalesByDepartment,
   SkuHistory,
   SalesVsGoal,
@@ -478,6 +479,16 @@ export const getSalesByDay = (
 ) =>
   request<SalesByDay[]>("/analytics/sales-by-day", {
     query: { days, office_id: office_id ?? undefined },
+    signal,
+  });
+
+export const getDailySalesDetail = (
+  target_date: string,
+  office_id?: number | null,
+  signal?: AbortSignal,
+) =>
+  request<DailySalesDetail>("/analytics/sales-by-day/detail", {
+    query: { target_date, office_id: office_id ?? undefined },
     signal,
   });
 

@@ -30,6 +30,7 @@ interface Props<T> {
   barFormatter?: (val: unknown) => string;
   lineFormatter?: (val: unknown) => string;
   height?: number | string;
+  onClick?: (entry: T) => void;
 }
 
 export function ComposedChart<T>({
@@ -43,14 +44,24 @@ export function ComposedChart<T>({
   barFormatter,
   lineFormatter,
   height = 300,
+  onClick,
 }: Props<T>) {
   const mounted = useMounted();
   if (!mounted) return <div style={{ height }} className="w-full bg-surface-2 animate-pulse rounded-xl" />;
 
   return (
-    <div style={{ height, width: "100%" }}>
+    <div style={{ height, width: "100%" }} className={onClick ? "cursor-pointer" : ""}>
       <ResponsiveContainer>
-        <RechartsComposedChart data={data} margin={{ top: 10, right: 10, left: 0, bottom: 0 }}>
+        <RechartsComposedChart
+          data={data}
+          margin={{ top: 10, right: 10, left: 0, bottom: 0 }}
+          onClick={(state: any) => {
+            if (state && state.activePayload && state.activePayload.length > 0) {
+              const payload = state.activePayload[0].payload as T;
+              onClick?.(payload);
+            }
+          }}
+        >
           <CartesianGrid {...GRID_PROPS} />
           <XAxis
             dataKey={xKey as string}

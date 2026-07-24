@@ -247,6 +247,37 @@ export interface SalesVsGoal {
   por_sucursal: GoalRow[];
 }
 
+export interface DailySalesProduct {
+  bsale_variant_id: number;
+  sku: string;
+  producto: string;
+  departamento: string;
+  categoria: string;
+  unidades_vendidas: number;
+  total_ventas: number;
+  stock_actual: number;
+  en_quiebre: boolean;
+}
+
+export interface DailySalesOffice {
+  bsale_office_id: number;
+  sucursal: string;
+  ventas: number;
+  tickets: number;
+}
+
+export interface DailySalesDetail {
+  date: string;
+  summary: {
+    ventas: number;
+    tickets: number;
+    ticket_promedio: number;
+  };
+  productos: DailySalesProduct[];
+  quiebres: DailySalesProduct[];
+  por_sucursal: DailySalesOffice[];
+}
+
 export interface WeeklyBoardKpis {
   ticket_promedio: number;
   transacciones: number;
