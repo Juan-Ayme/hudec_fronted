@@ -633,7 +633,7 @@ export function AppShell({ children }: { children: React.ReactNode }) {
           sidebarCollapsed ? "lg:pl-[68px]" : "lg:pl-64"
         )}
       >
-        <header className="sticky top-0 z-20 flex h-14 items-center gap-3 border-b border-white/5 bg-bg/60 px-4 backdrop-blur-xl sm:px-6">
+        <header className="sticky top-0 z-40 flex h-14 items-center gap-3 border-b border-white/5 bg-bg/60 px-4 backdrop-blur-xl sm:px-6">
           <button
             onClick={() => setMobileOpen(true)}
             className="rounded-md p-1.5 text-muted transition-colors duration-[var(--duration-fast)] ease-[var(--ease-premium)] hover:bg-surface-2 hover:text-fg focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-primary/40 lg:hidden"

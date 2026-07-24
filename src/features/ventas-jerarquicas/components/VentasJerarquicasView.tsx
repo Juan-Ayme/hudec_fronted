@@ -293,7 +293,7 @@ export function VentasJerarquicasView() {
         <div className="absolute inset-0 bg-gradient-to-br from-primary/5 via-transparent to-violet/5 pointer-events-none" />
         
         {/* Unified Toolbar (Tabs + Search/Actions) */}
-        <div className="flex flex-col gap-3 border-b border-white/5 bg-surface/60 px-5 py-2.5 relative z-30 backdrop-blur-md">
+        <div className="flex flex-col gap-3 border-b border-white/5 bg-surface/60 px-5 py-2.5 relative z-10 backdrop-blur-md">
           <div className="flex flex-col xl:flex-row xl:items-center justify-between gap-4">
             {/* Left: Búsqueda */}
             <div className="relative w-full xl:w-56 max-w-xs shrink-0 group xl:mr-2">
