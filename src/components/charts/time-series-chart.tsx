@@ -43,19 +43,39 @@ export function TimeSeriesChart<T>({
   onClick?: (entry: T) => void;
 }) {
   const mounted = useMounted();
+
+  const resolveItem = (state: any): T | null => {
+    if (!state) return null;
+    if (state.activePayload && state.activePayload.length > 0 && state.activePayload[0].payload) {
+      return state.activePayload[0].payload as T;
+    }
+    if (state.activeLabel !== undefined && state.activeLabel !== null) {
+      const found = data.find((item: any) => String(item[xKey]) === String(state.activeLabel));
+      if (found) return found as T;
+    }
+    if (typeof state.activeTooltipIndex === "number" && data[state.activeTooltipIndex]) {
+      return data[state.activeTooltipIndex] as T;
+    }
+    return null;
+  };
+
+  const handleChartClick = (state: any) => {
+    if (!onClick) return;
+    const item = resolveItem(state);
+    if (item) {
+      onClick(item);
+    }
+  };
+
   if (!mounted) return <div style={{ height }} />;
+
   return (
-    <div style={{ height, width: "100%" }} className={onClick ? "cursor-pointer" : ""}>
+    <div style={{ height, width: "100%" }} className={onClick ? "cursor-pointer select-none" : ""}>
       <ResponsiveContainer width="100%" height="100%">
         <AreaChart
           data={data}
           margin={{ top: 8, right: 12, left: 4, bottom: 0 }}
-          onClick={(state: any) => {
-            if (state && state.activePayload && state.activePayload.length > 0) {
-              const payload = state.activePayload[0].payload as T;
-              onClick?.(payload);
-            }
-          }}
+          onClick={handleChartClick}
         >
         <defs>
           {series.map((s, i) => {
@@ -85,7 +105,16 @@ export function TimeSeriesChart<T>({
         />
         <YAxis {...AXIS_PROPS} width={64} tickFormatter={yTickFormatter as (v: string) => string} />
         <Tooltip
-          content={<ChartTooltip formatter={valueFormatter} />}
+          content={(props: any) => {
+            const item = props.payload && props.payload.length > 0 ? (props.payload[0].payload as T) : null;
+            return (
+              <ChartTooltip
+                {...props}
+                formatter={valueFormatter}
+                onClick={onClick && item ? () => onClick(item) : undefined}
+              />
+            );
+          }}
           cursor={{ stroke: "#233044" }}
         />
         {series.map((s, i) => {
@@ -100,7 +129,17 @@ export function TimeSeriesChart<T>({
               strokeWidth={3}
               fill={`url(#grad-${s.key})`}
               dot={false}
-              activeDot={{ r: 6, strokeWidth: 3, stroke: "var(--color-bg)", fill: color }}
+              activeDot={{
+                r: 7,
+                strokeWidth: 3,
+                stroke: "var(--color-bg)",
+                fill: color,
+                onClick: (_: any, event: any) => {
+                  if (event && event.payload && onClick) {
+                    onClick(event.payload as T);
+                  }
+                },
+              }}
             />
           );
         })}

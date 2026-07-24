@@ -56,17 +56,36 @@ export function ChartTooltip({
   payload,
   label,
   formatter,
+  onClick,
 }: {
   active?: boolean;
   payload?: TooltipEntry[];
   label?: string | number;
   formatter?: (value: number | string, name: string) => string;
+  onClick?: () => void;
 }) {
   if (!active || !payload || payload.length === 0) return null;
   return (
-    <div className="rounded-xl border border-border-soft bg-surface-2/90 px-4 py-3 text-xs shadow-2xl backdrop-blur-md">
+    <div
+      onClick={(e) => {
+        if (onClick) {
+          e.stopPropagation();
+          onClick();
+        }
+      }}
+      className={`rounded-xl border border-border-soft bg-surface-2/95 px-4 py-3 text-xs shadow-2xl backdrop-blur-md transition-all ${
+        onClick ? "cursor-pointer hover:border-primary/50 hover:bg-surface-3" : ""
+      }`}
+    >
       {label !== undefined && label !== "" && (
-        <p className="mb-2 font-bold text-fg/90">{label}</p>
+        <div className="mb-2 flex items-center justify-between gap-3 font-bold text-fg/90">
+          <span>{label}</span>
+          {onClick && (
+            <span className="text-[10px] font-normal text-primary bg-primary/10 border border-primary/20 px-2 py-0.5 rounded-full">
+              Ver detalle 🔍
+            </span>
+          )}
+        </div>
       )}
       <div className="flex flex-col gap-1.5">
         {payload.map((entry, i) => (
