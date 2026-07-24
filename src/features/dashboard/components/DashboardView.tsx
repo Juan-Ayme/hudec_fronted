@@ -1,5 +1,6 @@
 "use client";
 
+import { useState } from "react";
 import { Coins, Package, Receipt, Wallet } from "lucide-react";
 import { money, num } from "@/lib/format";
 import { DateRangeSelect } from "@/components/ui/date-range-select";
@@ -12,8 +13,11 @@ import { DepartmentPerformanceCard } from "./DepartmentPerformanceCard";
 import { CapitalDistributionCard } from "./CapitalDistributionCard";
 import { TopProductsCard } from "./TopProductsCard";
 import { OfficePerformanceCard } from "./OfficePerformanceCard";
+import { DayDrillDownPanel } from "@/features/graficos/components/DayDrillDownPanel";
 
 export function DashboardView() {
+  const [selectedDate, setSelectedDate] = useState<string | null>(null);
+
   const {
     days,
     setDays,
@@ -83,8 +87,23 @@ export function DashboardView() {
 
         {/* Time Series Hero */}
         <div className="md:col-span-9">
-          <RevenueTrendCard days={days} query={byDay} />
+          <RevenueTrendCard
+            days={days}
+            query={byDay}
+            onSelectDay={(day) => setSelectedDate(day.dia)}
+          />
         </div>
+
+        {/* PANEL INTERACTIVO DE INSPECCIÓN DIARIA EN EL DASHBOARD */}
+        {selectedDate && (
+          <div className="md:col-span-12">
+            <DayDrillDownPanel
+              date={selectedDate}
+              onClose={() => setSelectedDate(null)}
+              onNavigateDate={(newDate) => setSelectedDate(newDate)}
+            />
+          </div>
+        )}
 
 
         {/* ROW 2: Departments & Donut */}

@@ -31,6 +31,7 @@ export function TimeSeriesChart<T>({
   xTickFormatter,
   yTickFormatter,
   valueFormatter,
+  onClick,
 }: {
   data: T[];
   xKey: string;
@@ -39,12 +40,23 @@ export function TimeSeriesChart<T>({
   xTickFormatter?: (v: unknown) => string;
   yTickFormatter?: (v: unknown) => string;
   valueFormatter?: (v: number | string, name: string) => string;
+  onClick?: (entry: T) => void;
 }) {
   const mounted = useMounted();
   if (!mounted) return <div style={{ height }} />;
   return (
-    <ResponsiveContainer width="100%" height={height}>
-      <AreaChart data={data} margin={{ top: 8, right: 12, left: 4, bottom: 0 }}>
+    <div style={{ height, width: "100%" }} className={onClick ? "cursor-pointer" : ""}>
+      <ResponsiveContainer width="100%" height="100%">
+        <AreaChart
+          data={data}
+          margin={{ top: 8, right: 12, left: 4, bottom: 0 }}
+          onClick={(state: any) => {
+            if (state && state.activePayload && state.activePayload.length > 0) {
+              const payload = state.activePayload[0].payload as T;
+              onClick?.(payload);
+            }
+          }}
+        >
         <defs>
           {series.map((s, i) => {
             const color = s.color ?? CHART_COLORS[i % CHART_COLORS.length];
@@ -94,5 +106,6 @@ export function TimeSeriesChart<T>({
         })}
       </AreaChart>
     </ResponsiveContainer>
+  </div>
   );
 }
