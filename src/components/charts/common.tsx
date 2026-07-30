@@ -1,6 +1,7 @@
 "use client";
 
 import { useSyncExternalStore } from "react";
+import { MousePointerClick } from "lucide-react";
 
 // Paleta y tooltip compartidos para todos los gráficos (Recharts).
 
@@ -81,8 +82,8 @@ export function ChartTooltip({
         <div className="mb-2 flex items-center justify-between gap-3 font-bold text-fg/90">
           <span>{label}</span>
           {onClick && (
-            <span className="text-[10px] font-normal text-primary bg-primary/10 border border-primary/20 px-2 py-0.5 rounded-full">
-              Ver detalle 🔍
+            <span className="inline-flex items-center gap-1 text-[10px] font-semibold text-primary bg-primary/15 border border-primary/30 px-2 py-0.5 rounded-full shadow-xs">
+              <MousePointerClick className="h-3 w-3 shrink-0" /> Ver detalle
             </span>
           )}
         </div>

@@ -73,8 +73,15 @@ export default function AuditoriaCostosPage() {
       header: "Producto",
       render: (row) => (
         <div className="flex flex-col">
-          <span className="font-medium text-fg">{row.producto}</span>
-          <span className="text-[11px] text-muted">SKU: {row.codigo_sku}</span>
+          <span className="font-medium text-fg leading-tight">{row.producto}</span>
+          <div className="flex items-center gap-1.5 mt-1 text-[10px] text-muted">
+            <span className="bg-surface-2 px-1.5 py-0.5 rounded font-mono">SKU: {row.codigo_sku}</span>
+            {row.codigo_barra && (
+              <span className="bg-surface-2 px-1.5 py-0.5 rounded font-mono" title={row.codigo_barra}>
+                CB: {row.codigo_barra}
+              </span>
+            )}
+          </div>
         </div>
       ),
     },

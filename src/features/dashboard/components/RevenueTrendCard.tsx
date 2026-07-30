@@ -7,6 +7,7 @@ import { money, moneyCompact, dayLabel } from "@/lib/format";
 import { Card, CardHeader, CardBody } from "@/components/ui/card";
 import { ErrorState, EmptyState } from "@/components/ui/states";
 import { LineChartLoader } from "@/components/ui/chart-loaders";
+import { InteractiveHint } from "@/components/ui/interactive-hint";
 import type { SalesByDay } from "@/lib/types";
 
 const TimeSeriesChart = dynamic(() => import("@/components/charts/time-series-chart").then(mod => mod.TimeSeriesChart), { ssr: false });
@@ -30,9 +31,7 @@ export function RevenueTrendCard({
               <TrendingUp className="h-5 w-5 text-primary" /> Evolución de Ingresos
             </span>
             {onSelectDay && (
-              <span className="text-xs font-normal text-primary/80 bg-primary/10 border border-primary/20 px-2.5 py-1 rounded-full animate-pulse">
-                💡 Haz clic en cualquier pico o día para ver productos y quiebres
-              </span>
+              <InteractiveHint text="Haz clic en cualquier pico o día para ver productos y quiebres" />
             )}
           </div>
         }

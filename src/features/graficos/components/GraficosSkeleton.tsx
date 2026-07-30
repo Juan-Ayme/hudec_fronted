@@ -8,7 +8,7 @@ export function GraficosSkeleton() {
     <div className="relative">
       <div className="flex flex-wrap items-center justify-between gap-4 border-b border-border-soft pb-4 mb-6">
         <div>
-          <h1 className="text-2xl font-bold tracking-tight text-fg">Analítica Visual</h1>
+          <h1 className="text-2xl font-bold tracking-tight text-fg">Analítica Visual & Gráficos Avanzados</h1>
           <p className="text-sm text-muted">Explora la evolución y distribución de tus ventas en detalle.</p>
         </div>
         <div className={cn("h-10 w-48 rounded-lg border border-white/5", shmr)} />
@@ -24,23 +24,20 @@ export function GraficosSkeleton() {
         <div className="md:col-span-12">
           <div className={cn("h-[430px] rounded-2xl border border-white/5", shmr)} />
         </div>
-        <div className="md:col-span-6">
-          <div className={cn("h-[380px] rounded-2xl border border-white/5", shmr)} />
-        </div>
-        <div className="md:col-span-6">
-          <div className={cn("h-[380px] rounded-2xl border border-white/5", shmr)} />
-        </div>
         <div className="md:col-span-12">
           <div className={cn("h-[480px] rounded-2xl border border-white/5", shmr)} />
         </div>
       </div>
 
-      <PremiumLoaderOverlay messages={[
-        "Construyendo analíticas visuales...",
-        "Cruzando datos por departamento...",
-        "Calculando anatomía del ticket...",
-        "Procesando ranking de categorías..."
-      ]} />
+      <PremiumLoaderOverlay 
+        messages={[
+          "Construyendo analíticas visuales...",
+          "Calculando anatomía del ticket...",
+          "Procesando ranking de categorías..."
+        ]} 
+        variant="analytics"
+        position="center"
+      />
     </div>
   );
 }

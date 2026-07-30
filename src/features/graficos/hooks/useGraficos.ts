@@ -4,18 +4,14 @@ import { useState } from "react";
 import { useQuery } from "@tanstack/react-query";
 import {
   getSalesByDay,
-  getSalesByDepartment,
   getSalesByCategory,
-  getSalesByOffice,
   getTicketAnatomy,
-  getTopProducts,
 } from "@/lib/api";
 import { useSucursal } from "@/components/sucursal-context";
 
 /**
- * Hook de /graficos: rango de días + sucursal activa + las 6 queries de
- * analítica visual (evolución, mix, sucursales, categorías, productos y
- * anatomía del ticket) + flag agregado de loading para el skeleton.
+ * Hook de /graficos: rango de días + sucursal activa + las queries activas de
+ * analítica visual (evolución, categorías y anatomía del ticket) + flag agregado de loading.
  */
 export function useGraficos() {
   const [days, setDays] = useState(30);
@@ -26,19 +22,9 @@ export function useGraficos() {
     queryFn: ({ signal }) => getSalesByDay(days, signal, officeId),
   });
 
-  const byDept = useQuery({
-    queryKey: ["sales-by-department", days, officeId],
-    queryFn: ({ signal }) => getSalesByDepartment(days, signal, officeId),
-  });
-
   const byCategory = useQuery({
     queryKey: ["sales-by-category", days, officeId],
     queryFn: ({ signal }) => getSalesByCategory(days, signal, officeId),
-  });
-
-  const byOffice = useQuery({
-    queryKey: ["sales-by-office", days],
-    queryFn: ({ signal }) => getSalesByOffice(days, signal),
   });
 
   const ticketAnatomy = useQuery({
@@ -46,30 +32,19 @@ export function useGraficos() {
     queryFn: ({ signal }) => getTicketAnatomy(days, "previous_period", signal, officeId),
   });
 
-  const topProducts = useQuery({
-    queryKey: ["top-products", days, officeId],
-    queryFn: ({ signal }) => getTopProducts(days, 15, signal, officeId),
-  });
-
   const anat = ticketAnatomy.data?.delta_pct;
 
   const isAnyLoading =
     byDay.isLoading ||
-    byDept.isLoading ||
     byCategory.isLoading ||
-    byOffice.isLoading ||
-    ticketAnatomy.isLoading ||
-    topProducts.isLoading;
+    ticketAnatomy.isLoading;
 
   return {
     days,
     setDays,
     byDay,
-    byDept,
     byCategory,
-    byOffice,
     ticketAnatomy,
-    topProducts,
     anat,
     isAnyLoading,
   };

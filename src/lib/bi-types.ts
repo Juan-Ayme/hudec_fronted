@@ -838,6 +838,7 @@ export interface VariantCostByOfficeParams {
 export interface VariantCostHealthDetail {
   sucursal: string;
   codigo_sku: string;
+  codigo_barra: string | null;
   producto: string;
   costo_efectivo: number;
   costo_origen: string;

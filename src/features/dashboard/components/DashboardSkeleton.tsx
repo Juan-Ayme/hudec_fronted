@@ -32,12 +32,16 @@ export function DashboardSkeleton() {
           <div className={cn("h-[216px] rounded-2xl border border-white/5", shmr)} />
         </div>
       </div>
-      <PremiumLoaderOverlay messages={[
-        "Analizando ventas del día...",
-        "Calculando ticket promedio...",
-        "Valorizando stock actual...",
-        "Consolidando métricas..."
-      ]} />
+      <PremiumLoaderOverlay 
+        messages={[
+          "Analizando ventas del día...",
+          "Calculando ticket promedio...",
+          "Valorizando stock actual...",
+          "Consolidando métricas..."
+        ]} 
+        variant="growth"
+        position="center"
+      />
     </div>
   );
 }
