@@ -400,47 +400,9 @@ export function UnifiedTree({
         </div>
       )}
 
-      {/* ── Root button + controles ──────────────────────────────────── */}
-      <div className="flex items-center gap-1">
-        <button
-          onClick={() => onSelect(ROOT_SELECTION)}
-          className={cn(
-            "flex flex-1 items-center justify-between rounded-xl px-3 py-2.5 text-left transition-all",
-            "duration-300 ease-[cubic-bezier(0.23,1,0.32,1)] active:scale-[0.98]",
-            isRootSel ? "bg-primary/15 text-primary shadow-[inset_0_1px_2px_rgba(0,0,0,0.1)]" : "text-fg hover:bg-surface-2/60",
-          )}
-        >
-          <span className="flex items-center gap-2">
-            <Layers className={cn("h-4 w-4", isRootSel ? "text-primary" : "text-faint")} />
-            <span className={cn("text-body font-semibold", isRootSel ? "text-primary" : "")}>Todos los productos</span>
-          </span>
-          <span className="text-caption tabular-nums text-muted">{num(totalSkus)} SKUs</span>
-        </button>
-
-        {/* ── Mejora 5: Botones colapsar/expandir ────────────────────── */}
-        {!showGrid && tree.length > 0 && (
-          <div className="flex shrink-0 gap-0.5">
-            <button
-              onClick={collapseAll}
-              title="Colapsar todo"
-              className="flex h-7 w-7 items-center justify-center rounded-lg text-faint transition-colors hover:bg-surface-3 hover:text-muted active:scale-95"
-            >
-              <ChevronsDownUp className="h-3.5 w-3.5" />
-            </button>
-            <button
-              onClick={expandAll}
-              title="Expandir todo"
-              className="flex h-7 w-7 items-center justify-center rounded-lg text-faint transition-colors hover:bg-surface-3 hover:text-muted active:scale-95"
-            >
-              <ChevronsUpDown className="h-3.5 w-3.5" />
-            </button>
-          </div>
-        )}
-      </div>
-
-      {/* ── Mejora 4: Grid de departamentos (cuando ROOT sin búsqueda) ── */}
-      {showGrid ? (
-        <div className="mt-2">
+      {/* ── Mejora 4: Vista Grid en root ──────────────────────────────────── */}
+      {!isSearching && isRootSel ? (
+        <div className="mt-1 animate-in fade-in slide-in-from-bottom-2 duration-300">
           <DeptGridView
             tree={tree}
             onSelect={(s) => {
@@ -453,7 +415,7 @@ export function UnifiedTree({
       ) : tree.length === 0 ? (
         <p className="py-4 text-center text-xs text-faint">Sin datos para mostrar</p>
       ) : (
-        <ul className="mt-2 flex flex-col gap-1 pr-1">
+        <ul className="mt-1 flex flex-col gap-1 pr-1 animate-in fade-in slide-in-from-left-2 duration-300">
           {tree.map((dept, deptIdx) => {
             const isDeptSel = selection.dept === dept.name;
             const isDeptExpanded = expandedDeptos.has(dept.name);
@@ -461,9 +423,122 @@ export function UnifiedTree({
             const isDeptMatch = isSearching && searchMatches.has(dept.name);
             const ref = getFirstMatchRef(dept.name);
 
+            // En modo Drill-Down (sin búsqueda y con departamento seleccionado),
+            // ignoramos todos los departamentos excepto el seleccionado.
+            const isDrillDown = !isSearching && selection.dept !== null;
+            if (isDrillDown && !isDeptSel) return null;
+
+            const renderCategories = () => (
+              <ul className={cn("flex flex-col gap-0.5", !isDrillDown && "ml-3.5 mt-1 mb-2 animate-tree-expand overflow-hidden border-l border-white/10 pl-2")}>
+                {dept.children.map((cat, catIdx) => {
+                  const catKey = `${dept.name}::${cat.name}`;
+                  const isCatSel = selection.cat === cat.name;
+                  const isCatExpanded = expandedCats.has(catKey);
+                  const isCatMatch = isSearching && searchMatches.has(cat.name);
+                  const catRef = getFirstMatchRef(cat.name);
+
+                  return (
+                    <li key={cat.name} id={`cat-node-${cat.name}`}>
+                      <div
+                        ref={catRef}
+                        className={cn(
+                          "group flex w-full items-start gap-0.5 rounded-lg transition-all border border-transparent",
+                          "duration-300 ease-[cubic-bezier(0.23,1,0.32,1)]",
+                          isCatSel && !selection.subcat
+                            ? `${deptTone.bgActive} border-white/10 shadow-sm`
+                            : "hover:bg-surface-2/50",
+                          // Mejora 1: highlight
+                          isCatMatch && "ring-1 ring-warning/40 bg-warning/[0.07]",
+                          isSearching && !isCatMatch && "opacity-40",
+                          // Sticky para la categoría si está expandida
+                          isCatExpanded && "sticky top-0 z-10 bg-surface/95 backdrop-blur-sm shadow-sm"
+                        )}
+                      >
+                        <button onClick={() => toggleCat(dept.name, cat.name)} className="mt-1 flex h-7 w-7 shrink-0 items-center justify-center rounded-lg text-faint transition-colors hover:bg-surface-3 hover:text-muted active:scale-[0.95]">
+                          <ChevronRight className={cn("h-4 w-4 transition-transform duration-300 ease-[cubic-bezier(0.23,1,0.32,1)]", isCatExpanded && "rotate-90")} />
+                        </button>
+                        <button onClick={() => selectCat(dept.name, cat.name)} className="relative flex min-w-0 flex-1 flex-col justify-center py-2.5 pr-3 text-left active:scale-[0.98] transition-transform">
+                          <div className="flex items-center justify-between gap-2 w-full mb-1">
+                            <div className="flex items-center gap-2 min-w-0">
+                              <FolderOpen className={cn("h-3.5 w-3.5 shrink-0 transition-colors", isCatSel ? deptTone.dot.replace('bg-', 'text-') : "text-faint")} />
+                              <p className={cn("truncate text-[0.75rem] transition-colors", isCatSel ? "text-fg font-bold" : "text-fg/90 font-medium")}>{cat.name}</p>
+                            </div>
+                            <div className="flex items-center gap-1.5 shrink-0">
+                              {hasMatrix && <HealthBadge paraComprar={cat.paraComprar} saludables={cat.saludables} compact />}
+                              <ComprasBadges node={cat} />
+                              <p className="font-mono text-[0.75rem] tabular-nums font-semibold text-fg/90 shrink-0">{money(cat.ventas)}</p>
+                            </div>
+                          </div>
+                          <div className="flex items-center gap-2 w-full pl-5.5 mb-1 pr-1">
+                            <ProgressBar pct={cat.pct} tone={deptTone.bar} />
+                            <div className="flex items-center gap-1.5 text-[0.6rem] text-faint shrink-0 tabular-nums">
+                              <span>{pct(cat.pct * 100)}</span><span>•</span><span>{num(cat.skuCount)} SKUs</span>
+                            </div>
+                          </div>
+                        </button>
+                      </div>
+
+                      {isCatExpanded && cat.children.length > 0 && (
+                        <ul className="ml-3.5 mt-0.5 mb-1.5 animate-tree-expand overflow-hidden border-l border-white/10 pl-2 flex flex-col gap-0.5">
+                          {cat.children.map((subcat) => {
+                            const isSubcatSel = isCatSel && selection.subcat === subcat.name;
+                            const isSubcatMatch = isSearching && searchMatches.has(subcat.name);
+                            const subcatRef = getFirstMatchRef(subcat.name);
+
+                            return (
+                              <li key={subcat.name}>
+                                <button
+                                  ref={subcatRef as React.Ref<HTMLButtonElement> | undefined}
+                                  onClick={() => selectSubcat(dept.name, cat.name, subcat.name)}
+                                  className={cn(
+                                    "group relative flex w-full flex-col justify-center py-2 pl-3 pr-3 text-left transition-all rounded-md",
+                                    "duration-300 ease-[cubic-bezier(0.23,1,0.32,1)] active:scale-[0.98]",
+                                    isSubcatSel
+                                      ? "bg-white/5 border border-white/5 shadow-sm"
+                                      : "hover:bg-surface-2/40 border border-transparent",
+                                    // Mejora 1: highlight
+                                    isSubcatMatch && "ring-1 ring-warning/40 bg-warning/[0.07]",
+                                    isSearching && !isSubcatMatch && "opacity-40",
+                                  )}
+                                >
+                                  <div className="flex items-center justify-between gap-2 w-full mb-1">
+                                    <div className="flex items-center gap-2 min-w-0">
+                                      <Tag className={cn("h-3 w-3 shrink-0 transition-colors", isSubcatSel ? "text-white/80" : "text-faint")} />
+                                      <p className={cn("truncate text-[0.7rem] transition-colors", isSubcatSel ? "text-fg font-semibold" : "text-fg/80")}>{subcat.name}</p>
+                                    </div>
+                                    <div className="flex items-center gap-1.5 shrink-0">
+                                      {hasMatrix && <HealthBadge paraComprar={subcat.paraComprar} saludables={subcat.saludables} compact />}
+                                      <ComprasBadges node={subcat} />
+                                      <p className="font-mono text-[0.7rem] tabular-nums font-semibold text-fg/90 shrink-0">{money(subcat.ventas)}</p>
+                                    </div>
+                                  </div>
+                                  <div className="flex items-center gap-2 w-full pl-5 pr-1">
+                                    <ProgressBar pct={subcat.pct} tone="info" />
+                                    <div className="flex items-center gap-1.5 text-[0.55rem] text-faint shrink-0 tabular-nums">
+                                      <span>{pct(subcat.pct * 100)}</span><span>•</span><span>{num(subcat.skuCount)} SKUs</span>
+                                    </div>
+                                  </div>
+                                </button>
+                              </li>
+                            );
+                          })}
+                        </ul>
+                      )}
+                    </li>
+                  );
+                })}
+              </ul>
+            );
+
+            // Si estamos en Drill-Down, NO renderizamos el header del departamento, solo sus categorías.
+            if (isDrillDown) {
+              return <li key={dept.name}>{renderCategories()}</li>;
+            }
+
+            // Si estamos en Búsqueda Global (o en algún caso futuro donde se requiera ver el árbol completo),
+            // renderizamos el header del departamento y luego sus categorías.
             return (
               <li key={dept.name} id={`dept-node-${dept.name}`}>
-                {/* ── Mejora 3: Sticky header de departamento ─────────── */}
                 <div
                   ref={ref}
                   className={cn(
@@ -472,11 +547,9 @@ export function UnifiedTree({
                     isDeptSel && !selection.cat
                       ? `${deptTone.bgActive} border-white/10 shadow-sm`
                       : "hover:bg-surface-2/50",
-                    // Mejora 1: highlight de búsqueda
                     isDeptMatch && "ring-1 ring-warning/40 bg-warning/[0.07]",
                     isSearching && !isDeptMatch && "opacity-40",
-                    // Mejora 3: Sticky
-                    isDeptExpanded && "sticky top-0 z-10 bg-surface/95 backdrop-blur-sm",
+                    isDeptExpanded && "sticky top-0 z-10 bg-surface/95 backdrop-blur-sm"
                   )}
                 >
                   <button onClick={() => toggleDepto(dept.name)} className="mt-1 flex h-7 w-7 shrink-0 items-center justify-center rounded-lg text-faint transition-all hover:bg-surface-3 hover:text-muted active:scale-[0.95]">
@@ -504,105 +577,7 @@ export function UnifiedTree({
                   </button>
                 </div>
 
-                {isDeptExpanded && dept.children.length > 0 && (
-                  <ul className="ml-3.5 mt-1 mb-2 animate-tree-expand overflow-hidden border-l border-white/5 pl-1.5 flex flex-col gap-0.5">
-                    {dept.children.map((cat) => {
-                      const catKey = `${dept.name}::${cat.name}`;
-                      const isCatSel = isDeptSel && selection.cat === cat.name;
-                      const isCatExpanded = expandedCats.has(catKey);
-                      const isCatMatch = isSearching && searchMatches.has(cat.name);
-                      const catRef = getFirstMatchRef(cat.name);
-
-                      return (
-                        <li key={cat.name}>
-                          <div
-                            ref={catRef}
-                            className={cn(
-                              "group flex w-full items-start gap-0.5 rounded-lg transition-all",
-                              "duration-300 ease-[cubic-bezier(0.23,1,0.32,1)]",
-                              isCatSel && !selection.subcat
-                                ? "bg-info/10 shadow-[inset_3px_0_0_var(--color-info)]"
-                                : "hover:bg-surface-2/50",
-                              // Mejora 1: highlight
-                              isCatMatch && "ring-1 ring-warning/40 bg-warning/[0.07]",
-                              isSearching && !isCatMatch && "opacity-40",
-                            )}
-                          >
-                            <button onClick={() => toggleCat(dept.name, cat.name)} className="mt-1 flex h-6 w-6 shrink-0 items-center justify-center rounded text-faint transition-colors hover:bg-surface-3 hover:text-muted active:scale-[0.95]">
-                              <ChevronRight className={cn("h-3 w-3 transition-transform duration-300 ease-[cubic-bezier(0.23,1,0.32,1)]", isCatExpanded && "rotate-90")} />
-                            </button>
-                            <button onClick={() => selectCat(dept.name, cat.name)} className="relative flex min-w-0 flex-1 flex-col justify-center py-2 pr-3 text-left active:scale-[0.98] transition-transform">
-                              <div className="flex items-center justify-between gap-2 w-full mb-1">
-                                <div className="flex items-center gap-2 min-w-0">
-                                  <FolderOpen className={cn("h-3 w-3 shrink-0 transition-colors", isCatSel ? "text-info" : "text-faint")} />
-                                  <p className={cn("truncate text-[0.7rem] font-medium transition-colors", isCatSel ? "text-info-fg font-semibold" : "text-fg/80")}>{cat.name}</p>
-                                </div>
-                                <div className="flex items-center gap-1.5 shrink-0">
-                                  {hasMatrix && <HealthBadge paraComprar={cat.paraComprar} saludables={cat.saludables} compact />}
-                                  <ComprasBadges node={cat} />
-                                  <p className="font-mono text-[0.7rem] tabular-nums font-semibold text-fg/90 shrink-0">{money(cat.ventas)}</p>
-                                </div>
-                              </div>
-                              <div className="flex items-center gap-2 w-full pl-5 mb-1.5 pr-1">
-                                <ProgressBar pct={cat.pct} tone="info" />
-                                <div className="flex items-center gap-1.5 text-[0.6rem] text-faint shrink-0 tabular-nums">
-                                  <span>{pct(cat.pct * 100)}</span><span>•</span><span>{num(cat.skuCount)} SKUs</span>
-                                </div>
-                              </div>
-                            </button>
-                          </div>
-
-                          {isCatExpanded && cat.children.length > 0 && (
-                            <ul className="ml-3 mt-0.5 mb-1 animate-tree-expand overflow-hidden border-l border-white/5 pl-1.5 flex flex-col gap-0.5">
-                              {cat.children.map((subcat) => {
-                                const isSubcatSel = isCatSel && selection.subcat === subcat.name;
-                                const isSubcatMatch = isSearching && searchMatches.has(subcat.name);
-                                const subcatRef = getFirstMatchRef(subcat.name);
-
-                                return (
-                                  <li key={subcat.name}>
-                                    <button
-                                      ref={subcatRef as React.Ref<HTMLButtonElement> | undefined}
-                                      onClick={() => selectSubcat(dept.name, cat.name, subcat.name)}
-                                      className={cn(
-                                        "group relative flex w-full flex-col justify-center py-2 pl-4 pr-3 text-left transition-all rounded-md",
-                                        "duration-300 ease-[cubic-bezier(0.23,1,0.32,1)] active:scale-[0.98]",
-                                        isSubcatSel
-                                          ? "bg-violet/10 shadow-[inset_3px_0_0_var(--color-violet)]"
-                                          : "hover:bg-surface-2/50",
-                                        // Mejora 1: highlight
-                                        isSubcatMatch && "ring-1 ring-warning/40 bg-warning/[0.07]",
-                                        isSearching && !isSubcatMatch && "opacity-40",
-                                      )}
-                                    >
-                                      <div className="flex items-center justify-between gap-2 w-full mb-0.5">
-                                        <div className="flex items-center gap-2 min-w-0">
-                                          <Tag className={cn("h-3 w-3 shrink-0 transition-colors", isSubcatSel ? "text-violet" : "text-faint")} />
-                                          <p className={cn("truncate text-[0.65rem] transition-colors", isSubcatSel ? "text-violet-fg font-semibold" : "text-fg/80 font-medium")}>{subcat.name}</p>
-                                        </div>
-                                        <div className="flex items-center gap-1.5 shrink-0">
-                                          {hasMatrix && <HealthBadge paraComprar={subcat.paraComprar} saludables={subcat.saludables} compact />}
-                                          <ComprasBadges node={subcat} />
-                                          <p className="font-mono text-[0.65rem] tabular-nums font-semibold text-fg/90 shrink-0">{money(subcat.ventas)}</p>
-                                        </div>
-                                      </div>
-                                      <div className="flex items-center gap-2 w-full pl-5 pr-1">
-                                        <ProgressBar pct={subcat.pct} tone="violet" />
-                                        <div className="flex items-center gap-1 text-[0.55rem] text-faint shrink-0 tabular-nums">
-                                          <span>{pct(subcat.pct * 100)}</span><span>•</span><span>{num(subcat.skuCount)} SKUs</span>
-                                        </div>
-                                      </div>
-                                    </button>
-                                  </li>
-                                );
-                              })}
-                            </ul>
-                          )}
-                        </li>
-                      );
-                    })}
-                  </ul>
-                )}
+                {isDeptExpanded && dept.children.length > 0 && renderCategories()}
               </li>
             );
           })}

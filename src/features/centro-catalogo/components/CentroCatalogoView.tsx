@@ -101,11 +101,6 @@ export function CentroCatalogoView() {
         </div>
       </div>
 
-      {/* Breadcrumb (indicador de selección) + KPIs del nodo */}
-      <div className="flex flex-wrap items-center justify-between gap-3">
-        <Breadcrumb selection={selection} onNavigate={setSelection} />
-        <KpiHeader node={state.kpiNode} showVentasMetrics={canVerRendimiento} />
-      </div>
 
       {/* Workspace: árbol compartido + panel de la pestaña activa */}
       <div className="grid min-h-0 flex-1 grid-cols-1 gap-4 lg:grid-cols-[380px_1fr]">
@@ -138,7 +133,13 @@ export function CentroCatalogoView() {
           </Card>
         </aside>
 
-        <section className="relative flex min-h-0 flex-col">
+        <section className="relative flex min-h-0 flex-col gap-3">
+          {/* Contexto del Nodo Seleccionado */}
+          <div className="flex flex-wrap items-center justify-between gap-3 rounded-xl border border-white/5 bg-surface-2/30 p-3 shadow-sm backdrop-blur-md">
+            <Breadcrumb selection={selection} onNavigate={setSelection} />
+            <KpiHeader node={state.kpiNode} showVentasMetrics={canVerRendimiento} />
+          </div>
+
           {canVerRendimiento && (
             <div className={cn("min-h-0 flex-1 flex-col", tab === "rendimiento" ? "flex" : "hidden")}>
               <RendimientoPanel
