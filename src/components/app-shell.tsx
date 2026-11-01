@@ -45,6 +45,20 @@ function NavLinks({
     return initial;
   });
 
+  // Asegura que al navegar a otra ruta, su grupo se expanda autom?ticamente
+  useEffect(() => {
+    for (const g of groups) {
+      if (g.items.some((i) => isActive(pathname, i.href))) {
+        setExpandedGroups((prev) => {
+          if (prev.has(g.title)) return prev;
+          const next = new Set(prev);
+          next.add(g.title);
+          return next;
+        });
+      }
+    }
+  }, [pathname, groups]);
+
   const toggleGroup = (title: string) => {
     setExpandedGroups((prev) => {
       const next = new Set(prev);
@@ -55,14 +69,13 @@ function NavLinks({
   };
 
   return (
-    <nav className={cn("flex flex-col", collapsed ? "gap-2" : "gap-3")}>
+    <nav className={cn("flex flex-col", collapsed ? "gap-1.5" : "gap-3")}>
       {groups.map((group) => {
         const isExpanded = expandedGroups.has(group.title);
         
         if (collapsed) {
-          if (!isExpanded) return null;
           return (
-            <ul key={group.title} className="flex flex-col gap-1 mb-2">
+            <ul key={group.title} className="flex flex-col gap-1 mb-2 pb-2 border-b border-white/[0.06] last:border-0 last:mb-0 last:pb-0">
               {group.items.map((item) => {
                 const active = isActive(pathname, item.href);
                 const Icon = item.icon;

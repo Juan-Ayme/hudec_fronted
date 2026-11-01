@@ -11,7 +11,14 @@ import {
   Settings,
   Users,
   History,
+  TrendingUp,
   CircleDollarSign,
+  ArrowLeftRight,
+  FileSpreadsheet,
+  Boxes,
+  ShoppingBag,
+  BarChart3,
+  ClipboardCheck,
   type LucideIcon,
 } from "lucide-react";
 import type { UserRole } from "@/lib/api";
@@ -32,17 +39,16 @@ export const NAV_GROUPS: NavGroup[] = [
     title: "Análisis",
     items: [
       { href: "/", label: "Resumen Ejecutivo", icon: LayoutDashboard },
-      // ENLACES COMENTADOS (2026-06-20) — apuntan a páginas que no existen en src/app/.
-      // Reactivar cuando se creen las páginas correspondientes.
-      // { href: "/stock", label: "Stock", icon: Boxes },
-      // { href: "/ventas", label: "Ventas", icon: Receipt },
-      // Fusión de Análisis de Ventas + Gestión de Compras (árbol + pestañas).
-      { href: "/centro-catalogo", label: "Centro de Catálogo", icon: PackageSearch },
+      { href: "/reporte-ventas", label: "Reporte de Ventas", icon: FileSpreadsheet },
+      { href: "/compras-ecosistema", label: "Ecosistema de Compras", icon: ArrowLeftRight },
+      { href: "/compras-historico", label: "Compras Histórico", icon: ShoppingBag },
     ],
   },
   {
     title: "Catálogo",
     items: [
+      { href: "/centro-catalogo", label: "Centro de Catálogo", icon: PackageSearch },
+      { href: "/inventario-excel", label: "Inventario & Depuración", icon: Boxes },
       { href: "/taxonomia", label: "Estructura de Catálogo", icon: FolderTree },
       { href: "/product-types", label: "Tipologías de Producto", icon: Tags },
     ],
@@ -50,18 +56,19 @@ export const NAV_GROUPS: NavGroup[] = [
   {
     title: "BI",
     items: [
-      { href: "/graficos", label: "Gráficos Avanzados", icon: Activity },
       { href: "/pulso", label: "Pulso Operativo", icon: Activity },
       { href: "/diagnostico", label: "Diagnóstico Inteligente", icon: Gauge },
       { href: "/salud-catalogo", label: "Auditoría de Salud", icon: ShieldCheck },
       { href: "/plan-mes", label: "Planificación Estratégica", icon: CalendarClock },
       { href: "/rotacion-historica", label: "Análisis de Rotación", icon: History },
+      { href: "/rentabilidad", label: "Rentabilidad", icon: TrendingUp },
+      { href: "/graficos", label: "Gráficos Avanzados", icon: BarChart3 },
     ],
   },
   {
     title: "Operaciones",
     items: [
-      { href: "/auditorias", label: "Auditorías", icon: ShieldCheck },
+      { href: "/auditorias", label: "Auditorías", icon: ClipboardCheck },
       { href: "/auditoria-costos", label: "Auditoría de Costos", icon: CircleDollarSign },
       { href: "/sync", label: "Sincronización", icon: RefreshCw },
       { href: "/configuracion", label: "Configuración", icon: Settings },
@@ -73,7 +80,13 @@ export const NAV_GROUPS: NavGroup[] = [
 export const ALL_NAV_ITEMS: NavItem[] = NAV_GROUPS.flatMap((g) => g.items);
 
 /** Rutas que ve un `viewer` (encargado de tienda). El resto queda oculto. */
-const VIEWER_HREFS = new Set<string>(["/", "/centro-catalogo", "/pulso", "/taxonomia"]);
+const VIEWER_HREFS = new Set<string>([
+  "/",
+  "/centro-catalogo",
+  "/pulso",
+  "/taxonomia",
+  "/reporte-ventas",
+]);
 
 /** Grupos de navegación visibles según el rol en la empresa activa.
  *  viewer → solo las vistas operativas de su tienda; admin/operador → todo. */

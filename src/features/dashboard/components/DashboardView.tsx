@@ -37,7 +37,7 @@ export function DashboardView() {
   }
 
   return (
-    <div className="space-y-6 relative overflow-hidden">
+    <div className="space-y-6 relative">
       {/* ── macOS-style ambient background orbs ── */}
       <div className="pointer-events-none absolute inset-0 z-0 overflow-hidden">
         <div className="absolute -top-40 left-1/4 h-[500px] w-[500px] rounded-full bg-primary/[0.07] blur-[120px] animate-[pulse_8s_ease-in-out_infinite]" />
@@ -46,7 +46,7 @@ export function DashboardView() {
         <div className="absolute top-2/3 left-1/2 h-[300px] w-[300px] rounded-full bg-success/[0.04] blur-[120px] animate-[pulse_9s_ease-in-out_infinite_3s]" />
       </div>
 
-      <div className="flex justify-end mb-2 relative z-10">
+      <div className="flex justify-end mb-2 relative z-50">
         <div className="shrink-0">
            <DateRangeSelect value={days} onChange={setDays} />
         </div>

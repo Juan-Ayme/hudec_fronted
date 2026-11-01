@@ -14,6 +14,8 @@ import type {
   CategoryTargetsList,
   CategoryTargetsPreview,
   DiagnosisResponse,
+  EcosistemaNivel,
+  EcosistemaResponse,
   PlanResponse,
   PulseResponse,
   VariantCostAudit,
@@ -213,6 +215,38 @@ export const exportVariantCostsExcel = async (
   window.URL.revokeObjectURL(downloadUrl);
 };
 
+// ─────────────────────────── Ecosistema de Compras ──────────────────────────
+export interface EcosistemaParams {
+  nivel?: EcosistemaNivel;
+  dias?: number; // 30-730, default 365
+  office_id?: number | null;
+}
+
+/** Ecosistema de Compras: cruce compra ↔ venta ↔ stock por nivel de taxonomía.
+ *  Devuelve `{ meta, kpis, items }` con multiplicador, sellthrough, cobertura y
+ *  veredicto por fila. Alimenta la página /compras-ecosistema. */
+export const getEcosistema = (
+  params: EcosistemaParams = {},
+  signal?: AbortSignal,
+) =>
+  request<EcosistemaResponse>("/compras/ecosistema", {
+    query: {
+      nivel: params.nivel,
+      dias: params.dias,
+      office_id: params.office_id ?? undefined,
+    },
+    signal,
+  });
+
+export const ecosistemaExcelUrl = (params: EcosistemaParams = {}): string => {
+  const query = {
+    nivel: params.nivel,
+    dias: params.dias,
+    office_id: params.office_id ?? undefined,
+  };
+  return `${API_BASE_URL}/compras/ecosistema/excel${buildQuery(query as Record<string, string | number | boolean | null | undefined>)}`;
+};
+
 // ──────────────────────── Query keys (para @tanstack/react-query) ────────────────────────
 // Centralizados para invalidar todo el módulo BI de una sola vez cuando cambia la
 // empresa activa. Usan un array simple; sumarles el office_id/params en cada page.
@@ -226,6 +260,8 @@ export const biQueryKeys = {
     ["bi", "catalog-health", office_id, top_n] as const,
   plan: (office_id: number | null, meses_calendario: number | undefined) =>
     ["bi", "plan", office_id, meses_calendario] as const,
+  ecosistema: (office_id: number | null, nivel: string, dias: number) =>
+    ["bi", "ecosistema", office_id, nivel, dias] as const,
   categoryTargets: (office_id: number | null) =>
     ["bi", "category-targets", office_id] as const,
   categoryTargetsPreview: () => ["bi", "category-targets", "preview"] as const,
@@ -243,6 +279,12 @@ export type {
   CategoryTargetsPreview,
   CategoryTargetUpdateResult,
   DiagnosisResponse,
+  EcosistemaItem,
+  EcosistemaKpis,
+  EcosistemaMeta,
+  EcosistemaNivel,
+  EcosistemaResponse,
+  EcosistemaVeredicto,
   PlanResponse,
   PulseResponse,
   VariantCostAudit,

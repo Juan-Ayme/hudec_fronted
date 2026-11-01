@@ -887,3 +887,62 @@ export interface VariantCostHealthResponse {
   detalle: VariantCostHealthDetail[];
   nota?: string;
 }
+
+// ─────────────── Ecosistema de Compras (GET /compras/ecosistema) ───────────────
+// Cruce compra ↔ venta ↔ stock por nivel de taxonomía. A diferencia del resto de
+// la API, este endpoint post-procesa los números en Python (round()) → llegan como
+// float/int reales, no como string. Los campos multiplicador/sellthrough/cobertura
+// son null cuando no hay comparable (compra=0, unds_compradas=0, venta=0). Las
+// dimensiones (department/category/subcategory) pueden venir null (sin taxonomía).
+
+export type EcosistemaNivel = "departamento" | "categoria" | "subcategoria";
+
+export type EcosistemaVeredicto =
+  | "SIN_REPOSICION"
+  | "RIESGO_QUIEBRE"
+  | "SOBRECOMPRA"
+  | "EXCESO_STOCK"
+  | "EQUILIBRADO"
+  | "SIN_MOVIMIENTO";
+
+export interface EcosistemaItem {
+  // Dimensiones: presentes según `nivel`. `department` puede ser null (sin taxonomía).
+  department: string | null;
+  category?: string | null;
+  subcategory?: string | null;
+  venta_pen: number; // retail, con IGV
+  compra_pen: number; // a costo
+  stock_pen: number; // stock actual valorizado a costo
+  unds_vendidas: number;
+  unds_compradas: number;
+  unds_stock: number;
+  multiplicador: number | null; // venta/compra; null si compra=0
+  sellthrough_pct: number | null; // % vendido de lo comprado; null si unds_compradas=0; puede ser >100
+  meses_cobertura: number | null; // stock / venta mensual (unds); null si venta=0
+  veredicto: EcosistemaVeredicto;
+}
+
+export interface EcosistemaMeta {
+  generado_at: string;
+  nivel: EcosistemaNivel;
+  dias: number;
+  office_id: number | null;
+  office_scope_compra: number[]; // tiendas + almacén central
+  office_scope_venta: number[]; // solo tiendas
+  nota: string;
+}
+
+export interface EcosistemaKpis {
+  venta_total_pen: number;
+  compra_total_pen: number;
+  stock_total_pen: number;
+  multiplicador_global: number | null;
+  filas: number;
+  por_veredicto: Partial<Record<EcosistemaVeredicto, number>>;
+}
+
+export interface EcosistemaResponse {
+  meta: EcosistemaMeta;
+  kpis: EcosistemaKpis;
+  items: EcosistemaItem[];
+}

@@ -35,7 +35,7 @@ export function GraficosView() {
             Explora la evolución y haz clic en cualquier fecha o pico para descubrir los productos vendidos y quiebres de stock.
           </p>
         </div>
-        <div className="shrink-0 relative z-10">
+        <div className="shrink-0 relative z-40">
            <DateRangeSelect value={days} onChange={setDays} />
         </div>
       </div>

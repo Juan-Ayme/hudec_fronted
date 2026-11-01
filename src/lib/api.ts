@@ -785,6 +785,139 @@ export const setProductSubcategory = (
 export const getStockValuation = (signal?: AbortSignal) =>
   request<StockValuation>("/stock/valuation", { signal });
 
+// ───────────────── Inventario Excel Export ──────────────
+export interface InventarioExcelParams {
+  office_id?: number | null;
+  only_with_stock?: boolean;
+  include_inactive?: boolean;
+  department?: string;
+  category?: string;
+  subcategory?: string;
+  q?: string;
+}
+
+export interface InventarioExcelResult {
+  blob: Blob;
+  filename: string;
+  totalRows: number;
+}
+
+/**
+ * Descarga el reporte de inventario consolidado en formato Excel (.xlsx).
+ * El endpoint devuelve un stream binario — no JSON — por lo que no usamos
+ * el helper `request<T>` genérico sino fetch directo.
+ */
+export async function downloadInventarioExcel(
+  params: InventarioExcelParams = {},
+  signal?: AbortSignal,
+): Promise<InventarioExcelResult> {
+  const query = buildQuery({
+    office_id: params.office_id ?? undefined,
+    only_with_stock: params.only_with_stock ?? undefined,
+    include_inactive: params.include_inactive ?? undefined,
+    department: params.department || undefined,
+    category: params.category || undefined,
+    subcategory: params.subcategory || undefined,
+    q: params.q || undefined,
+  });
+
+  const url = `${API_BASE_URL}/stock/inventario/excel${query}`;
+
+  const headers: Record<string, string> = {};
+  const companyId = readActiveCompanyId();
+  if (companyId !== null) headers["X-Company-Id"] = String(companyId);
+
+  let res: Response;
+  try {
+    res = await fetch(url, {
+      method: "GET",
+      headers,
+      credentials: "include",
+      signal,
+    });
+  } catch {
+    throw new ApiError(
+      0,
+      "No se pudo conectar con la API para descargar el Excel.",
+    );
+  }
+
+  if (!res.ok) {
+    // Intentar leer detalle del error como JSON
+    let detail: unknown;
+    try {
+      detail = await res.json();
+    } catch {
+      detail = await res.text().catch(() => null);
+    }
+    const msg =
+      typeof detail === "object" && detail && "detail" in detail
+        ? String((detail as { detail: unknown }).detail)
+        : `Error ${res.status} al generar el inventario`;
+    throw new ApiError(res.status, msg, detail);
+  }
+
+  const blob = await res.blob();
+  const disposition = res.headers.get("Content-Disposition") || "";
+  const filenameMatch = disposition.match(/filename="?([^";\n]+)"?/);
+  const filename = filenameMatch?.[1] || `Inventario_${new Date().toISOString().slice(0, 10)}.xlsx`;
+  const totalRows = parseInt(res.headers.get("X-Total-Rows") || "0", 10);
+
+  return { blob, filename, totalRows };
+}
+
+// ─────────────── Desactivación Masiva de SKUs ────────────
+export interface BulkDeactivateRequest {
+  skus: string[];
+  dry_run?: boolean;
+  forzar_con_stock?: boolean;
+}
+
+export interface BulkDeactivateItem {
+  bsale_variant_id?: number;
+  bsale_product_id?: number;
+  code: string;
+  product_name?: string;
+  stock?: number;
+  reason?: string;
+  error?: string;
+}
+
+export interface BulkDeactivateTotals {
+  received: number;
+  to_deactivate?: number;
+  deactivated?: number;
+  failed?: number;
+  parent_products_to_deactivate?: number;
+  parent_products_deactivated?: number;
+  blocked_by_stock: number;
+  already_inactive: number;
+  not_found: number;
+}
+
+export interface BulkDeactivateResponse {
+  ok: boolean;
+  dry_run: boolean;
+  forzar_con_stock: boolean;
+  timestamp?: string;
+  totals: BulkDeactivateTotals;
+  to_deactivate?: BulkDeactivateItem[];
+  deactivated?: BulkDeactivateItem[];
+  failed?: BulkDeactivateItem[];
+  blocked_by_stock: BulkDeactivateItem[];
+  already_inactive: (BulkDeactivateItem | string)[];
+  not_found: string[];
+}
+
+export const bulkDeactivateProducts = (
+  body: BulkDeactivateRequest,
+  signal?: AbortSignal,
+) =>
+  request<BulkDeactivateResponse>("/products/bulk-deactivate", {
+    method: "POST",
+    body,
+    signal,
+  });
 
 
 // ─────────────────────── Matrices ──────────────────────
