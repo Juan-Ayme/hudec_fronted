@@ -1,18 +1,26 @@
 // Cliente HTTP tipado para la API KAWII/HUDEC.
 import type {
   AuditResponse,
-  Category,
   ComprasCatalogoResponse,
   DataQualityIssue,
-  Department,
   FixNamingResponse,
   Health,
   Kpis,
-  MatrixModule,
   MatrixResponse,
-  ProductDetail,
   ProductType,
   ProductTypesResponse,
+  ProductTypesWorkspaceResponse,
+  PullProductTypesResponse,
+  BulkMapProductTypesPayload,
+  BulkMapProductTypesResponse,
+  BulkDeleteProductTypesPayload,
+  BulkDeleteProductTypesResponse,
+  MergeProductTypesPayload,
+  MergeProductTypesResponse,
+  BulkChangeProductTypePayload,
+  BulkChangeProductTypeResponse,
+  BulkProductSubcategoryPayload,
+  BulkProductSubcategoryResponse,
   RotacionHistoricaResponse,
   SalesByCategory,
   SalesByDay,
@@ -20,7 +28,6 @@ import type {
   SalesByDepartment,
   SkuHistory,
   SalesVsGoal,
-  GoalsResponse,
   TicketAnatomy,
   SalesByOffice,
   StockValuation,
@@ -153,7 +160,15 @@ export interface ExclusionsResponse {
   excluded_departments: number[];
   excluded_categories: number[];
   seasonal_departments: number[];
-  departments: { id: number; name: string; excluded: boolean; seasonal: boolean }[];
+  /** Departamentos fuera de los informes (/informes/*), p.ej. Librería fuera de campaña escolar. */
+  informes_excluded_departments: number[];
+  departments: {
+    id: number;
+    name: string;
+    excluded: boolean;
+    seasonal: boolean;
+    informes_excluded: boolean;
+  }[];
 }
 
 export const getExclusions = (signal?: AbortSignal) =>
@@ -163,39 +178,11 @@ export const setExclusions = (body: {
   excluded_departments: number[];
   excluded_categories: number[];
   seasonal_departments: number[];
+  informes_excluded_departments?: number[];
 }) =>
   request<Record<string, unknown>>("/config/exclusions", {
     method: "PUT",
     body,
-  });
-
-// Umbrales de clasificación (ventanas, tendencia, XYZ, velocidad, cobertura, …).
-// El backend devuelve los valores vigentes + los defaults + la metadata de
-// secciones para que el frontend renderice el form sin duplicar la lista.
-export interface ThresholdField {
-  key: string;
-  label: string;
-  help: string;
-}
-export interface ThresholdSection {
-  key: string;
-  title: string;
-  description: string;
-  fields: ThresholdField[];
-}
-export interface ThresholdsResponse {
-  thresholds: Record<string, number>;
-  defaults: Record<string, number>;
-  sections: ThresholdSection[];
-}
-
-export const getThresholds = (signal?: AbortSignal) =>
-  request<ThresholdsResponse>("/config/thresholds", { signal });
-
-export const setThresholds = (thresholds: Record<string, number>) =>
-  request<Record<string, unknown>>("/config/thresholds", {
-    method: "PUT",
-    body: { thresholds },
   });
 
 // Configuración por empresa (marca + IDs operativos de BSale).
@@ -556,10 +543,6 @@ export const getTopProducts = (
 
 // ─────────────── Tablero Semanal (5 KPIs de gerencia) ───────────────
 
-/** Metas de venta configuradas (manual), keyed por mes. */
-export const getGoals = (signal?: AbortSignal) =>
-  request<GoalsResponse>("/analytics/goals", { signal });
-
 export const getSalesVsGoal = (
   month: string,
   office_id?: number | null,
@@ -609,16 +592,6 @@ export const getPrecioCostoPorSucursal = (sku: string, signal?: AbortSignal) =>
     `/analytics/precio-costo/${encodeURIComponent(sku)}`,
     { signal },
   );
-
-/** URL para descargar el Informe Diario (mes en curso, 3 pestañas). */
-export function dailyReportExcelUrl(
-  params: { office_id?: number | null } = {},
-): string {
-  const sp = new URLSearchParams();
-  if (params.office_id != null) sp.set("office_id", String(params.office_id));
-  const qs = sp.toString();
-  return `${API_BASE_URL}/analytics/daily-report/excel${qs ? `?${qs}` : ""}`;
-}
 
 /** URL para descargar Compras & Catálogo (2 pestañas: quiebres reales + venta por categoría). */
 export function comprasCatalogoExcelUrl(
@@ -747,36 +720,6 @@ export const getRotacionHistorica = (
     query: { from: fromIso, to: toIso, office_id: office_id ?? undefined },
     signal,
   });
-
-// ─────────────────────── Productos ──────────────────────
-export interface ProductFilters {
-  q?: string;
-  department?: string;
-  category?: string;
-  subcategory?: string;
-  mapped_only?: boolean;
-  override_only?: boolean;
-  unmapped_only?: boolean;
-  product_type_id?: number;
-  limit?: number;
-  offset?: number;
-}
-
-
-
-export const getProduct = (id: number, signal?: AbortSignal) =>
-  request<ProductDetail>(`/products/${id}`, { signal });
-
-export const setProductSubcategory = (
-  id: number,
-  subcategory_id: number | null,
-) =>
-  request<Record<string, unknown>>(`/products/${id}/subcategory`, {
-    method: "PATCH",
-    query: subcategory_id === null ? {} : { subcategory_id },
-  });
-
-
 
 // ───────────────────────── Stock ────────────────────────
 // Único endpoint vivo tras el cleanup: lo usa el Dashboard (DonutChart) Y el
@@ -936,12 +879,6 @@ export interface MatrixFilters {
   offset?: number;
 }
 
-export const getMatrixModules = (signal?: AbortSignal) =>
-  request<{ modules: MatrixModule[]; endpoints_especiales: Record<string, string> }>(
-    "/matrix/",
-    { signal },
-  );
-
 export const getMatrix = (
   moduleId: string,
   filters: MatrixFilters,
@@ -1045,15 +982,6 @@ export async function downloadExcelFile(
 // ─────────────────────── Taxonomía ──────────────────────
 export const getTaxonomyTree = (signal?: AbortSignal) =>
   request<TaxonomyTree>("/taxonomy/tree", { signal });
-
-export const getDepartments = (signal?: AbortSignal) =>
-  request<Department[]>("/taxonomy/departments", { signal });
-
-export const getCategories = (department_id?: number, signal?: AbortSignal) =>
-  request<Category[]>("/taxonomy/categories", {
-    query: { department_id },
-    signal,
-  });
 
 export const getSubcategories = (category_id?: number, signal?: AbortSignal) =>
   request<Subcategory[]>("/taxonomy/subcategories", {
@@ -1173,6 +1101,47 @@ export const deleteProductType = (id: number, force = false) =>
 
 export const resyncProductType = (id: number) =>
   request(`/bsale/product-types/${id}/resync`, { method: "POST" });
+
+// ── Reclasificación & Workspace de Product Types (BSale + BD) ──
+export const getProductTypesWorkspace = (signal?: AbortSignal) =>
+  request<ProductTypesWorkspaceResponse>("/bsale/product-types/workspace", {
+    signal,
+  });
+
+export const pullProductTypesFromBsale = () =>
+  request<PullProductTypesResponse>("/bsale/product-types/pull", {
+    method: "POST",
+  });
+
+export const bulkMapProductTypes = (payload: BulkMapProductTypesPayload) =>
+  request<BulkMapProductTypesResponse>("/bsale/product-types/bulk-map", {
+    method: "POST",
+    body: payload,
+  });
+
+export const bulkDeleteProductTypes = (payload: BulkDeleteProductTypesPayload) =>
+  request<BulkDeleteProductTypesResponse>("/bsale/product-types/bulk-delete", {
+    method: "POST",
+    body: payload,
+  });
+
+export const mergeProductTypes = (payload: MergeProductTypesPayload) =>
+  request<MergeProductTypesResponse>("/bsale/product-types/merge", {
+    method: "POST",
+    body: payload,
+  });
+
+export const bulkChangeProductType = (payload: BulkChangeProductTypePayload) =>
+  request<BulkChangeProductTypeResponse>("/products/bulk-change-type", {
+    method: "POST",
+    body: payload,
+  });
+
+export const bulkProductSubcategory = (payload: BulkProductSubcategoryPayload) =>
+  request<BulkProductSubcategoryResponse>("/products/bulk-subcategory", {
+    method: "POST",
+    body: payload,
+  });
 
 // ─────────────────────── Auditorías ─────────────────────
 export const getAudits = (signal?: AbortSignal) =>
