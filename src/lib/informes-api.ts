@@ -440,6 +440,15 @@ export const abrirComprasPdf = (oficinas: number[], presMin: number, presMax: nu
   return abrirInformePdf(`/informes/compras/html?${qs.toString()}`);
 };
 
+/** Excel de traslados entre las tiendas elegidas (regla de 14 días, igual que el informe de compras). */
+export const trasladosExcelUrl = (oficinas: number[], presMin: number, presMax: number) => {
+  const qs = new URLSearchParams();
+  oficinas.forEach((o) => qs.append("oficinas", String(o)));
+  qs.set("pres_min", String(presMin));
+  qs.set("pres_max", String(presMax));
+  return `${API_BASE_URL}/informes/traslados/excel?${qs.toString()}`;
+};
+
 /** Mes en curso + compras: avance, categorías que bajan y presupuesto de compra. */
 export const abrirMesCursoPdf = (officeId: number | null) =>
   abrirInformePdf(`/informes/mes-curso/html${officeId != null ? `?office_id=${officeId}` : ""}`);

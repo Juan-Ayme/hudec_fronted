@@ -20,6 +20,7 @@ import {
   abrirComprasPdf,
   abrirInformeTemporadaPdf,
   getTiendasCompras,
+  trasladosExcelUrl,
   type TiendaCompras,
   abrirMesCursoPdf,
   descargarJson,
@@ -135,6 +136,18 @@ function ComprasSemana() {
   const toggle = (id: number) =>
     setElegidas(sel.includes(id) ? sel.filter((x) => x !== id) : [...sel, id]);
   const valido = sel.length > 0 && presMin >= 0 && presMax >= presMin;
+  const [bajando, setBajando] = useState(false);
+  const descargarTraslados = async () => {
+    if (sel.length < 2) return;
+    setBajando(true);
+    try {
+      await downloadExcelFile(trasladosExcelUrl(sel, presMin, presMax), "traslados_entre_tiendas.xlsx");
+    } catch (e) {
+      toast.error(e instanceof Error ? e.message : "No se pudo descargar el Excel de traslados");
+    } finally {
+      setBajando(false);
+    }
+  };
 
   const abrir = async () => {
     if (!valido) return;
@@ -191,6 +204,11 @@ function ComprasSemana() {
             <Button onClick={abrir} disabled={!valido || abriendo}>
               <FileText className="h-4 w-4" />
               {abriendo ? "Generando… (puede tardar ~1 min)" : "Generar PDF"}
+            </Button>
+            <Button variant="outline" onClick={descargarTraslados} disabled={sel.length < 2 || bajando}
+              title="Qué pasar de una tienda a otra antes de comprar (solo entre las tiendas marcadas)">
+              <Download className="h-4 w-4" />
+              {bajando ? "Preparando Excel…" : "Traslados (Excel)"}
             </Button>
           </div>
           {!valido && (
