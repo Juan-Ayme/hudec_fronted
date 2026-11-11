@@ -452,3 +452,12 @@ export const trasladosExcelUrl = (oficinas: number[], presMin: number, presMax: 
 /** Mes en curso + compras: avance, categorías que bajan y presupuesto de compra. */
 export const abrirMesCursoPdf = (officeId: number | null) =>
   abrirInformePdf(`/informes/mes-curso/html${officeId != null ? `?office_id=${officeId}` : ""}`);
+
+// ── Campaña de juguetes (Navidad): compras y capital por nivel de costo ────
+
+/** PDF de la campaña de juguetes: capital por nivel y qué comprar por categoría y
+ *  subcategoría, en dos compras. Usa las tiendas de la empresa que ve el usuario. */
+export const abrirCampanaJuguetesPdf = () => abrirInformePdf("/informes/campana-juguetes/html");
+
+/** El mismo informe en Excel, con el detalle por producto y por tienda. */
+export const campanaJuguetesExcelUrl = () => `${API_BASE_URL}/informes/campana-juguetes/excel`;
