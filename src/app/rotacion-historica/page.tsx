@@ -1,7 +1,5 @@
-"use client";
+import { redirect } from "next/navigation";
 
-import { RotacionHistoricaView } from "@/features/rotacion-historica/components/RotacionHistoricaView";
-
-export default function RotacionHistoricaPage() {
-  return <RotacionHistoricaView />;
+export default function RotacionHistoricaRedirectPage() {
+  redirect("/reporte-ventas?tab=rotacion");
 }

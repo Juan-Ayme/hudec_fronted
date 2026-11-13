@@ -13,7 +13,9 @@ import { DepartmentPerformanceCard } from "./DepartmentPerformanceCard";
 import { CapitalDistributionCard } from "./CapitalDistributionCard";
 import { TopProductsCard } from "./TopProductsCard";
 import { OfficePerformanceCard } from "./OfficePerformanceCard";
-import { DayDrillDownPanel } from "@/features/graficos/components/DayDrillDownPanel";
+import { DayDrillDownPanel } from "./DayDrillDownPanel";
+import { TicketAnatomyKpis } from "./TicketAnatomyKpis";
+import { TopCategoriesChart } from "./TopCategoriesChart";
 
 export function DashboardView() {
   const [selectedDate, setSelectedDate] = useState<string | null>(null);
@@ -24,9 +26,12 @@ export function DashboardView() {
     kpis,
     byDay,
     byDept,
+    byCategory,
     byOffice,
     valuation,
     top,
+    ticketAnatomy,
+    anat,
     isAnyLoading,
   } = useDashboard();
 
@@ -48,7 +53,7 @@ export function DashboardView() {
 
       <div className="flex justify-end mb-2 relative z-50">
         <div className="shrink-0">
-           <DateRangeSelect value={days} onChange={setDays} />
+          <DateRangeSelect value={days} onChange={setDays} />
         </div>
       </div>
 
@@ -56,8 +61,7 @@ export function DashboardView() {
 
       {/* Bento Grid Layout */}
       <div className="grid grid-cols-1 gap-5 md:grid-cols-12 md:grid-rows-auto relative z-10">
-
-        {/* ROW 1: KPIs & Gauge */}
+        {/* ROW 1: KPIs & Time Series Hero */}
         <div className="md:col-span-3 flex flex-col gap-3">
           <KpiStat
             label={`Ingresos Brutos (${days}d)`}
@@ -85,7 +89,6 @@ export function DashboardView() {
           />
         </div>
 
-        {/* Time Series Hero */}
         <div className="md:col-span-9">
           <RevenueTrendCard
             days={days}
@@ -105,8 +108,12 @@ export function DashboardView() {
           </div>
         )}
 
+        {/* ROW 2: Anatomía del Ticket (Variación vs período anterior) */}
+        <div className="md:col-span-12">
+          <TicketAnatomyKpis anat={anat} loading={ticketAnatomy.isLoading} />
+        </div>
 
-        {/* ROW 2: Departments & Donut */}
+        {/* ROW 3: Departments & Donut */}
         <div className="md:col-span-7">
           <DepartmentPerformanceCard days={days} query={byDept} />
         </div>
@@ -115,24 +122,27 @@ export function DashboardView() {
           <CapitalDistributionCard query={valuation} />
         </div>
 
-        {/* ROW 3: Top Products & Office Bars */}
+        {/* ROW 4: Top Categorías */}
+        <div className="md:col-span-12">
+          <TopCategoriesChart query={byCategory} />
+        </div>
+
+        {/* ROW 5: Top Products & Office Bars */}
         <div className="md:col-span-7">
           <TopProductsCard days={days} query={top} />
         </div>
 
         <div className="md:col-span-5 flex flex-col gap-5">
-           {/* Add a KPI for products here to fill the gap and keep Bento layout tight */}
-           <KpiStat
-             label="Catálogo Activo"
-             value={num(k?.productos_total)}
-             icon={Package}
-             tone="info"
-             loading={kpis.isLoading}
-             sub={`${num(k?.productos_mapeados)} items mapeados (taxonomía)`}
-           />
-           <OfficePerformanceCard days={days} query={byOffice} />
+          <KpiStat
+            label="Catálogo Activo"
+            value={num(k?.productos_total)}
+            icon={Package}
+            tone="info"
+            loading={kpis.isLoading}
+            sub={`${num(k?.productos_mapeados)} items mapeados (taxonomía)`}
+          />
+          <OfficePerformanceCard days={days} query={byOffice} />
         </div>
-
       </div>
     </div>
   );

@@ -1,7 +1,5 @@
-"use client";
+import { redirect } from "next/navigation";
 
-import { AuditoriasView } from "@/features/auditorias/components/AuditoriasView";
-
-export default function AuditoriasPage() {
-  return <AuditoriasView />;
+export default function AuditoriasRedirectPage() {
+  redirect("/taxonomia?tab=auditoria");
 }

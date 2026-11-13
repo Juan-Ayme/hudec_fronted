@@ -1,7 +1,5 @@
-"use client";
+import { redirect } from "next/navigation";
 
-import { RentabilidadView } from "@/features/rentabilidad/RentabilidadView";
-
-export default function RentabilidadPage() {
-  return <RentabilidadView />;
+export default function RentabilidadRedirectPage() {
+  redirect("/reporte-ventas?tab=rentabilidad");
 }

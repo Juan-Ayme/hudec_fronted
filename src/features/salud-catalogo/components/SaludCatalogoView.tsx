@@ -11,7 +11,6 @@ import {
 } from "@/features/bi/shared";
 import { ResumenList } from "@/features/diagnostico/components/ResumenList";
 import { useCatalogHealth } from "../hooks/useCatalogHealth";
-import { BootstrapPrompt } from "./BootstrapPrompt";
 import { Bloque8020Section } from "./Bloque8020Section";
 import { TopCategoriasList } from "./TopCategoriasList";
 import { CapitalAtrapadoTable } from "./CapitalAtrapadoTable";
@@ -25,7 +24,7 @@ import { HuecosYoyCatalogList } from "./HuecosYoyCatalogList";
  */
 export function SaludCatalogoView() {
   const router = useRouter();
-  const { q, preview, bootstrap } = useCatalogHealth();
+  const { q } = useCatalogHealth();
 
   if (q.isError) return <ErrorState error={q.error} />;
   if (q.isLoading || !q.data) {
@@ -72,9 +71,7 @@ export function SaludCatalogoView() {
         <EstacionalesInfo exclusiones={c.meta.exclusiones} />
       </div>
 
-      {c.bloque_estable_80_20 === null ? (
-        <BootstrapPrompt preview={preview} bootstrap={bootstrap} />
-      ) : (
+      {c.bloque_estable_80_20 !== null && (
         <Bloque8020Section bloque={c.bloque_estable_80_20} />
       )}
 

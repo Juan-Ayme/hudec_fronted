@@ -1,7 +1,5 @@
-"use client";
+import { redirect } from "next/navigation";
 
-import { UsuariosView } from "@/features/usuarios/components/UsuariosView";
-
-export default function UsuariosPage() {
-  return <UsuariosView />;
+export default function UsuariosRedirectPage() {
+  redirect("/configuracion?tab=usuarios");
 }

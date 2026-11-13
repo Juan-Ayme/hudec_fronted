@@ -1,7 +1,5 @@
 "use client";
 
-import { useState } from "react";
-import { useRouter } from "next/navigation";
 import { TrendingUp, Layers } from "lucide-react";
 import { LoadingState, ErrorState } from "@/components/ui/states";
 import { DateRangeSelect } from "@/components/ui/date-range-select";
@@ -21,7 +19,6 @@ const LEVEL_TABS: { value: RentabilidadLevel; label: string }[] = [
 ];
 
 export function RentabilidadView() {
-  const router = useRouter();
   const {
     days, setDays,
     level, setLevel,
@@ -38,9 +35,9 @@ export function RentabilidadView() {
   return (
     <div className="flex flex-col gap-8 pb-10">
       {/* ── Header Area with Accent ── */}
-      <div className="relative z-30 -mx-6 -mt-6 p-6">
-        <div className="absolute inset-0 z-0 bg-gradient-to-b from-primary/10 via-primary/5 to-transparent opacity-50" />
-        <div className="absolute top-0 left-0 right-0 h-[2px] bg-gradient-to-r from-transparent via-primary to-transparent opacity-50" />
+      <div className="relative z-30 rounded-2xl border border-white/[0.06] p-6">
+        <div className="pointer-events-none absolute inset-0 z-0 rounded-2xl bg-gradient-to-b from-primary/10 via-primary/5 to-transparent opacity-50" />
+        <div className="pointer-events-none absolute top-0 left-4 right-4 h-[2px] bg-gradient-to-r from-transparent via-primary to-transparent opacity-50" />
         
         <div className="relative z-10 flex flex-wrap items-center justify-between gap-4">
           <div className="flex items-center gap-3">

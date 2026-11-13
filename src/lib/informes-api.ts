@@ -459,5 +459,27 @@ export const abrirMesCursoPdf = (officeId: number | null) =>
  *  subcategoría, en dos compras. Usa las tiendas de la empresa que ve el usuario. */
 export const abrirCampanaJuguetesPdf = () => abrirInformePdf("/informes/campana-juguetes/html");
 
+/**
+ * "¿Cómo funciona cada tienda?": días, horas, departamentos, stock y agotados por tienda.
+ * `officeId` null = todas las tiendas comparadas lado a lado; con valor = solo esa tienda,
+ * comparada contra el promedio de las otras. `semanas` = semanas completas (lunes a domingo).
+ */
+export const abrirSucursalesPdf = (officeId: number | null, semanas = 5) => {
+  const qs = new URLSearchParams({ semanas: String(semanas) });
+  if (officeId != null) qs.set("office_id", String(officeId));
+  return abrirInformePdf(`/informes/sucursales/html?${qs}`);
+};
+
+/**
+ * "¿Cómo vendemos más en la mañana?" (hasta la 1 pm): si falta gente o ticket, primer cliente,
+ * mañana más floja, qué se compra temprano y plan por tienda. `officeId` null = todas las
+ * tiendas; con valor = solo esa, contra el promedio de las otras.
+ */
+export const abrirMananasPdf = (officeId: number | null, semanas = 8) => {
+  const qs = new URLSearchParams({ semanas: String(semanas) });
+  if (officeId != null) qs.set("office_id", String(officeId));
+  return abrirInformePdf(`/informes/mananas/html?${qs}`);
+};
+
 /** El mismo informe en Excel, con el detalle por producto y por tienda. */
 export const campanaJuguetesExcelUrl = () => `${API_BASE_URL}/informes/campana-juguetes/excel`;

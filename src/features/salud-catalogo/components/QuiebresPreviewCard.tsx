@@ -30,7 +30,7 @@ export function QuiebresPreviewCard({
         }
         action={
           <Link
-            href="/diagnostico"
+            href="/pulso?tab=diagnostico"
             className="inline-flex items-center gap-1 rounded-md border border-info/40 bg-info/10 px-3 py-1.5 text-caption font-semibold text-info transition-colors hover:bg-info/20"
           >
             Ver detalle

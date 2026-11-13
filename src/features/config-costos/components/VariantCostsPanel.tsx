@@ -18,6 +18,8 @@ import { cn } from "@/lib/utils";
 import type { VariantCostBackfillResult } from "@/lib/bi-types";
 import { COBERTURA } from "@/features/bi/shared";
 import { useVariantCosts } from "../hooks/useVariantCosts";
+import { CostsByOfficeSection } from "./CostsByOfficeSection";
+import { CostosMalCargadosSection } from "./CostosMalCargadosSection";
 
 /**
  * Panel admin de /configuracion?tab=costos: KPIs de auditoría de costos
@@ -186,6 +188,9 @@ export function VariantCostsPanel() {
           loading={backfill.isPending}
         />
       )}
+
+      <CostosMalCargadosSection />
+      <CostsByOfficeSection />
     </div>
   );
 }

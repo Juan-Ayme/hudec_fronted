@@ -1,7 +1,7 @@
 "use client";
 
 import { useState } from "react";
-import { Boxes, CalendarClock, CalendarRange, Download, FileJson, FileText, Gift, PackageX, ShoppingCart, TrendingUp, Wallet } from "lucide-react";
+import { Boxes, CalendarClock, CalendarRange, Download, FileJson, FileText, Gift, PackageX, ShoppingCart, Store, Sunrise, TrendingUp, Wallet } from "lucide-react";
 import { PageHeader } from "@/components/ui/page-header";
 import { Card } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
@@ -17,6 +17,8 @@ import { SurtidoSection } from "./SurtidoView";
 import { useSucursal } from "@/components/sucursal-context";
 import {
   abrirCampanaJuguetesPdf,
+  abrirSucursalesPdf,
+  abrirMananasPdf,
   abrirCierreMesPdf,
   abrirComprasPdf,
   campanaJuguetesExcelUrl,
@@ -106,6 +108,8 @@ function InformesGerente() {
     <>
     <ComprasSemana />
     <CampanaJuguetes />
+    <ComoFuncionaTiendas />
+    <VentaManana />
     <div className="mb-5 grid gap-3 sm:grid-cols-2">
       {items.map(({ cual, titulo, desc, icon: Icon }) => (
         <button key={cual} onClick={() => abrir(cual)} disabled={abriendo !== null}
@@ -170,6 +174,115 @@ function CampanaJuguetes() {
             {bajando ? "Preparando Excel…" : "Detalle (Excel)"}
           </Button>
         </div>
+      </div>
+    </div>
+  );
+}
+
+/**
+ * "¿Cómo funciona cada tienda?": sigue al selector global de sucursal.
+ * Todas = las tiendas comparadas lado a lado; una sucursal = solo esa, contra el promedio de las otras.
+ */
+const SEMANAS_OPC = [4, 5, 8, 13] as const;
+
+function ComoFuncionaTiendas() {
+  const { officeId, sucursalName } = useSucursal();
+  const [semanas, setSemanas] = useState<number>(5);
+  const [abriendo, setAbriendo] = useState(false);
+  const todas = officeId == null;
+  const abrir = async () => {
+    setAbriendo(true);
+    try {
+      await abrirSucursalesPdf(officeId, semanas);
+    } catch (e) {
+      toast.error(e instanceof Error ? e.message : "No se pudo generar el informe");
+    } finally {
+      setAbriendo(false);
+    }
+  };
+  return (
+    <div className="mb-3 rounded-2xl border border-yellow-400/30 bg-yellow-400/[0.06] p-4">
+      <div className="flex flex-wrap items-start gap-3">
+        <Store className="mt-0.5 h-5 w-5 shrink-0 text-yellow-400" />
+        <div className="min-w-0 flex-1">
+          <p className="text-sm font-semibold text-fg">
+            PDF · {todas ? "¿Cómo funciona cada tienda?" : `¿Cómo funciona ${sucursalName ?? "la sucursal"}?`}
+          </p>
+          <p className="text-xs text-muted">
+            {todas
+              ? "Las tiendas comparadas lado a lado: qué días y a qué hora venden, qué departamentos, qué se compra junto (familias y parejas), para cuántos días alcanza el stock, qué agotados se pueden trasladar y por qué bajan las ventas."
+              : "Solo esta tienda, comparada con el promedio de las otras: su semana, sus horas fuertes, qué vende y qué se compra junto, su stock, de dónde traer sus agotados y por qué bajan sus ventas."}
+          </p>
+          <div className="mt-2 flex flex-wrap items-center gap-1.5 text-xs text-muted">
+            <span>Últimas</span>
+            {SEMANAS_OPC.map((s) => (
+              <button key={s} onClick={() => setSemanas(s)}
+                className={cn("rounded-full border px-2.5 py-0.5 transition-colors",
+                  semanas === s ? "border-yellow-400/60 bg-yellow-400/20 text-fg" : "border-white/10 hover:text-fg")}>
+                {s}
+              </button>
+            ))}
+            <span>semanas · cambia de tienda con el selector de sucursal</span>
+          </div>
+        </div>
+        <Button onClick={abrir} disabled={abriendo}>
+          <FileText className="h-4 w-4" />
+          {abriendo ? "Generando… (puede tardar ~30 s)" : "Generar PDF"}
+        </Button>
+      </div>
+    </div>
+  );
+}
+
+/**
+ * "¿Cómo vendemos más en la mañana?": sigue al selector global de sucursal, igual que
+ * "¿Cómo funciona cada tienda?". Mañana = hasta la 1 pm.
+ */
+const SEMANAS_MANANA = [4, 8, 13] as const;
+
+function VentaManana() {
+  const { officeId, sucursalName } = useSucursal();
+  const [semanas, setSemanas] = useState<number>(8);
+  const [abriendo, setAbriendo] = useState(false);
+  const todas = officeId == null;
+  const abrir = async () => {
+    setAbriendo(true);
+    try {
+      await abrirMananasPdf(officeId, semanas);
+    } catch (e) {
+      toast.error(e instanceof Error ? e.message : "No se pudo generar el informe");
+    } finally {
+      setAbriendo(false);
+    }
+  };
+  return (
+    <div className="mb-3 rounded-2xl border border-yellow-400/30 bg-yellow-400/[0.06] p-4">
+      <div className="flex flex-wrap items-start gap-3">
+        <Sunrise className="mt-0.5 h-5 w-5 shrink-0 text-yellow-400" />
+        <div className="min-w-0 flex-1">
+          <p className="text-sm font-semibold text-fg">
+            PDF · {todas ? "¿Cómo vendemos más en la mañana?" : `¿Cómo vende más ${sucursalName ?? "la sucursal"} en la mañana?`}
+          </p>
+          <p className="text-xs text-muted">
+            Cuánto entra antes de la 1 pm, si falta gente o ticket, a qué hora llega el primer cliente, qué mañana es la
+            más floja y cuánto se ganaría, qué se compra temprano, agotados de la mañana y un plan por tienda.
+          </p>
+          <div className="mt-2 flex flex-wrap items-center gap-1.5 text-xs text-muted">
+            <span>Últimas</span>
+            {SEMANAS_MANANA.map((s) => (
+              <button key={s} onClick={() => setSemanas(s)}
+                className={cn("rounded-full border px-2.5 py-0.5 transition-colors",
+                  semanas === s ? "border-yellow-400/60 bg-yellow-400/20 text-fg" : "border-white/10 hover:text-fg")}>
+                {s}
+              </button>
+            ))}
+            <span>semanas · cambia de tienda con el selector de sucursal</span>
+          </div>
+        </div>
+        <Button onClick={abrir} disabled={abriendo}>
+          <FileText className="h-4 w-4" />
+          {abriendo ? "Generando… (puede tardar ~20 s)" : "Generar PDF"}
+        </Button>
       </div>
     </div>
   );

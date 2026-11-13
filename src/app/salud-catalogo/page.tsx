@@ -1,7 +1,5 @@
-"use client";
+import { redirect } from "next/navigation";
 
-import { SaludCatalogoView } from "@/features/salud-catalogo/components/SaludCatalogoView";
-
-export default function SaludCatalogoPage() {
-  return <SaludCatalogoView />;
+export default function SaludCatalogoRedirectPage() {
+  redirect("/pulso?tab=salud");
 }

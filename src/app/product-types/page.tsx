@@ -1,7 +1,5 @@
-"use client";
+import { redirect } from "next/navigation";
 
-import { ProductTypesView } from "@/features/product-types/components/ProductTypesView";
-
-export default function ProductTypesPage() {
-  return <ProductTypesView />;
+export default function ProductTypesRedirectPage() {
+  redirect("/taxonomia?tab=tipologias");
 }

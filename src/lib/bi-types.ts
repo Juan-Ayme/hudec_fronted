@@ -742,20 +742,6 @@ export interface CategoryTargetsList {
   items: CategoryTarget[];
 }
 
-export interface CategoryTargetsPreview {
-  total_sugerencias: number;
-  exclusiones_aplicadas: Exclusiones;
-  criterios: Record<string, unknown>;
-  items: CategoryTarget[];
-}
-
-export interface CategoryTargetsBootstrapResult {
-  ok: true;
-  filas_insertadas: number;
-  filas_borradas: number;
-  force: boolean;
-  items: CategoryTarget[];
-}
 
 export type CategoryTargetPatch = Partial<
   Pick<
@@ -846,7 +832,7 @@ export interface VariantCostHealthDetail {
   precio_venta: number;
   tabla_precio: string;
   margen_soles: number;
-  margen_pct: number;
+  margen_pct: number | null;
   costo_avg_sucursales: number;
   costo_min_sucursales: number;
   costo_max_sucursales: number;

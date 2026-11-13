@@ -1,7 +1,5 @@
-"use client";
+import { redirect } from "next/navigation";
 
-import { DiagnosticoView } from "@/features/diagnostico/components/DiagnosticoView";
-
-export default function DiagnosticoPage() {
-  return <DiagnosticoView />;
+export default function DiagnosticoRedirectPage() {
+  redirect("/pulso?tab=diagnostico");
 }

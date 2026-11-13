@@ -3,7 +3,6 @@
 import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
 import { toast } from "@/lib/toast";
 import {
-  bootstrapCategoryTargets,
   deleteCategoryTarget,
   listCategoryTargets,
   updateCategoryTarget,
@@ -13,7 +12,7 @@ import type { CategoryTargetPatch } from "@/lib/bi-types";
 
 /**
  * Hook admin del tab "Category Targets" de /configuracion. Expone la lista +
- * mutations para editar, eliminar y reset-con-force.
+ * mutations para editar y eliminar filas.
  * Filtro por sucursal es opcional (por default trae todo).
  */
 export function useCategoryTargets(office_id: number | null = null) {
@@ -50,19 +49,5 @@ export function useCategoryTargets(office_id: number | null = null) {
       toast.error("No se pudo eliminar", { description: err.message }),
   });
 
-  const reset = useMutation({
-    mutationFn: (force: boolean) => bootstrapCategoryTargets(force),
-    onSuccess: (data) => {
-      toast.success(
-        data.force
-          ? `Reset con ${data.filas_insertadas} categorías`
-          : `Bootstrap: ${data.filas_insertadas} categorías cargadas`,
-      );
-      qc.invalidateQueries({ queryKey: ["bi"] });
-    },
-    onError: (err: Error) =>
-      toast.error("Error en el bootstrap", { description: err.message }),
-  });
-
-  return { list, update, remove, reset };
+  return { list, update, remove };
 }

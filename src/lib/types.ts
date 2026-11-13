@@ -12,14 +12,6 @@ export interface Health {
   timestamp: string;
 }
 
-// ---- Paginación genérica ----
-export interface Paginated<T> {
-  total: number;
-  limit: number;
-  offset: number;
-  items: T[];
-}
-
 // ---- Analytics ----
 export interface Kpis {
   periodo_dias: number;
@@ -98,14 +90,6 @@ export interface SalesByCategory {
   tickets: number;
 }
 
-export interface SalesBySubcategory {
-  departamento: string;
-  categoria: string;
-  subcategoria: string;
-  ventas: number;
-  tickets: number;
-}
-
 export interface SalesByOffice {
   sucursal: string;
   ventas: number;
@@ -120,73 +104,6 @@ export interface TopProduct {
 }
 
 // ---- Simulador de cascada (debugger por SKU) ----
-/** Métricas crudas del SKU para una sucursal; el frontend evalúa la cascada
- *  con estos números (espejo del SQL de matriz, sin formato display). */
-export interface SkuDetailRow {
-  sucursal: string;
-  office_id: number;
-  is_seasonal_dept: boolean;
-  stock: { disponible: number; reservado: number; almacen_central: number };
-  ventas_90d: {
-    unds_vendidas: number;
-    unds_vendidas_30d: number;
-    dias_con_ventas: number;
-    dias_sin_venta_90d: number | null;
-    v_recent_45d: number;
-    v_old_45d: number;
-    vel_30d: number | null;
-    dias_con_stock_30d: number;
-    ultima_venta_90d: string | null;
-  };
-  lifetime: {
-    unds_vendidas: number;
-    ult_venta: string | null;
-    unds_recibidas: number;
-    primera_recepcion: string | null;
-    unds_consumidas: number;
-    unds_trasladadas: number;
-    pct_sellthrough: number | null;
-    edad_dias: number | null;
-  };
-  lote: {
-    primera_recep_90d: string | null;
-    ultima_recepcion: string | null;
-    dias_desde_ultima_recep: number | null;
-    ult_recep_qty: number;
-    unds_post_recep: number;
-    unds_recibidas_90d: number;
-    unds_lote_total: number;
-    dias_con_stock: number | null;
-    dias_exhibido: number | null;
-    dias_con_venta_lote: number;
-    ult_venta_lote: string | null;
-    pri_venta_lote: string | null;
-    dias_absorcion_lote: number | null;
-  };
-  proyecciones: {
-    ventas_dia: number | null;
-    proy_mes: number | null;
-    proy_30d_reciente: number | null;
-    proy_post_recep: number | null;
-    dias_cobertura: number | null;
-    dias_cobertura_reciente: number | null;
-    cob_post_recep: number | null;
-    pct_frecuencia: number | null;
-    tdpv: number;
-    monto_vendido_90d: number;
-  };
-  categoria_baseline: { avg_proy_cat: number | null };
-}
-
-export interface SkuDetail {
-  sku: string;
-  product_name: string | null;
-  department: string | null;
-  category: string | null;
-  subcategory: string | null;
-  rows: SkuDetailRow[];
-}
-
 export interface SkuHistoryPoint {
   fecha: string;
   unds_vendidas: number;
@@ -199,30 +116,6 @@ export interface SkuHistory {
   days: number;
   office_id: number | null;
   points: SkuHistoryPoint[];
-}
-
-// ---- Tablero Semanal (5 KPIs de gerencia) ----
-export interface Stockout {
-  sucursal: string | null;
-  office_id: number;
-  sku: string | null;
-  producto: string | null;
-  departamento: string | null;
-  categoria: string | null;
-  stock_disponible: number;
-  unds_vendidas_ventana: number;
-  unds_vendidas_90d: number;
-  ultima_venta: string | null;
-  tenia_demanda: boolean;
-}
-
-export interface StockoutsResponse {
-  total: number;
-  con_demanda: number;
-  sin_demanda: number;
-  returned: number;
-  demand_window_days: number;
-  skus: Stockout[];
 }
 
 /** Fila de "venta acumulada vs meta" (global o por sucursal). */
@@ -278,104 +171,7 @@ export interface DailySalesDetail {
   por_sucursal: DailySalesOffice[];
 }
 
-export interface WeeklyBoardKpis {
-  ticket_promedio: number;
-  transacciones: number;
-  ventas: number;
-  skus_en_quiebre: number;
-  skus_en_quiebre_con_demanda: number;
-  avance_meta_pct: number | null;
-}
-
-export interface WeeklyBoard {
-  generado: string;
-  periodo_dias: number;
-  office_id: number | null;
-  nota: string;
-  kpi_resumen: WeeklyBoardKpis;
-  ticket_promedio: { serie_diaria: { dia: string; ticket_promedio: number | null }[] };
-  transacciones: { serie_diaria: { dia: string; tickets: number }[] };
-  venta_por_categoria: (SalesByCategory & { participacion_pct: number })[];
-  skus_en_quiebre: StockoutsResponse;
-  venta_vs_meta: SalesVsGoal;
-}
-
-/** Metas configuradas: { "YYYY-MM": { "global": n, "<office_id>": n } }. */
-export interface GoalsResponse {
-  goals: Record<string, Record<string, number>>;
-}
-
-// ---- Productos ----
-export interface ProductListItem {
-  bsale_product_id: number;
-  name: string;
-  is_active: boolean | null;
-  bsale_product_type_id: number | null;
-  product_type_name: string | null;
-  subcategory: string | null;
-  category: string | null;
-  department: string | null;
-  has_override: boolean | null;
-  skus: string | null;
-  variantes_count: number;
-}
-
-export interface VariantDetail {
-  bsale_variant_id: number;
-  code: string | null;
-  description: string | null;
-  effective_cost: number | null;
-  average_cost: number | null;
-  latest_cost: number | null;
-  cost_source: string | null;
-}
-
-export interface ProductStockByOffice {
-  sucursal: string;
-  unidades: number;
-}
-
-export interface ProductDetail {
-  bsale_product_id: number;
-  name: string;
-  is_active: boolean | null;
-  bsale_product_type_id: number | null;
-  product_type_name: string | null;
-  subcategory: string | null;
-  category: string | null;
-  department: string | null;
-  has_override: boolean | null;
-  variantes: VariantDetail[];
-  stock_por_sucursal: ProductStockByOffice[];
-}
-
-export interface OrphanProduct {
-  id: number;
-  name: string;
-  productos: number;
-}
-
-export interface ProductsSummary {
-  total_productos: number;
-  total_variantes: number;
-  product_types_total: number;
-  product_types_mapeados: number;
-  product_types_sin_mapear: number;
-  productos_con_override: number;
-  productos_huerfanos: OrphanProduct[];
-}
-
 // ---- Stock ----
-export interface StockLevel {
-  bsale_variant_id: number;
-  bsale_office_id: number;
-  office_name: string | null;
-  variant_code: string | null;
-  product_name: string | null;
-  quantity_available: number;
-  quantity_reserved: number | null;
-}
-
 export interface StockValuationOffice {
   bsale_office_id: number;
   sucursal: string;
@@ -388,78 +184,7 @@ export interface StockValuation {
   por_sucursal: StockValuationOffice[];
 }
 
-export interface StockTop {
-  bsale_variant_id: number;
-  code: string | null;
-  producto: string;
-  unidades: number;
-}
-
-export interface StockHistoryPoint {
-  snapshot_date: string;
-  sucursal: string;
-  unidades: number;
-}
-
-// ---- Documentos ----
-export interface DocumentListItem {
-  bsale_document_id: number;
-  serial_number: string | null;
-  doc_number: string | null;
-  emission_date: string | null;
-  total_amount: number | null;
-  bsale_office_id: number | null;
-  office_name: string | null;
-  document_type_name: string | null;
-  is_credit_note: boolean | null;
-}
-
-export interface DocumentDetailLine {
-  bsale_variant_id: number | null;
-  code: string | null;
-  producto: string | null;
-  quantity: number;
-  net_unit_value: number | null;
-  total_amount: number | null;
-}
-
-export interface DocumentDetail extends Record<string, unknown> {
-  bsale_document_id: number;
-  document_type_name: string | null;
-  office_name: string | null;
-  emission_date: string | null;
-  total_amount: number | null;
-  detalles: DocumentDetailLine[];
-}
-
-export interface DocumentsSummaryType {
-  tipo: string | null;
-  cantidad: number;
-}
-
-export interface DocumentsSummary {
-  total_documentos: number;
-  total_detalles: number;
-  mas_reciente: string | null;
-  mas_antiguo: string | null;
-  por_tipo: DocumentsSummaryType[];
-}
-
 // ---- Taxonomía ----
-export interface Department {
-  id: number;
-  name: string;
-  slug: string | null;
-}
-
-export interface Category {
-  id: number;
-  name: string;
-  slug: string | null;
-  department_id: number;
-  department_name?: string;
-}
-
 export interface Subcategory {
   id: number;
   name: string;
@@ -500,12 +225,261 @@ export interface ProductType {
   department: string | null;
   department_id: number | null;
   productos: number;
+  productos_activos?: number;
+  productos_inactivos?: number;
+  expected_name?: string | null;
   naming_ok: boolean;
 }
 
 export interface ProductTypesResponse {
   total: number;
   items: ProductType[];
+}
+
+export interface ProductTypesWorkspaceSummary {
+  total_product_types: number;
+  active_product_types: number;
+  inactive_product_types: number;
+  mapped_count: number;
+  unmapped_with_products_count: number;
+  unmapped_empty_count: number;
+  mapped_empty_count: number;
+  naming_mismatches_count: number;
+  products_with_override_count: number;
+  products_without_classification_count: number;
+}
+
+export interface ProductTypesWorkspaceResponse {
+  summary: ProductTypesWorkspaceSummary;
+  unmapped_with_products: ProductType[];
+  unmapped_empty: ProductType[];
+  mapped: ProductType[];
+}
+
+export interface PullProductTypesResponse {
+  ok: boolean;
+  operation: string;
+  timestamp: string;
+  stats: {
+    fetched_from_bsale: number;
+    new_inserted: number;
+    updated: number;
+    auto_mapped: number;
+    deactivated_locally: number;
+    unmapped_with_products: number;
+    unmapped_empty: number;
+  };
+  workspace: ProductTypesWorkspaceResponse;
+}
+
+export interface BulkMapProductTypesPayload {
+  product_type_ids: number[];
+  subcategory_id?: number | null;
+  unmap?: boolean;
+  rename_in_bsale?: boolean;
+  dry_run?: boolean;
+}
+
+export interface BulkMapProductTypesResponse {
+  ok: boolean;
+  operation: string;
+  dry_run: boolean;
+  timestamp: string;
+  target_subcategory: {
+    subcategory_id: number;
+    subcategory: string;
+    category_id: number;
+    category: string;
+    department_id: number;
+    department: string;
+  } | null;
+  totals: {
+    received: number;
+    updated?: number;
+    to_update?: number;
+    renamed_in_bsale?: number;
+    rename_failed?: number;
+    not_found: number;
+  };
+  to_update?: Array<{
+    bsale_product_type_id: number;
+    current_name: string;
+    new_name: string;
+    old_subcategory_id: number | null;
+    new_subcategory_id: number | null;
+  }>;
+  updated_ids?: number[];
+  rename_failed?: Array<{
+    bsale_product_type_id: number;
+    current_name: string;
+    target_name: string;
+    error: string;
+  }>;
+  not_found: number[];
+}
+
+export interface BulkDeleteProductTypesPayload {
+  product_type_ids?: number[] | null;
+  delete_all_empty_unmapped?: boolean;
+  dry_run?: boolean;
+}
+
+export interface BulkDeleteProductTypesResponse {
+  ok: boolean;
+  operation: string;
+  dry_run: boolean;
+  timestamp: string;
+  totals: {
+    requested: number;
+    deleted?: number;
+    to_delete?: number;
+    blocked_with_products: number;
+    failed?: number;
+    not_found: number;
+  };
+  to_delete?: Array<ProductType>;
+  deleted?: Array<{ bsale_product_type_id: number; name: string }>;
+  blocked_with_products: Array<{
+    bsale_product_type_id: number;
+    name: string;
+    productos: number;
+    productos_activos: number;
+    productos_inactivos: number;
+    reason: string;
+  }>;
+  failed?: Array<{ bsale_product_type_id: number; name: string; error: string }>;
+  not_found: number[];
+}
+
+export interface MergeProductTypesPayload {
+  source_product_type_ids: number[];
+  target_product_type_id: number;
+  delete_sources_after?: boolean;
+  copy_mapping_if_target_unmapped?: boolean;
+  clear_product_overrides?: boolean;
+  dry_run?: boolean;
+}
+
+export interface MergeProductTypesResponse {
+  ok: boolean;
+  operation: string;
+  dry_run: boolean;
+  timestamp: string;
+  target?: ProductType;
+  sources?: ProductType[];
+  sources_not_found?: number[];
+  totals: {
+    sources_count?: number;
+    sources_requested?: number;
+    products_to_move?: number;
+    products_found?: number;
+    active_products_to_move?: number;
+    inactive_products_to_move?: number;
+    will_delete_sources?: boolean;
+    products_moved?: number;
+    products_failed?: number;
+    sources_deleted?: number;
+    sources_kept?: number;
+  };
+  sample_products?: Array<{
+    bsale_product_id: number;
+    name: string;
+    is_active: boolean;
+    bsale_product_type_id: number;
+    subcategory_id: number | null;
+  }>;
+  moved_products?: Array<{
+    bsale_product_id: number;
+    name: string;
+    from_product_type_id: number;
+    to_product_type_id: number;
+  }>;
+  failed_products?: Array<{
+    bsale_product_id: number;
+    name: string;
+    from_product_type_id: number;
+    error: string;
+  }>;
+  sources_deleted?: Array<{ bsale_product_type_id: number; name: string }>;
+  sources_kept?: Array<{ bsale_product_type_id: number; name: string; reason: string }>;
+}
+
+export interface BulkChangeProductTypePayload {
+  target_product_type_id: number;
+  product_ids?: number[] | null;
+  variant_ids?: number[] | null;
+  skus?: string[] | null;
+  clear_overrides?: boolean;
+  dry_run?: boolean;
+}
+
+export interface BulkChangeProductTypeResponse {
+  ok: boolean;
+  operation: string;
+  dry_run: boolean;
+  timestamp: string;
+  target_product_type: ProductType;
+  totals: {
+    matched_products: number;
+    to_move?: number;
+    moved?: number;
+    failed?: number;
+    already_in_target: number;
+    overrides_cleared_on_existing?: number;
+    not_found_count: number;
+  };
+  to_move?: Array<{
+    bsale_product_id: number;
+    product_name: string;
+    is_active: boolean;
+    bsale_product_type_id: number;
+    override_subcategory_id: number | null;
+    current_product_type_name: string | null;
+    current_department: string | null;
+    current_category: string | null;
+    current_subcategory: string | null;
+  }>;
+  moved?: Array<{
+    bsale_product_id: number;
+    product_name: string;
+    old_product_type_id: number;
+    old_product_type_name: string | null;
+    new_product_type_id: number;
+    new_product_type_name: string;
+  }>;
+  failed?: Array<{
+    bsale_product_id: number;
+    product_name: string;
+    old_product_type_id: number;
+    error: string;
+  }>;
+  already_in_target: Array<any>;
+  not_found: {
+    product_ids: number[];
+    variant_ids: number[];
+    skus: string[];
+  };
+}
+
+export interface BulkProductSubcategoryPayload {
+  subcategory_id: number | null;
+  product_ids?: number[] | null;
+  variant_ids?: number[] | null;
+  skus?: string[] | null;
+  clear_all_company_overrides?: boolean;
+}
+
+export interface BulkProductSubcategoryResponse {
+  ok: boolean;
+  operation: string;
+  subcategory_id: number | null;
+  updated_count: number;
+  updated_product_ids: number[];
+  not_found: {
+    product_ids: number[];
+    variant_ids: number[];
+    skus: string[];
+  };
 }
 
 // ---- Auditorías ----
@@ -602,13 +576,6 @@ export interface DataQualityIssue {
 }
 
 // ---- Matrices KAWII ----
-export interface MatrixModule {
-  id: string;
-  name: string;
-  description: string;
-  endpoint: string;
-}
-
 export interface MatrixResponse {
   module: string;
   total: number;
@@ -616,60 +583,6 @@ export interface MatrixResponse {
   offset: number;
   columns: string[];
   rows: Array<Record<string, unknown>>;
-}
-
-export interface CategoryCount {
-  label: string;
-  count: number;
-}
-
-export interface DistributionResponse {
-  module: string;
-  label_column: string;
-  sucursal_filter: string | null;
-  total_skus: number;
-  categories: CategoryCount[];
-}
-
-export interface TransferResponse {
-  module: string;
-  total: number;
-  transfers: Array<Record<string, unknown>>;
-}
-
-export interface ActionGroupsSummary {
-  urgente_comprar: number;
-  reponer: number;
-  saludable: number;
-  exceso: number;
-  liquidar: number;
-  descatalogar: number;
-  evaluar: number;
-  otro: number;
-}
-
-export interface ActionGroupsResponse {
-  module: string;
-  label_column: string;
-  summary: ActionGroupsSummary;
-  groups: Record<string, Array<Record<string, unknown>>>;
-}
-
-export interface BranchStats {
-  total_skus: number;
-  urgente: number;
-  reponer: number;
-  saludable: number;
-  descatalogar: number;
-  exceso: number;
-}
-
-export interface MatrixSummaryResponse {
-  total_skus: number;
-  by_branch: Record<string, BranchStats>;
-  transfers_sugeridas: number;
-  tendencia_creciendo: number;
-  tendencia_decayendo: number;
 }
 
 // ---- Selección jerárquica (árbol Departamento → Categoría → Subcategoría) ----

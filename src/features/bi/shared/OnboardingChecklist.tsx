@@ -99,8 +99,10 @@ export function OnboardingChecklist() {
       id: "targets",
       label: "Category targets (80/20)",
       done: hasTargets,
-      href: "/salud-catalogo",
-      hint: hasTargets ? undefined : "Correr el bootstrap desde /salud-catalogo.",
+      href: "/configuracion?tab=targets",
+      hint: hasTargets
+        ? undefined
+        : "Configurar metas por categoría en Configuración → Category targets.",
     },
     {
       id: "costos",

@@ -1,7 +1,5 @@
-"use client";
+import { redirect } from "next/navigation";
 
-import { PlanMesView } from "@/features/plan-mes/components/PlanMesView";
-
-export default function PlanMesPage() {
-  return <PlanMesView />;
+export default function PlanMesRedirectPage() {
+  redirect("/pulso?tab=plan");
 }

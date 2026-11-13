@@ -8,18 +8,21 @@ import { Row } from "../types";
 import { s, n } from "../utils";
 import { SimilarsInfo, similarsLabel } from "../utils/similarity";
 
-function getTrendMock(tendencia: string, clasif: string) {
-  const t = tendencia.toUpperCase();
-  const c = clasif.toUpperCase();
-  if (t.includes("CRECIENDO RÁPIDO") || c.includes("BESTSELLER RÁPIDO")) return [1, 2, 3.5];
-  if (t.includes("CRECIENDO") || c.includes("EMERGENTE")) return [1, 1.5, 2];
-  if (t.includes("BAJANDO RÁPIDO") || c.includes("EX-BESTSELLER")) return [3, 1.5, 0.5];
-  if (t.includes("BAJANDO")) return [2, 1.5, 1];
-  if (t.includes("INICIO") || c.includes("NUEVO")) return [0, 1, 2.5];
-  if (c.includes("MUERTO") || c.includes("EXTINTA")) return [0.5, 0.1, 0];
-  if (c.includes("LENTO") || c.includes("PARADO")) return [1, 0.8, 0.5];
-  if (c.includes("BESTSELLER")) return [3, 3, 3.2];
-  return [1, 1, 1];
+/**
+ * Tendencia REAL del SKU (uds/día) a partir de las columnas de la matriz 90d:
+ *   v90 = venta neta 90d / 90 · v30 = ritmo últimos 30d (solo días con stock)
+ *   p30 = ritmo del lote fresco (post-recepción) o, si no hay, el de 30d.
+ * Antes era `getTrendMock`, que dibujaba una forma fija según la etiqueta
+ * ("BESTSELLER" → subida) sin mirar las ventas: podía mostrar una subida en un
+ * producto que en realidad caía. Devuelve null si no hay ventas para dibujar.
+ */
+function getTrendReal(sku: Row): [number, number, number] | null {
+  const v90 = n(sku["Unds Vend (90d)"]) / 90;
+  const v30 = n(sku["Vel últimos 30d"]);
+  const postRecep = n(sku["Proy Post-Recep"]) / 30;
+  const p30 = postRecep > 0 ? postRecep : v30;
+  if (v90 <= 0 && v30 <= 0 && p30 <= 0) return null;
+  return [v90, v30, p30];
 }
 
 export const ProductListItem = React.memo(function ProductListItem({
@@ -47,7 +50,7 @@ export const ProductListItem = React.memo(function ProductListItem({
   const meta = getClassificationMeta(clasif);
   const Icon = meta.icon;
   
-  const [v90, v30, p30] = getTrendMock(tendencia, clasif);
+  const trend = getTrendReal(sku);
   const hasSimilares = !!similares && similares.items.length > 0;
 
   return (
@@ -84,8 +87,12 @@ export const ProductListItem = React.memo(function ProductListItem({
 
       {/* 2. Visualización: Sparkline */}
       <div className="flex flex-1 items-center gap-4 relative z-10">
-        <div className="w-24 shrink-0 hidden md:block opacity-70 group-hover:opacity-100 transition-opacity duration-300" title={`Tendencia: ${tendencia || 'Estable'}`}>
-          <SmoothSparkline v90={v90} v30={v30} p30={p30} width={90} height={24} />
+        <div className="w-24 shrink-0 hidden md:block opacity-70 group-hover:opacity-100 transition-opacity duration-300" title={trend ? `Uds/día · 90d: ${trend[0].toFixed(2)} · 30d: ${trend[1].toFixed(2)} · lote actual: ${trend[2].toFixed(2)}` : `Tendencia: ${tendencia || 'Estable'}`}>
+          {trend ? (
+            <SmoothSparkline v90={trend[0]} v30={trend[1]} p30={trend[2]} width={90} height={24} />
+          ) : (
+            <span className="text-[0.65rem] text-faint">sin ventas</span>
+          )}
         </div>
       </div>
 

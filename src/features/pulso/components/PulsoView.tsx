@@ -3,6 +3,7 @@
 import { useRouter } from "next/navigation";
 import { Activity, Bell } from "lucide-react";
 import { LoadingState, ErrorState } from "@/components/ui/states";
+import { useCompany } from "@/components/company-context";
 import {
   AlertaList,
   CoberturaBanner,
@@ -18,16 +19,11 @@ import { Ultimos7DiasCard } from "./Ultimos7DiasCard";
 
 /**
  * Vista 1 — Pulso: "¿Cómo voy hoy?".
- * Layout:
- *   1. CoberturaBanner (si el margen está distorsionado, mostrar arriba de todo).
- *   2. HeaderMes: venta acumulada + gauge + link a /plan-mes.
- *   3. VeredictoCard: lectura del momento (color según código).
- *   4. UltimoDiaCard + SemanaMiniChart en grid.
- *   5. Ultimos7DiasCard: 4 comparativas.
- *   6. AlertaList: chips priorizadas.
  */
 export function PulsoView() {
   const router = useRouter();
+  const { activeRole } = useCompany();
+  const isViewer = activeRole === "viewer" || activeRole === null;
   const { q } = usePulse();
 
   if (q.isError) return <ErrorState error={q.error} />;
@@ -37,11 +33,11 @@ export function PulsoView() {
 
   return (
     <div className="flex flex-col gap-5">
-      <OnboardingChecklist />
+      {!isViewer && <OnboardingChecklist />}
 
       <CoberturaBanner
         cobertura={p.meta.cobertura_costos}
-        onAudit={() => router.push("/configuracion?tab=costos")}
+        onAudit={isViewer ? undefined : () => router.push("/configuracion?tab=costos")}
       />
 
       <div className="flex items-center justify-between gap-3">
@@ -55,7 +51,7 @@ export function PulsoView() {
         <EstacionalesInfo exclusiones={p.meta.exclusiones} />
       </div>
 
-      <HeaderMes mes={p.mes_en_curso} />
+      <HeaderMes mes={p.mes_en_curso} showPlanLink={!isViewer} />
 
       <VeredictoCard veredicto={p.veredicto} />
 
@@ -82,7 +78,7 @@ export function PulsoView() {
         </p>
         <AlertaList
           alertas={p.alertas}
-          onAction={() => router.push("/diagnostico")}
+          onAction={isViewer ? undefined : () => router.push("/pulso?tab=diagnostico")}
         />
       </div>
     </div>

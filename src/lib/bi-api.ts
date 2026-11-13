@@ -10,9 +10,7 @@ import type {
   CatalogHealthResponse,
   CategoryTargetPatch,
   CategoryTargetUpdateResult,
-  CategoryTargetsBootstrapResult,
   CategoryTargetsList,
-  CategoryTargetsPreview,
   DiagnosisResponse,
   EcosistemaNivel,
   EcosistemaResponse,
@@ -103,22 +101,6 @@ export const listCategoryTargets = (
     signal,
   });
 
-/** Preview de lo que insertaría el bootstrap. No muta nada. */
-export const previewCategoryTargets = (signal?: AbortSignal) =>
-  request<CategoryTargetsPreview>("/config/category-targets/preview", {
-    signal,
-  });
-
-/**
- * Carga inicial (o reset con force) de targets sugeridos automáticamente.
- * Idempotente cuando la tabla está vacía. Con datos + force=false → 409 Conflict.
- */
-export const bootstrapCategoryTargets = (force = false) =>
-  request<CategoryTargetsBootstrapResult>(
-    "/config/category-targets/bootstrap",
-    { method: "POST", query: { force } },
-  );
-
 /** Edición parcial de un target — solo se modifican los campos enviados. */
 export const updateCategoryTarget = (
   category_id: number,
@@ -153,6 +135,38 @@ export const backfillVariantCosts = (dry_run: boolean) =>
     "/config/variant-costs/backfill-from-receptions",
     { method: "POST", query: { dry_run } },
   );
+
+/** Compra con costo >= precio de venta: error de carga a corregir en BSale. */
+export interface CostoMalCargado {
+  sku: string;
+  producto: string;
+  office_id: number;
+  sucursal: string;
+  fecha: string | null;
+  recepcion: number;
+  nota: string;
+  cantidad: number;
+  costo_cargado: number;
+  precio_venta: number;
+  veces_precio: number;
+  costo_que_usa_el_sistema: number | null;
+  stock_actual: number | null;
+}
+
+export interface CostosMalCargados {
+  total: number;
+  productos: number;
+  por_sucursal: Record<string, number>;
+  criterio: string;
+  detalle: CostoMalCargado[];
+}
+
+/** Compras mal cargadas en BSale (costo >= precio de venta), últimos `meses`. */
+export const getCostosMalCargados = (meses = 12, signal?: AbortSignal) =>
+  request<CostosMalCargados>("/config/variant-costs/mal-cargados", { query: { meses }, signal });
+
+export const costosMalCargadosExcelUrl = (meses = 12) =>
+  `${API_BASE_URL}/config/variant-costs/mal-cargados/export?meses=${meses}`;
 
 /** Análisis de salud de costos por sucursal. */
 export const getVariantCostsByOffice = (
@@ -264,7 +278,6 @@ export const biQueryKeys = {
     ["bi", "ecosistema", office_id, nivel, dias] as const,
   categoryTargets: (office_id: number | null) =>
     ["bi", "category-targets", office_id] as const,
-  categoryTargetsPreview: () => ["bi", "category-targets", "preview"] as const,
   variantCostsAudit: () => ["bi", "variant-costs", "audit"] as const,
   variantCostsByOffice: (params: import("@/lib/bi-types").VariantCostByOfficeParams) => ["bi", "variant-costs", "by-office", params] as const,
 } as const;
@@ -274,9 +287,7 @@ export type {
   CatalogHealthResponse,
   CategoryTarget,
   CategoryTargetPatch,
-  CategoryTargetsBootstrapResult,
   CategoryTargetsList,
-  CategoryTargetsPreview,
   CategoryTargetUpdateResult,
   DiagnosisResponse,
   EcosistemaItem,

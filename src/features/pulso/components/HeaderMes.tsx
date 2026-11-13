@@ -23,7 +23,13 @@ import {
  *  - Días transcurridos / restantes.
  *  - Link a /plan-mes para ver la proyección y planificar.
  */
-export function HeaderMes({ mes }: { mes: PulseMesEnCurso }) {
+export function HeaderMes({
+  mes,
+  showPlanLink = true,
+}: {
+  mes: PulseMesEnCurso;
+  showPlanLink?: boolean;
+}) {
   const g = mes.global;
   return (
     <Card>
@@ -100,17 +106,19 @@ export function HeaderMes({ mes }: { mes: PulseMesEnCurso }) {
             </span>
             <HelpTip text="Si se mantiene el ritmo de venta actual, el mes cerraría en este monto." side="bottom" />
           </p>
-          <Link
-            href="/plan-mes"
-            className={cn(
-              "inline-flex items-center gap-1 rounded-md px-3 py-1.5 text-caption font-semibold",
-              "border border-primary/40 bg-primary/10 text-primary",
-              "transition-colors hover:bg-primary/20 hover:border-primary/60",
-            )}
-          >
-            Ver plan del mes
-            <ChevronRight className="h-3.5 w-3.5" aria-hidden="true" />
-          </Link>
+          {showPlanLink && (
+            <Link
+              href="/pulso?tab=plan"
+              className={cn(
+                "inline-flex items-center gap-1 rounded-md px-3 py-1.5 text-caption font-semibold",
+                "border border-primary/40 bg-primary/10 text-primary",
+                "transition-colors hover:bg-primary/20 hover:border-primary/60",
+              )}
+            >
+              Ver plan del mes
+              <ChevronRight className="h-3.5 w-3.5" aria-hidden="true" />
+            </Link>
+          )}
         </div>
       </CardBody>
 
