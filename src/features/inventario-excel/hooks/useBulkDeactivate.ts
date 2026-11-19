@@ -102,7 +102,7 @@ export function useBulkDeactivate() {
     } finally {
       setIsExecuting(false);
     }
-  }, [parsedSkus, forzarConStock]);
+  }, [parsedSkus, forzarConStock, queryClient]);
 
   const resetAll = useCallback(() => {
     setRawInput("");

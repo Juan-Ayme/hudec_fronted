@@ -77,11 +77,13 @@ export function CompanyProvider({ children }: { children: ReactNode }) {
   // decide explícitamente en /select-company. Si la guardada ya no está en
   // sus membresías (ej. le sacaron acceso), limpiamos la selección para
   // forzar re-elección.
-  useEffect(() => {
-    if (!companies.length) return;
+  // (Ajuste de estado durante el render cuando cambian las membresías.)
+  const [prevCompanies, setPrevCompanies] = useState<Company[] | null>(null);
+  if (companies !== prevCompanies) {
+    setPrevCompanies(companies);
     const stillValid =
       storedId !== null && companies.some((c) => c.id === storedId);
-    if (!stillValid) {
+    if (companies.length && !stillValid) {
       if (companies.length === 1) {
         setStoredId(companies[0].id);
       } else if (storedId !== null) {
@@ -89,7 +91,7 @@ export function CompanyProvider({ children }: { children: ReactNode }) {
         setStoredId(null);
       }
     }
-  }, [companies, storedId]);
+  }
 
   const activeCompany = useMemo(
     () => companies.find((c) => c.id === storedId) ?? null,

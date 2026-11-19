@@ -1,7 +1,7 @@
 "use client";
 
 import { useState, useMemo } from "react";
-import { ArrowRight, Check, Eye, FileSpreadsheet, Loader2, Sparkles, X, AlertCircle } from "lucide-react";
+import { ArrowRight, Check, Eye, FileSpreadsheet, Loader2, X, AlertCircle } from "lucide-react";
 import { Card } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";

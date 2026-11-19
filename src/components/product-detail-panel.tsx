@@ -172,7 +172,8 @@ interface ProductDetailPanelProps {
   row: Record<string, unknown>;
   open: boolean;
   onClose: () => void;
-  sucursalName: string | null;
+  /** Sucursal del selector global (null = todas las tiendas). */
+  officeId: number | null;
   similares?: SimilarsInfo;
   onOpenSimilar?: (sku: string) => void;
 }
@@ -254,24 +255,16 @@ export function ProductDetailPanel({
   row,
   open,
   onClose,
-  sucursalName,
+  officeId,
   similares,
   onOpenSimilar,
 }: ProductDetailPanelProps) {
   /* ── SKU history query ─────────────────────────────────── */
   const sku = s(row["Código SKU"] ?? row["SKU"] ?? row["Código"] ?? row["sku"]);
-  const branchNameStr = sucursalName === "Todas" ? null : sucursalName;
-  const office_id = branchNameStr
-    ? branchNameStr === "Magdalena"
-      ? 1
-      : branchNameStr === "San Miguel"
-        ? 2
-        : null
-    : null;
 
   const { data: historyData, isLoading: historyLoading, isError: historyError } = useQuery({
-    queryKey: ["skuHistory", sku, 180, office_id],
-    queryFn: ({ signal }) => getSkuHistory(sku, 180, office_id, signal),
+    queryKey: ["skuHistory", sku, 180, officeId],
+    queryFn: ({ signal }) => getSkuHistory(sku, 180, officeId, signal),
     enabled: open && sku.length > 0,
     staleTime: 5 * 60_000,
     retry: false,
@@ -439,9 +432,10 @@ export function ProductDetailPanel({
             Otros SKUs de la misma subcategoría con nombres parecidos. Revísalos antes de confirmar la compra para no duplicar stock.
           </p>
           <div className="flex flex-col gap-2">
-            {similares!.items.slice(0, 6).map((sim) => (
+            {similares!.items.slice(0, 6).map((sim, i) => (
               <button
-                key={sim.sku}
+                // El backend puede repetir SKU (variantes con el mismo código).
+                key={`${sim.sku}-${i}`}
                 type="button"
                 onClick={() => onOpenSimilar?.(sim.sku)}
                 disabled={!onOpenSimilar}

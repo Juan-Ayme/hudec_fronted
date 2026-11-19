@@ -16,7 +16,7 @@ import { Building2, LogOut, Shield, User, Eye } from "lucide-react";
 import { useAuth } from "@/components/auth-context";
 import { useCompany } from "@/components/company-context";
 import { Button } from "@/components/ui/button";
-import { Card, CardBody } from "@/components/ui/card";
+
 import { cn } from "@/lib/utils";
 import type { UserRole } from "@/lib/api";
 
@@ -24,12 +24,6 @@ const roleIcon: Record<UserRole, typeof Shield> = {
   admin: Shield,
   operador: User,
   viewer: Eye,
-};
-
-const roleColor: Record<UserRole, string> = {
-  admin: "text-primary",
-  operador: "text-violet",
-  viewer: "text-success",
 };
 
 function SelectCompanyView() {
@@ -58,7 +52,7 @@ function SelectCompanyView() {
   const handleSelect = (companyId: number) => {
     setActiveCompany(companyId);
     // Reload para que React Query invalide todo con el nuevo header
-    window.location.href = next;
+    window.location.assign(next);
   };
 
   const handleLogout = async () => {

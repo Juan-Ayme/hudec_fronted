@@ -6,7 +6,6 @@ import {
   Play,
   RotateCcw,
   ClipboardPaste,
-  CheckCircle2,
   AlertTriangle,
   HelpCircle,
   AlertCircle,
@@ -650,7 +649,7 @@ export function BulkDeactivateTab() {
             <li>Se invalidará la caché de las matrices de compras y ventas.</li>
             {forzarConStock && (
               <li className="text-warning font-semibold">
-                ⚠️ Atención: Has activado "Forzar con stock", por lo que los productos con unidades físicas también serán desactivados.
+                ⚠️ Atención: Has activado &quot;Forzar con stock&quot;, por lo que los productos con unidades físicas también serán desactivados.
               </li>
             )}
           </ul>

@@ -1,7 +1,7 @@
 "use client";
 
 import { useState } from "react";
-import { ArrowRight, Check, Eye, Layers, Loader2, Sparkles, X } from "lucide-react";
+import { ArrowRight, Check, Eye, Layers, Sparkles, X } from "lucide-react";
 import { Card } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";

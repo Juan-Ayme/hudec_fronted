@@ -1,5 +1,5 @@
 import { redirect } from "next/navigation";
 
 export default function DiagnosticoRedirectPage() {
-  redirect("/pulso?tab=diagnostico");
+  redirect("/informes");
 }

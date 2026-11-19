@@ -35,18 +35,19 @@ function NavLinks({
   );
 
   // Asegura que al navegar a otra ruta, su grupo nunca quede contraído
-  useEffect(() => {
-    for (const g of groups) {
-      if (g.items.some((i) => isActive(pathname, i.href))) {
-        setCollapsedGroups((prev) => {
-          if (!prev.has(g.title)) return prev;
-          const next = new Set(prev);
-          next.delete(g.title);
-          return next;
-        });
-      }
+  // (ajuste de estado durante el render al cambiar la ruta, sin efecto).
+  const [prevPathname, setPrevPathname] = useState(pathname);
+  if (pathname !== prevPathname) {
+    setPrevPathname(pathname);
+    const activeTitles = groups
+      .filter((g) => g.items.some((i) => isActive(pathname, i.href)))
+      .map((g) => g.title);
+    if (activeTitles.some((t) => collapsedGroups.has(t))) {
+      const next = new Set(collapsedGroups);
+      activeTitles.forEach((t) => next.delete(t));
+      setCollapsedGroups(next);
     }
-  }, [pathname, groups]);
+  }
 
   const toggleGroup = (title: string) => {
     setCollapsedGroups((prev) => {

@@ -453,28 +453,7 @@ export interface BulkChangeProductTypeResponse {
     old_product_type_id: number;
     error: string;
   }>;
-  already_in_target: Array<any>;
-  not_found: {
-    product_ids: number[];
-    variant_ids: number[];
-    skus: string[];
-  };
-}
-
-export interface BulkProductSubcategoryPayload {
-  subcategory_id: number | null;
-  product_ids?: number[] | null;
-  variant_ids?: number[] | null;
-  skus?: string[] | null;
-  clear_all_company_overrides?: boolean;
-}
-
-export interface BulkProductSubcategoryResponse {
-  ok: boolean;
-  operation: string;
-  subcategory_id: number | null;
-  updated_count: number;
-  updated_product_ids: number[];
+  already_in_target: Array<unknown>;
   not_found: {
     product_ids: number[];
     variant_ids: number[];
@@ -690,78 +669,3 @@ export interface ComprasCatalogoResponse {
 // SQL: 04h_rotacion_historica.sql (variante PARAMETRIZABLE del 04b).
 // La clasificación NO usa la cascada de 38 reglas (depende del presente);
 // usa Pareto ABC + frecuencia + tendencia intra-ventana.
-export interface RotacionHistoricaMeta {
-  from: string;          // YYYY-MM-DD
-  to: string;            // YYYY-MM-DD
-  dias_ventana: number;
-  office_id: number | null;
-  sucursal: string | null;
-  generado_at: string;
-}
-
-export interface RotacionHistoricaKpis {
-  skus_con_venta: number;
-  unds_vendidas: number;
-  venta_soles: number;
-  skus_pareto_a: number;
-  skus_pareto_b: number;
-  skus_pareto_c: number;
-}
-
-export interface RotacionHistoricaDept {
-  departamento: string;
-  skus_total: number;
-  skus_pareto_a: number;
-  venta_soles: number;
-  unds_vendidas: number;
-  participacion_pct: number;
-}
-
-export interface RotacionHistoricaPareto {
-  pareto: "A" | "B" | "C";
-  skus: number;
-  etiqueta: string;
-}
-
-export interface RotacionHistoricaClasif {
-  clasificacion: string;
-  skus: number;
-}
-
-export interface RotacionHistoricaSku {
-  sku: string;
-  producto: string;
-  sucursal: string;
-  departamento: string | null;
-  categoria: string | null;
-  subcategoria: string | null;
-  unds_vendidas: number;
-  vendido_sku_soles: number;
-  vendido_subcat_soles: number;
-  vendido_cat_soles: number;
-  vendido_depto_soles: number;
-  pct_en_subcat: number;
-  pct_en_cat: number;
-  pct_en_depto: number;
-  velocidad_uds_dia: number;
-  dias_con_venta: number;
-  pct_frecuencia: number;
-  tendencia: string | null;
-  unds_primera_mitad: number;
-  unds_segunda_mitad: number;
-  rank_sucursal: number;
-  pct_acum: number;
-  pareto: "A" | "B" | "C";
-  clasificacion: string;
-  primera_venta: string | null;
-  ultima_venta: string | null;
-}
-
-export interface RotacionHistoricaResponse {
-  meta: RotacionHistoricaMeta;
-  kpis: RotacionHistoricaKpis;
-  por_departamento: RotacionHistoricaDept[];
-  por_pareto: RotacionHistoricaPareto[];
-  por_clasificacion: RotacionHistoricaClasif[];
-  skus: RotacionHistoricaSku[];
-}

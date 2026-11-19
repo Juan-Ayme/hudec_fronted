@@ -1,10 +1,10 @@
 "use client";
 
 import { useState } from "react";
-import { AlertOctagon, Check, Eye, Loader2, Trash2, X } from "lucide-react";
+import { AlertOctagon, Eye, Trash2, X } from "lucide-react";
 import { Card } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
-import { Badge } from "@/components/ui/badge";
+
 import { bulkDeleteProductTypes } from "@/lib/api";
 import { toast } from "@/lib/toast";
 import type { ProductType, BulkDeleteProductTypesResponse } from "@/lib/types";

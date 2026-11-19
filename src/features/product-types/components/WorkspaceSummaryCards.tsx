@@ -3,7 +3,6 @@
 import {
   AlertTriangle,
   CheckCircle2,
-  FolderSync,
   Layers,
   Trash2,
 } from "lucide-react";

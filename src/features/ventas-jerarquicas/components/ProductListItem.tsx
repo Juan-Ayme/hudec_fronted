@@ -1,5 +1,5 @@
 import React from "react";
-import { ChevronRight, Banknote, Package, Box, Target, TrendingUp, Activity, AlertTriangle, ShoppingCart, Check } from "lucide-react";
+import { ChevronRight, Banknote, Box, TrendingUp, AlertTriangle, ShoppingCart, Check } from "lucide-react";
 import { cn } from "@/lib/utils";
 import { moneyCompact, num, num2, pct } from "@/lib/format";
 import { getClassificationMeta, SmoothSparkline, shortClasif } from "@/components/ui/classification";

@@ -15,7 +15,6 @@ import type { Selection } from "@/lib/types";
 export function DeptGridView({
   tree,
   onSelect,
-  hasMatrix,
 }: {
   tree: UnifiedNode[];
   onSelect: (s: Selection) => void;

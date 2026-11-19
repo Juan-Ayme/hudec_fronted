@@ -102,10 +102,11 @@ export function AuthProvider({ children }: { children: ReactNode }) {
   }, [qc]);
 
   const me: MeResponse | null = q.data ?? null;
-  const user: AuthUser | null = me
-    ? { id: me.id, username: me.username, is_active: me.is_active }
-    : null;
-  const companies: Company[] = me?.companies ?? [];
+  const user = useMemo<AuthUser | null>(
+    () => (me ? { id: me.id, username: me.username, is_active: me.is_active } : null),
+    [me],
+  );
+  const companies = useMemo<Company[]>(() => me?.companies ?? [], [me]);
 
   const value = useMemo<AuthContextValue>(
     () => ({

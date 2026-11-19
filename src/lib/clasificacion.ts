@@ -121,11 +121,3 @@ export function clasificarSku(etiqueta: string): Clasificacion {
   }
   return FALLBACK;
 }
-
-/**
- * ¿El SKU pertenece al universo de /compras-catalogo? Es la MISMA condición
- * que `_is_quiebre_real` en el backend (severidad 🔴 Crítico o 🟠 Alta).
- */
-export function esUniversoCompras(sev: Severidad): boolean {
-  return sev === "critico" || sev === "alta";
-}

@@ -2,12 +2,10 @@ import {
   LayoutDashboard,
   FolderTree,
   RefreshCw,
-  Activity,
   PackageSearch,
   Settings,
-  ArrowLeftRight,
-  FileSpreadsheet,
   Boxes,
+  Truck,
   FileText,
   type LucideIcon,
 } from "lucide-react";
@@ -27,19 +25,11 @@ export interface NavGroup {
 export const NAV_GROUPS: NavGroup[] = [
   {
     // Lo que gerencia necesita para decidir: informes con la conclusión
-    // arriba, PDF con gráficos y Excel con el detalle.
+    // arriba, PDF con gráficos, Excel con el detalle y el vistazo ejecutivo.
     title: "Decidir",
     items: [
       { href: "/informes", label: "Informes", icon: FileText },
-    ],
-  },
-  {
-    title: "Comercial & BI",
-    items: [
       { href: "/", label: "Resumen Ejecutivo", icon: LayoutDashboard },
-      { href: "/pulso", label: "Inteligencia BI", icon: Activity },
-      { href: "/reporte-ventas", label: "Ventas & Rentabilidad", icon: FileSpreadsheet },
-      { href: "/compras-ecosistema", label: "Compras & Recepciones", icon: ArrowLeftRight },
     ],
   },
   {
@@ -47,6 +37,7 @@ export const NAV_GROUPS: NavGroup[] = [
     items: [
       { href: "/centro-catalogo", label: "Centro de Catálogo", icon: PackageSearch },
       { href: "/inventario-excel", label: "Inventario & Depuración", icon: Boxes },
+      { href: "/traslados", label: "Traslados", icon: Truck },
       { href: "/taxonomia", label: "Taxonomía & Clasificación", icon: FolderTree },
     ],
   },
@@ -65,8 +56,6 @@ export const ALL_NAV_ITEMS: NavItem[] = NAV_GROUPS.flatMap((g) => g.items);
 const VIEWER_HREFS = new Set<string>([
   "/informes",
   "/",
-  "/pulso",
-  "/reporte-ventas",
   "/centro-catalogo",
   "/taxonomia",
 ]);

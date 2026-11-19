@@ -25,8 +25,8 @@ export function useProductTypes() {
   const [toggle, setToggle] = useState<Toggle>("all");
 
   // Bandeja activa del workspace
-  const [activeTray, setActiveTrayState] = useState<WorkspaceTrayId>("unmapped_with_products");
-  const [hasSetInitialTray, setHasSetInitialTray] = useState(false);
+  // null = el usuario aún no eligió: se usa la bandeja por defecto del resumen.
+  const [chosenTray, setActiveTrayState] = useState<WorkspaceTrayId | null>(null);
 
   // Selección múltiple para acciones masivas
   const [selectedIds, setSelectedIds] = useState<Set<number>>(new Set());
@@ -64,19 +64,16 @@ export function useProductTypes() {
     staleTime: 60_000,
   });
 
-  // Ajustar bandeja por defecto según resumen
-  useEffect(() => {
-    if (!hasSetInitialTray && workspaceQuery.data?.summary) {
-      if (workspaceQuery.data.summary.unmapped_with_products_count > 0) {
-        setActiveTrayState("unmapped_with_products");
-      } else if (workspaceQuery.data.summary.unmapped_empty_count > 0) {
-        setActiveTrayState("unmapped_empty");
-      } else {
-        setActiveTrayState("mapped");
-      }
-      setHasSetInitialTray(true);
-    }
-  }, [workspaceQuery.data, hasSetInitialTray]);
+  // Bandeja por defecto según resumen (hasta que el usuario elija otra)
+  const summary = workspaceQuery.data?.summary;
+  const defaultTray: WorkspaceTrayId = !summary
+    ? "unmapped_with_products"
+    : summary.unmapped_with_products_count > 0
+      ? "unmapped_with_products"
+      : summary.unmapped_empty_count > 0
+        ? "unmapped_empty"
+        : "mapped";
+  const activeTray = chosenTray ?? defaultTray;
 
   const setActiveTray = (tray: WorkspaceTrayId) => {
     setActiveTrayState(tray);

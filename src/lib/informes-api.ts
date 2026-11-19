@@ -125,7 +125,7 @@ export const informeTemporadaExcelUrl = (clave: string, officeId: number | null)
  *  "Imprimir" para guardarlo como PDF. Se baja con fetch (no con un link) porque
  *  el backend exige el header X-Company-Id, que un <a href> no manda.
  *  `path` = ruta del endpoint HTML, p.ej. `/informes/temporada/navidad/html`. */
-export async function abrirInformePdf(path: string): Promise<void> {
+async function abrirInformePdf(path: string): Promise<void> {
   // La pestaña se abre ANTES del await para que el navegador no la bloquee
   // como popup (tiene que salir del click del usuario).
   const win = window.open("", "_blank");
@@ -438,6 +438,33 @@ export const abrirComprasPdf = (oficinas: number[], presMin: number, presMax: nu
   qs.set("pres_min", String(presMin));
   qs.set("pres_max", String(presMax));
   return abrirInformePdf(`/informes/compras/html?${qs.toString()}`);
+};
+
+/** Productos estancados en las tiendas elegidas: trasladar, probar en otra tienda, promoción, rematar o guardar. */
+const qsTiendas = (oficinas: number[]) => {
+  const qs = new URLSearchParams();
+  oficinas.forEach((o) => qs.append("oficinas", String(o)));
+  return qs.toString();
+};
+export const abrirEstancadosPdf = (oficinas: number[]) => abrirInformePdf(`/informes/estancados/html?${qsTiendas(oficinas)}`);
+export const estancadosExcelUrl = (oficinas: number[]) => `${API_BASE_URL}/informes/estancados/excel?${qsTiendas(oficinas)}`;
+
+/** Lista de compra rápida en PDF: Urgente › Reponer › Consumo, por categoría › subcategoría › SKU. */
+export const abrirComprasRapidoPdf = (oficinas: number[], presMin: number, presMax: number) => {
+  const qs = new URLSearchParams();
+  oficinas.forEach((o) => qs.append("oficinas", String(o)));
+  qs.set("pres_min", String(presMin));
+  qs.set("pres_max", String(presMax));
+  return abrirInformePdf(`/informes/compras/rapido/html?${qs.toString()}`);
+};
+
+/** "¿Qué compramos esta semana?" en Excel: lista de compra por producto, resumen y diagnóstico. */
+export const comprasExcelUrl = (oficinas: number[], presMin: number, presMax: number) => {
+  const qs = new URLSearchParams();
+  oficinas.forEach((o) => qs.append("oficinas", String(o)));
+  qs.set("pres_min", String(presMin));
+  qs.set("pres_max", String(presMax));
+  return `${API_BASE_URL}/informes/compras/excel?${qs.toString()}`;
 };
 
 /** Excel de traslados entre las tiendas elegidas (regla de 14 días, igual que el informe de compras). */

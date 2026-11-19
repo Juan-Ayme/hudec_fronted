@@ -1,21 +1,18 @@
 "use client";
 
-import { useState } from "react";
+
 import {
   Plus,
   RefreshCw,
   FileSpreadsheet,
   AlertTriangle,
   FolderTree,
-  Sparkles,
-  Layers,
   Trash2,
-  GitMerge,
   Loader2,
 } from "lucide-react";
 import { PageHeader } from "@/components/ui/page-header";
 import { Button } from "@/components/ui/button";
-import { Badge } from "@/components/ui/badge";
+
 import { useProductTypes } from "../hooks/useProductTypes";
 import { WorkspaceSummaryCards } from "./WorkspaceSummaryCards";
 import { WorkspaceTable, type WorkspaceTrayId } from "./WorkspaceTable";

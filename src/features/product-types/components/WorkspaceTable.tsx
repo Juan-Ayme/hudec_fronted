@@ -6,12 +6,9 @@ import {
   Link2Off,
   RefreshCw,
   Trash2,
-  Tags,
   CircleAlert,
   GitMerge,
   Layers,
-  ArrowRight,
-  Boxes,
   CheckSquare,
   Square,
   MinusSquare,
@@ -61,7 +58,6 @@ export function WorkspaceTable({
   onOpenBulkMap,
   onOpenBulkDelete,
   onOpenMerge,
-  onOpenMoveProducts,
   invalidate,
 }: WorkspaceTableProps) {
   // Filtrar por término de búsqueda
@@ -407,7 +403,7 @@ export function WorkspaceTable({
         </span>
         <div className="flex items-center gap-4">
           <span className="flex items-center gap-1.5">
-            <CircleAlert className="h-3.5 w-3.5 text-warning" /> Nombres sin convención "Cat / Subcat"
+            <CircleAlert className="h-3.5 w-3.5 text-warning" /> Nombres sin convención &quot;Cat / Subcat&quot;
           </span>
         </div>
       </div>

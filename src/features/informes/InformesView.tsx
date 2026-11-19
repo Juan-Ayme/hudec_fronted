@@ -25,6 +25,10 @@ import {
   abrirInformeTemporadaPdf,
   getTiendasCompras,
   trasladosExcelUrl,
+  comprasExcelUrl,
+  abrirComprasRapidoPdf,
+  abrirEstancadosPdf,
+  estancadosExcelUrl,
   type TiendaCompras,
   abrirMesCursoPdf,
   descargarJson,
@@ -107,6 +111,7 @@ function InformesGerente() {
   return (
     <>
     <ComprasSemana />
+    <Estancados />
     <CampanaJuguetes />
     <ComoFuncionaTiendas />
     <VentaManana />
@@ -288,6 +293,90 @@ function VentaManana() {
   );
 }
 
+/**
+ * Productos estancados: el gerente elige entre qué tiendas mirar. Lo que no se vende en una tienda
+ * se traslada (o se prueba) solo hacia las tiendas marcadas; lo que no se vende en ninguna se remata.
+ */
+function Estancados() {
+  const tiendas = useBIQuery<TiendaCompras[]>({
+    queryKey: ["informes", "compras", "tiendas"],
+    queryFn: ({ signal }) => getTiendasCompras(signal),
+  });
+  const [elegidas, setElegidas] = useState<number[] | null>(null);
+  const [abriendo, setAbriendo] = useState(false);
+  const [bajando, setBajando] = useState(false);
+  const lista = tiendas.data ?? [];
+  const sel = elegidas ?? lista.map((t) => t.id);
+  const toggle = (id: number) => setElegidas(sel.includes(id) ? sel.filter((x) => x !== id) : [...sel, id]);
+  const abrir = async () => {
+    if (!sel.length) return;
+    setAbriendo(true);
+    try {
+      await abrirEstancadosPdf(sel);
+    } catch (e) {
+      toast.error(e instanceof Error ? e.message : "No se pudo generar el informe");
+    } finally {
+      setAbriendo(false);
+    }
+  };
+  const descargar = async () => {
+    if (!sel.length) return;
+    setBajando(true);
+    try {
+      await downloadExcelFile(estancadosExcelUrl(sel), "productos_estancados.xlsx");
+    } catch (e) {
+      toast.error(e instanceof Error ? e.message : "No se pudo descargar el Excel");
+    } finally {
+      setBajando(false);
+    }
+  };
+  return (
+    <div className="mb-3 rounded-2xl border border-yellow-400/30 bg-yellow-400/[0.06] p-4">
+      <div className="flex items-start gap-3">
+        <PackageX className="mt-0.5 h-5 w-5 shrink-0 text-yellow-400" />
+        <div className="min-w-0 flex-1">
+          <p className="text-sm font-semibold text-fg">PDF · Productos estancados</p>
+          <p className="text-xs text-muted">
+            Stock que no se vende en 90 días, que dura más de 6 meses o que se frenó (+45 días sin venderse), y lo lento que no conviene recomprar. Qué trasladar a otra tienda (allá sí se vende), qué
+            probar donde nunca lo tuvieron, qué promocionar, qué rematar y qué guardar para su campaña. Solo entre las tiendas marcadas.
+          </p>
+          <div className="mt-3 flex flex-wrap items-end gap-x-6 gap-y-3">
+            <fieldset className="min-w-0">
+              <legend className="mb-1 text-[11px] font-semibold uppercase tracking-wide text-muted">Tiendas</legend>
+              {tiendas.isLoading ? (
+                <span className="text-xs text-muted">Cargando tiendas…</span>
+              ) : (
+                <div className="flex flex-wrap gap-2">
+                  {lista.map((t) => (
+                    <label key={t.id} className={cn(
+                      "flex cursor-pointer items-center gap-1.5 rounded-full border px-3 py-1 text-xs transition-colors",
+                      sel.includes(t.id) ? "border-yellow-400/60 bg-yellow-400/15 text-fg" : "border-white/10 text-muted")}>
+                      <input id={`est-tienda-${t.id}`} type="checkbox" className="accent-yellow-400"
+                        checked={sel.includes(t.id)} onChange={() => toggle(t.id)} />
+                      {t.nombre}
+                    </label>
+                  ))}
+                </div>
+              )}
+            </fieldset>
+            <Button onClick={abrir} disabled={!sel.length || abriendo}>
+              <FileText className="h-4 w-4" />
+              {abriendo ? "Generando… (~20 s)" : "Generar PDF"}
+            </Button>
+            <Button variant="outline" onClick={descargar} disabled={!sel.length || bajando}>
+              <Download className="h-4 w-4" />
+              {bajando ? "Preparando Excel…" : "Detalle (Excel)"}
+            </Button>
+          </div>
+          {sel.length === 1 && (
+            <p className="mt-2 text-xs text-muted">Con una sola tienda no hay a dónde trasladar: marca dos o más para ver traslados.</p>
+          )}
+        </div>
+      </div>
+    </div>
+  );
+}
+
 /** "¿Qué compramos esta semana?": el gerente elige tiendas y presupuesto y abre el PDF. */
 function ComprasSemana() {
   const tiendas = useBIQuery<TiendaCompras[]>({
@@ -313,6 +402,30 @@ function ComprasSemana() {
       toast.error(e instanceof Error ? e.message : "No se pudo descargar el Excel de traslados");
     } finally {
       setBajando(false);
+    }
+  };
+  const [abriendoRapido, setAbriendoRapido] = useState(false);
+  const abrirRapido = async () => {
+    if (!valido) return;
+    setAbriendoRapido(true);
+    try {
+      await abrirComprasRapidoPdf(sel, presMin, presMax);
+    } catch (e) {
+      toast.error(e instanceof Error ? e.message : "No se pudo generar la lista de compra");
+    } finally {
+      setAbriendoRapido(false);
+    }
+  };
+  const [bajandoCompras, setBajandoCompras] = useState(false);
+  const descargarCompras = async () => {
+    if (!valido) return;
+    setBajandoCompras(true);
+    try {
+      await downloadExcelFile(comprasExcelUrl(sel, presMin, presMax), "compras_esta_semana.xlsx");
+    } catch (e) {
+      toast.error(e instanceof Error ? e.message : "No se pudo descargar el Excel de compras");
+    } finally {
+      setBajandoCompras(false);
     }
   };
 
@@ -371,6 +484,16 @@ function ComprasSemana() {
             <Button onClick={abrir} disabled={!valido || abriendo}>
               <FileText className="h-4 w-4" />
               {abriendo ? "Generando… (puede tardar ~1 min)" : "Generar PDF"}
+            </Button>
+            <Button variant="outline" onClick={abrirRapido} disabled={!valido || abriendoRapido}
+              title="Solo la lista para comprar: Urgente › Categoría › Subcategoría › SKU, sin gráficos">
+              <FileText className="h-4 w-4" />
+              {abriendoRapido ? "Generando… (~1 min)" : "Lista rápida (PDF)"}
+            </Button>
+            <Button variant="outline" onClick={descargarCompras} disabled={!valido || bajandoCompras}
+              title="La misma compra en Excel: lista de productos para el proveedor, resumen por subcategoría y diagnóstico">
+              <Download className="h-4 w-4" />
+              {bajandoCompras ? "Preparando Excel… (~1 min)" : "Compras (Excel)"}
             </Button>
             <Button variant="outline" onClick={descargarTraslados} disabled={sel.length < 2 || bajando}
               title="Qué pasar de una tienda a otra antes de comprar (solo entre las tiendas marcadas)">

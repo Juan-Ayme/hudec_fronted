@@ -1,7 +1,7 @@
 "use client";
 
 import { useState, useMemo } from "react";
-import { GitMerge, ArrowRight, Check, Eye, Loader2, AlertTriangle, Trash2, X } from "lucide-react";
+import { GitMerge, ArrowRight, Check, Eye, Loader2, Trash2, X } from "lucide-react";
 import { Card } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";

@@ -147,6 +147,7 @@ export function CentroCatalogoView() {
                 allRows={state.allMatrixRows}
                 selection={selection}
                 sucursalName={state.sucursalName}
+                officeId={state.officeId}
                 isLoading={state.matrixQ.isLoading}
                 isError={state.matrixQ.isError}
                 error={state.matrixQ.error}
