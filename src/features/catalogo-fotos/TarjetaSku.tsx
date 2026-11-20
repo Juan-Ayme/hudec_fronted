@@ -2,7 +2,7 @@
 
 import { useEffect, useRef, useState } from "react";
 import { useQueryClient } from "@tanstack/react-query";
-import { ImageOff, Loader2, Palette, Plus, RefreshCw, Star, Trash2, X } from "lucide-react";
+import { ImageOff, Loader2, Maximize2, Palette, Plus, RefreshCw, Star, Trash2, X } from "lucide-react";
 import { num } from "@/lib/format";
 import { toast } from "@/lib/toast";
 import { cn } from "@/lib/utils";
@@ -17,6 +17,7 @@ import {
   type SkuFoto,
 } from "@/lib/fotos-api";
 import { EditorFoto } from "./EditorFoto";
+import { VisorFotos } from "./VisorFotos";
 
 /**
  * Tarjeta de un SKU: foto grande + sus 4 posiciones (★ = principal) + color.
@@ -34,6 +35,7 @@ export function TarjetaSku({ s, puedeEditar, maxFotos, fondoDisponible }: {
   const [arrastrando, setArrastrando] = useState(false);
   const [vista, setVista] = useState(1);          // qué foto se ve grande (solo en pantalla)
   const [editando, setEditando] = useState<{ archivos: File[]; posicion: number } | null>(null);
+  const [visor, setVisor] = useState<number | null>(null);   // posición con la que se abre el visor
   // Color mientras se elige en el selector; se guarda al cerrarlo (no en cada movimiento).
   const [colorEnCurso, setColorEnCurso] = useState<string | null>(null);
   const colorVisible = colorEnCurso ?? s.color;
@@ -115,6 +117,9 @@ export function TarjetaSku({ s, puedeEditar, maxFotos, fondoDisponible }: {
       }}
       className={cn("flex flex-col rounded-2xl border bg-white/[0.03] p-3 transition-colors",
         arrastrando ? "border-primary bg-primary/10" : "border-white/10")}>
+      {visor !== null && fotos.length > 0 && (
+        <VisorFotos fotos={fotos} inicio={visor} titulo={s.nombre} sku={s.sku} onCerrar={() => setVisor(null)} />
+      )}
       {editando && (
         <EditorFoto archivos={editando.archivos} fondoDisponible={fondoDisponible}
           onCancelar={() => setEditando(null)}
@@ -127,8 +132,15 @@ export function TarjetaSku({ s, puedeEditar, maxFotos, fondoDisponible }: {
       <div className={cn("relative flex aspect-square items-center justify-center overflow-hidden rounded-xl",
         grande ? "bg-white" : "border border-dashed border-white/15 bg-white/[0.02]")}>
         {grande ? (
-          // eslint-disable-next-line @next/next/no-img-element -- miniatura ya optimizada por Cloudinary
-          <img src={grande.thumb_url} alt={s.nombre} loading="lazy" className="h-full w-full object-contain" />
+          <button type="button" onClick={() => setVisor(grande.posicion)} title="Ver en grande"
+            aria-label={`Ver en grande las fotos de ${s.nombre}`}
+            className="group/foto relative h-full w-full cursor-zoom-in">
+            {/* eslint-disable-next-line @next/next/no-img-element -- miniatura ya optimizada por Cloudinary */}
+            <img src={grande.thumb_url} alt={s.nombre} loading="lazy" className="h-full w-full object-contain" />
+            <span className="pointer-events-none absolute bottom-1.5 right-1.5 flex items-center gap-1 rounded-full bg-black/60 px-2 py-0.5 text-[10px] text-white opacity-0 transition-opacity group-hover/foto:opacity-100">
+              <Maximize2 className="h-3 w-3" /> Ver en grande
+            </span>
+          </button>
         ) : (
           <button type="button" disabled={!puedeEditar} onClick={() => elegir(1)}
             className="flex flex-col items-center gap-1 px-2 text-center text-xs text-faint enabled:hover:text-fg">
