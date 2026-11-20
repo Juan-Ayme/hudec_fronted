@@ -204,9 +204,12 @@ function EditorUna({ archivo, n, total, fondoDisponible, onSiguiente, onCancelar
     const transparente = usarSinFondo && !blanco;
     if (!transparente) { g.fillStyle = "#ffffff"; g.fillRect(0, 0, c.width, c.height); }
     g.drawImage(im, sx, sy, sw, sh, 0, 0, c.width, c.height);
-    const tipo = transparente ? "image/png" : "image/jpeg";
-    const blob = await aBlob(c, tipo, 0.92);
-    const nombre = (archivo?.name.replace(/\.[^.]+$/, "") || "foto") + (transparente ? ".png" : ".jpg");
+    // Transparente -> WebP (guarda la transparencia y pesa ~7 veces menos que PNG); si el
+    // navegador no sabe generar WebP, devuelve PNG y se usa ese. Con fondo -> JPEG.
+    const blob = await aBlob(c, transparente ? "image/webp" : "image/jpeg", 0.9);
+    const tipo = blob.type || (transparente ? "image/png" : "image/jpeg");
+    const ext = tipo === "image/webp" ? ".webp" : tipo === "image/png" ? ".png" : ".jpg";
+    const nombre = (archivo?.name.replace(/\.[^.]+$/, "") || "foto") + ext;
     return new File([blob], nombre, { type: tipo });
   };
 
