@@ -1,7 +1,7 @@
 "use client";
 
 import { useState } from "react";
-import { Boxes, CalendarClock, CalendarRange, Download, FileJson, FileText, Gift, PackageX, ShoppingCart, Store, Sunrise, TrendingUp, Wallet } from "lucide-react";
+import { Boxes, CalendarClock, CalendarRange, Download, FileJson, FileText, LineChart, PackageX, ShoppingCart, TrendingUp, Wallet } from "lucide-react";
 import { PageHeader } from "@/components/ui/page-header";
 import { Card } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
@@ -16,21 +16,7 @@ import { PeriodoSection } from "./PeriodoView";
 import { SurtidoSection } from "./SurtidoView";
 import { useSucursal } from "@/components/sucursal-context";
 import {
-  abrirCampanaJuguetesPdf,
-  abrirSucursalesPdf,
-  abrirMananasPdf,
-  abrirCierreMesPdf,
-  abrirComprasPdf,
-  campanaJuguetesExcelUrl,
   abrirInformeTemporadaPdf,
-  getTiendasCompras,
-  trasladosExcelUrl,
-  comprasExcelUrl,
-  abrirComprasRapidoPdf,
-  abrirEstancadosPdf,
-  estancadosExcelUrl,
-  type TiendaCompras,
-  abrirMesCursoPdf,
   descargarJson,
   getInformeTemporada,
   getTemporadas,
@@ -41,6 +27,7 @@ import {
   type SkuTemporada,
   type TemporadaItem,
 } from "@/lib/informes-api";
+import { DescargasSection, PanelReporte, RecomendadoHoy, REPORTES } from "./DescargasView";
 
 /**
  * Centro de Informes — pocos números, la decisión arriba y las tres salidas:
@@ -59,455 +46,55 @@ const RIESGO_UI: Record<Riesgo, { label: string; cls: string }> = {
 };
 
 type Modo = "periodo" | "surtido" | "temporada";
+type Pestana = "analisis" | "descargas";
 
 export function InformesView() {
+  const [pestana, setPestana] = useState<Pestana>("analisis");
   const [modo, setModo] = useState<Modo>("periodo");
+  const [abierto, setAbierto] = useState<string | null>(null);
+  const reporte = REPORTES.find((r) => r.id === abierto) ?? null;
   return (
     <div>
       <PageHeader
         eyebrow="Informes"
         title="Informes para decidir"
-        description="La conclusión primero y pocos números. Elige un periodo (o deja que el sistema elija) o una temporada; descarga el PDF con gráficos para gerencia o el Excel con todo el detalle."
+        description="Análisis en vivo para mirar cómo vamos, y Descargas con los PDF para gerencia y los Excel con el detalle."
       />
-      <InformesGerente />
-      <div className="mb-4 inline-flex rounded-full border border-white/10 bg-white/[0.03] p-1">
+      <RecomendadoHoy onAbrir={setAbierto} />
+      <div className="mb-5 flex gap-1 border-b border-white/10">
         {([
-          ["periodo", "Por periodo", CalendarRange],
-          ["surtido", "Surtido", Boxes],
-          ["temporada", "Por temporada", CalendarClock],
-        ] as const).map(([m, label, Icon]) => (
-          <button key={m} onClick={() => setModo(m)}
-            className={cn("flex items-center gap-1.5 rounded-full px-4 py-1.5 text-sm transition-colors",
-              modo === m ? "bg-primary text-white" : "text-muted hover:text-fg")}>
+          ["analisis", "Análisis", LineChart],
+          ["descargas", "Descargas", Download],
+        ] as const).map(([p, label, Icon]) => (
+          <button key={p} onClick={() => setPestana(p)}
+            className={cn("-mb-px flex items-center gap-1.5 border-b-2 px-4 py-2 text-sm font-medium transition-colors",
+              pestana === p ? "border-primary text-fg" : "border-transparent text-muted hover:text-fg")}>
             <Icon className="h-4 w-4" /> {label}
+            {p === "descargas" && <span className="rounded-full bg-white/10 px-1.5 text-[10px] text-muted">{REPORTES.length}</span>}
           </button>
         ))}
       </div>
-      {modo === "periodo" ? <PeriodoSection /> : modo === "surtido" ? <SurtidoSection /> : <TemporadaSection />}
-    </div>
-  );
-}
-
-/** Los dos PDF mensuales para el gerente, siempre a mano arriba de la página. */
-function InformesGerente() {
-  const { officeId } = useSucursal();
-  const [abriendo, setAbriendo] = useState<"cierre" | "curso" | null>(null);
-  const abrir = async (cual: "cierre" | "curso") => {
-    setAbriendo(cual);
-    try {
-      await (cual === "cierre" ? abrirCierreMesPdf(officeId) : abrirMesCursoPdf(officeId));
-    } catch (e) {
-      toast.error(e instanceof Error ? e.message : "No se pudo generar el informe");
-    } finally {
-      setAbriendo(null);
-    }
-  };
-  const items = [
-    { cual: "cierre" as const, titulo: "Cierre del mes pasado", icon: FileText,
-      desc: "Cómo nos fue, cómo se movió cada categoría y por qué bajó, quiebres, qué rebajar y qué rematar." },
-    { cual: "curso" as const, titulo: "Mes en curso + compras", icon: ShoppingCart,
-      desc: "Avance contra el año pasado, categorías que vienen bajando y cuánto comprar (temporada + reposición)." },
-  ];
-  return (
-    <>
-    <ComprasSemana />
-    <Estancados />
-    <CampanaJuguetes />
-    <ComoFuncionaTiendas />
-    <VentaManana />
-    <div className="mb-5 grid gap-3 sm:grid-cols-2">
-      {items.map(({ cual, titulo, desc, icon: Icon }) => (
-        <button key={cual} onClick={() => abrir(cual)} disabled={abriendo !== null}
-          className="flex items-start gap-3 rounded-2xl border border-yellow-400/30 bg-yellow-400/[0.06] p-4 text-left transition-colors hover:bg-yellow-400/[0.12] disabled:opacity-60">
-          <Icon className="mt-0.5 h-5 w-5 shrink-0 text-yellow-400" />
-          <span>
-            <span className="block text-sm font-semibold text-fg">
-              {abriendo === cual ? "Generando PDF… (puede tardar ~40 s)" : `PDF · ${titulo}`}
-            </span>
-            <span className="block text-xs text-muted">{desc}</span>
-          </span>
-        </button>
-      ))}
-    </div>
-    </>
-  );
-}
-
-/** Campaña de juguetes (Navidad): PDF para gerencia y Excel con el detalle por producto. */
-function CampanaJuguetes() {
-  const [abriendo, setAbriendo] = useState(false);
-  const [bajando, setBajando] = useState(false);
-  const abrir = async () => {
-    setAbriendo(true);
-    try {
-      await abrirCampanaJuguetesPdf();
-    } catch (e) {
-      toast.error(e instanceof Error ? e.message : "No se pudo generar el informe");
-    } finally {
-      setAbriendo(false);
-    }
-  };
-  const descargar = async () => {
-    setBajando(true);
-    try {
-      await downloadExcelFile(campanaJuguetesExcelUrl(), "campana_juguetes.xlsx");
-    } catch (e) {
-      toast.error(e instanceof Error ? e.message : "No se pudo descargar el Excel");
-    } finally {
-      setBajando(false);
-    }
-  };
-  return (
-    <div className="mb-3 rounded-2xl border border-yellow-400/30 bg-yellow-400/[0.06] p-4">
-      <div className="flex flex-wrap items-start gap-3">
-        <Gift className="mt-0.5 h-5 w-5 shrink-0 text-yellow-400" />
-        <div className="min-w-0 flex-1">
-          <p className="text-sm font-semibold text-fg">PDF · Campaña de juguetes (Navidad)</p>
-          <p className="text-xs text-muted">
-            Cuánto capital poner en cada nivel de costo y qué juguetes comprar por categoría y subcategoría, en dos
-            compras: ahora y la reserva de diciembre. Con el reparto por tienda.
-          </p>
-        </div>
-        <div className="flex flex-wrap gap-2">
-          <Button onClick={abrir} disabled={abriendo}>
-            <FileText className="h-4 w-4" />
-            {abriendo ? "Generando… (puede tardar ~1 min)" : "Generar PDF"}
-          </Button>
-          <Button variant="outline" onClick={descargar} disabled={bajando}
-            title="El mismo informe con el detalle por producto y por tienda">
-            <Download className="h-4 w-4" />
-            {bajando ? "Preparando Excel…" : "Detalle (Excel)"}
-          </Button>
-        </div>
-      </div>
-    </div>
-  );
-}
-
-/**
- * "¿Cómo funciona cada tienda?": sigue al selector global de sucursal.
- * Todas = las tiendas comparadas lado a lado; una sucursal = solo esa, contra el promedio de las otras.
- */
-const SEMANAS_OPC = [4, 5, 8, 13] as const;
-
-function ComoFuncionaTiendas() {
-  const { officeId, sucursalName } = useSucursal();
-  const [semanas, setSemanas] = useState<number>(5);
-  const [abriendo, setAbriendo] = useState(false);
-  const todas = officeId == null;
-  const abrir = async () => {
-    setAbriendo(true);
-    try {
-      await abrirSucursalesPdf(officeId, semanas);
-    } catch (e) {
-      toast.error(e instanceof Error ? e.message : "No se pudo generar el informe");
-    } finally {
-      setAbriendo(false);
-    }
-  };
-  return (
-    <div className="mb-3 rounded-2xl border border-yellow-400/30 bg-yellow-400/[0.06] p-4">
-      <div className="flex flex-wrap items-start gap-3">
-        <Store className="mt-0.5 h-5 w-5 shrink-0 text-yellow-400" />
-        <div className="min-w-0 flex-1">
-          <p className="text-sm font-semibold text-fg">
-            PDF · {todas ? "¿Cómo funciona cada tienda?" : `¿Cómo funciona ${sucursalName ?? "la sucursal"}?`}
-          </p>
-          <p className="text-xs text-muted">
-            {todas
-              ? "Las tiendas comparadas lado a lado: qué días y a qué hora venden, qué departamentos, qué se compra junto (familias y parejas), para cuántos días alcanza el stock, qué agotados se pueden trasladar y por qué bajan las ventas."
-              : "Solo esta tienda, comparada con el promedio de las otras: su semana, sus horas fuertes, qué vende y qué se compra junto, su stock, de dónde traer sus agotados y por qué bajan sus ventas."}
-          </p>
-          <div className="mt-2 flex flex-wrap items-center gap-1.5 text-xs text-muted">
-            <span>Últimas</span>
-            {SEMANAS_OPC.map((s) => (
-              <button key={s} onClick={() => setSemanas(s)}
-                className={cn("rounded-full border px-2.5 py-0.5 transition-colors",
-                  semanas === s ? "border-yellow-400/60 bg-yellow-400/20 text-fg" : "border-white/10 hover:text-fg")}>
-                {s}
+      {pestana === "analisis" ? (
+        <>
+          <div className="mb-4 inline-flex rounded-full border border-white/10 bg-white/[0.03] p-1">
+            {([
+              ["periodo", "Por periodo", CalendarRange],
+              ["surtido", "Surtido", Boxes],
+              ["temporada", "Por temporada", CalendarClock],
+            ] as const).map(([m, label, Icon]) => (
+              <button key={m} onClick={() => setModo(m)}
+                className={cn("flex items-center gap-1.5 rounded-full px-4 py-1.5 text-sm transition-colors",
+                  modo === m ? "bg-primary text-white" : "text-muted hover:text-fg")}>
+                <Icon className="h-4 w-4" /> {label}
               </button>
             ))}
-            <span>semanas · cambia de tienda con el selector de sucursal</span>
           </div>
-        </div>
-        <Button onClick={abrir} disabled={abriendo}>
-          <FileText className="h-4 w-4" />
-          {abriendo ? "Generando… (puede tardar ~30 s)" : "Generar PDF"}
-        </Button>
-      </div>
-    </div>
-  );
-}
-
-/**
- * "¿Cómo vendemos más en la mañana?": sigue al selector global de sucursal, igual que
- * "¿Cómo funciona cada tienda?". Mañana = hasta la 1 pm.
- */
-const SEMANAS_MANANA = [4, 8, 13] as const;
-
-function VentaManana() {
-  const { officeId, sucursalName } = useSucursal();
-  const [semanas, setSemanas] = useState<number>(8);
-  const [abriendo, setAbriendo] = useState(false);
-  const todas = officeId == null;
-  const abrir = async () => {
-    setAbriendo(true);
-    try {
-      await abrirMananasPdf(officeId, semanas);
-    } catch (e) {
-      toast.error(e instanceof Error ? e.message : "No se pudo generar el informe");
-    } finally {
-      setAbriendo(false);
-    }
-  };
-  return (
-    <div className="mb-3 rounded-2xl border border-yellow-400/30 bg-yellow-400/[0.06] p-4">
-      <div className="flex flex-wrap items-start gap-3">
-        <Sunrise className="mt-0.5 h-5 w-5 shrink-0 text-yellow-400" />
-        <div className="min-w-0 flex-1">
-          <p className="text-sm font-semibold text-fg">
-            PDF · {todas ? "¿Cómo vendemos más en la mañana?" : `¿Cómo vende más ${sucursalName ?? "la sucursal"} en la mañana?`}
-          </p>
-          <p className="text-xs text-muted">
-            Cuánto entra antes de la 1 pm, si falta gente o ticket, a qué hora llega el primer cliente, qué mañana es la
-            más floja y cuánto se ganaría, qué se compra temprano, agotados de la mañana y un plan por tienda.
-          </p>
-          <div className="mt-2 flex flex-wrap items-center gap-1.5 text-xs text-muted">
-            <span>Últimas</span>
-            {SEMANAS_MANANA.map((s) => (
-              <button key={s} onClick={() => setSemanas(s)}
-                className={cn("rounded-full border px-2.5 py-0.5 transition-colors",
-                  semanas === s ? "border-yellow-400/60 bg-yellow-400/20 text-fg" : "border-white/10 hover:text-fg")}>
-                {s}
-              </button>
-            ))}
-            <span>semanas · cambia de tienda con el selector de sucursal</span>
-          </div>
-        </div>
-        <Button onClick={abrir} disabled={abriendo}>
-          <FileText className="h-4 w-4" />
-          {abriendo ? "Generando… (puede tardar ~20 s)" : "Generar PDF"}
-        </Button>
-      </div>
-    </div>
-  );
-}
-
-/**
- * Productos estancados: el gerente elige entre qué tiendas mirar. Lo que no se vende en una tienda
- * se traslada (o se prueba) solo hacia las tiendas marcadas; lo que no se vende en ninguna se remata.
- */
-function Estancados() {
-  const tiendas = useBIQuery<TiendaCompras[]>({
-    queryKey: ["informes", "compras", "tiendas"],
-    queryFn: ({ signal }) => getTiendasCompras(signal),
-  });
-  const [elegidas, setElegidas] = useState<number[] | null>(null);
-  const [abriendo, setAbriendo] = useState(false);
-  const [bajando, setBajando] = useState(false);
-  const lista = tiendas.data ?? [];
-  const sel = elegidas ?? lista.map((t) => t.id);
-  const toggle = (id: number) => setElegidas(sel.includes(id) ? sel.filter((x) => x !== id) : [...sel, id]);
-  const abrir = async () => {
-    if (!sel.length) return;
-    setAbriendo(true);
-    try {
-      await abrirEstancadosPdf(sel);
-    } catch (e) {
-      toast.error(e instanceof Error ? e.message : "No se pudo generar el informe");
-    } finally {
-      setAbriendo(false);
-    }
-  };
-  const descargar = async () => {
-    if (!sel.length) return;
-    setBajando(true);
-    try {
-      await downloadExcelFile(estancadosExcelUrl(sel), "productos_estancados.xlsx");
-    } catch (e) {
-      toast.error(e instanceof Error ? e.message : "No se pudo descargar el Excel");
-    } finally {
-      setBajando(false);
-    }
-  };
-  return (
-    <div className="mb-3 rounded-2xl border border-yellow-400/30 bg-yellow-400/[0.06] p-4">
-      <div className="flex items-start gap-3">
-        <PackageX className="mt-0.5 h-5 w-5 shrink-0 text-yellow-400" />
-        <div className="min-w-0 flex-1">
-          <p className="text-sm font-semibold text-fg">PDF · Productos estancados</p>
-          <p className="text-xs text-muted">
-            Stock que no se vende en 90 días, que dura más de 6 meses o que se frenó (+45 días sin venderse), y lo lento que no conviene recomprar. Qué trasladar a otra tienda (allá sí se vende), qué
-            probar donde nunca lo tuvieron, qué promocionar, qué rematar y qué guardar para su campaña. Solo entre las tiendas marcadas.
-          </p>
-          <div className="mt-3 flex flex-wrap items-end gap-x-6 gap-y-3">
-            <fieldset className="min-w-0">
-              <legend className="mb-1 text-[11px] font-semibold uppercase tracking-wide text-muted">Tiendas</legend>
-              {tiendas.isLoading ? (
-                <span className="text-xs text-muted">Cargando tiendas…</span>
-              ) : (
-                <div className="flex flex-wrap gap-2">
-                  {lista.map((t) => (
-                    <label key={t.id} className={cn(
-                      "flex cursor-pointer items-center gap-1.5 rounded-full border px-3 py-1 text-xs transition-colors",
-                      sel.includes(t.id) ? "border-yellow-400/60 bg-yellow-400/15 text-fg" : "border-white/10 text-muted")}>
-                      <input id={`est-tienda-${t.id}`} type="checkbox" className="accent-yellow-400"
-                        checked={sel.includes(t.id)} onChange={() => toggle(t.id)} />
-                      {t.nombre}
-                    </label>
-                  ))}
-                </div>
-              )}
-            </fieldset>
-            <Button onClick={abrir} disabled={!sel.length || abriendo}>
-              <FileText className="h-4 w-4" />
-              {abriendo ? "Generando… (~20 s)" : "Generar PDF"}
-            </Button>
-            <Button variant="outline" onClick={descargar} disabled={!sel.length || bajando}>
-              <Download className="h-4 w-4" />
-              {bajando ? "Preparando Excel…" : "Detalle (Excel)"}
-            </Button>
-          </div>
-          {sel.length === 1 && (
-            <p className="mt-2 text-xs text-muted">Con una sola tienda no hay a dónde trasladar: marca dos o más para ver traslados.</p>
-          )}
-        </div>
-      </div>
-    </div>
-  );
-}
-
-/** "¿Qué compramos esta semana?": el gerente elige tiendas y presupuesto y abre el PDF. */
-function ComprasSemana() {
-  const tiendas = useBIQuery<TiendaCompras[]>({
-    queryKey: ["informes", "compras", "tiendas"],
-    queryFn: ({ signal }) => getTiendasCompras(signal),
-  });
-  const [elegidas, setElegidas] = useState<number[] | null>(null);
-  const [presMin, setPresMin] = useState(20000);
-  const [presMax, setPresMax] = useState(25000);
-  const [abriendo, setAbriendo] = useState(false);
-  const lista = tiendas.data ?? [];
-  const sel = elegidas ?? lista.map((t) => t.id);
-  const toggle = (id: number) =>
-    setElegidas(sel.includes(id) ? sel.filter((x) => x !== id) : [...sel, id]);
-  const valido = sel.length > 0 && presMin >= 0 && presMax >= presMin;
-  const [bajando, setBajando] = useState(false);
-  const descargarTraslados = async () => {
-    if (sel.length < 2) return;
-    setBajando(true);
-    try {
-      await downloadExcelFile(trasladosExcelUrl(sel, presMin, presMax), "traslados_entre_tiendas.xlsx");
-    } catch (e) {
-      toast.error(e instanceof Error ? e.message : "No se pudo descargar el Excel de traslados");
-    } finally {
-      setBajando(false);
-    }
-  };
-  const [abriendoRapido, setAbriendoRapido] = useState(false);
-  const abrirRapido = async () => {
-    if (!valido) return;
-    setAbriendoRapido(true);
-    try {
-      await abrirComprasRapidoPdf(sel, presMin, presMax);
-    } catch (e) {
-      toast.error(e instanceof Error ? e.message : "No se pudo generar la lista de compra");
-    } finally {
-      setAbriendoRapido(false);
-    }
-  };
-  const [bajandoCompras, setBajandoCompras] = useState(false);
-  const descargarCompras = async () => {
-    if (!valido) return;
-    setBajandoCompras(true);
-    try {
-      await downloadExcelFile(comprasExcelUrl(sel, presMin, presMax), "compras_esta_semana.xlsx");
-    } catch (e) {
-      toast.error(e instanceof Error ? e.message : "No se pudo descargar el Excel de compras");
-    } finally {
-      setBajandoCompras(false);
-    }
-  };
-
-  const abrir = async () => {
-    if (!valido) return;
-    setAbriendo(true);
-    try {
-      await abrirComprasPdf(sel, presMin, presMax);
-    } catch (e) {
-      toast.error(e instanceof Error ? e.message : "No se pudo generar el informe");
-    } finally {
-      setAbriendo(false);
-    }
-  };
-
-  return (
-    <div className="mb-3 rounded-2xl border border-yellow-400/30 bg-yellow-400/[0.06] p-4">
-      <div className="flex items-start gap-3">
-        <Wallet className="mt-0.5 h-5 w-5 shrink-0 text-yellow-400" />
-        <div className="min-w-0 flex-1">
-          <p className="text-sm font-semibold text-fg">PDF · ¿Qué compramos esta semana?</p>
-          <p className="text-xs text-muted">
-            Qué productos se agotaron y cuánto pedir en las tiendas elegidas, dentro del presupuesto. Sin Navidad ni juguetes.
-          </p>
-          <div className="mt-3 flex flex-wrap items-end gap-x-6 gap-y-3">
-            <fieldset className="min-w-0">
-              <legend className="mb-1 text-[11px] font-semibold uppercase tracking-wide text-muted">Tiendas</legend>
-              {tiendas.isLoading ? (
-                <span className="text-xs text-muted">Cargando tiendas…</span>
-              ) : (
-                <div className="flex flex-wrap gap-2">
-                  {lista.map((t) => (
-                    <label key={t.id} className={cn(
-                      "flex cursor-pointer items-center gap-1.5 rounded-full border px-3 py-1 text-xs transition-colors",
-                      sel.includes(t.id) ? "border-yellow-400/60 bg-yellow-400/15 text-fg" : "border-white/10 text-muted")}>
-                      <input id={`tienda-${t.id}`} type="checkbox" className="accent-yellow-400"
-                        checked={sel.includes(t.id)} onChange={() => toggle(t.id)} />
-                      {t.nombre}
-                    </label>
-                  ))}
-                </div>
-              )}
-            </fieldset>
-            <label className="text-[11px] font-semibold uppercase tracking-wide text-muted">
-              Presupuesto mínimo (S/)
-              <input id="pres-min" type="number" min={0} step={1000} value={presMin}
-                onChange={(e) => setPresMin(Number(e.target.value))}
-                className="mt-1 block w-32 rounded-lg border border-white/10 bg-white/[0.04] px-2 py-1 text-sm text-fg" />
-            </label>
-            <label className="text-[11px] font-semibold uppercase tracking-wide text-muted">
-              Presupuesto máximo (S/)
-              <input id="pres-max" type="number" min={0} step={1000} value={presMax}
-                onChange={(e) => setPresMax(Number(e.target.value))}
-                className="mt-1 block w-32 rounded-lg border border-white/10 bg-white/[0.04] px-2 py-1 text-sm text-fg" />
-            </label>
-            <Button onClick={abrir} disabled={!valido || abriendo}>
-              <FileText className="h-4 w-4" />
-              {abriendo ? "Generando… (puede tardar ~1 min)" : "Generar PDF"}
-            </Button>
-            <Button variant="outline" onClick={abrirRapido} disabled={!valido || abriendoRapido}
-              title="Solo la lista para comprar: Urgente › Categoría › Subcategoría › SKU, sin gráficos">
-              <FileText className="h-4 w-4" />
-              {abriendoRapido ? "Generando… (~1 min)" : "Lista rápida (PDF)"}
-            </Button>
-            <Button variant="outline" onClick={descargarCompras} disabled={!valido || bajandoCompras}
-              title="La misma compra en Excel: lista de productos para el proveedor, resumen por subcategoría y diagnóstico">
-              <Download className="h-4 w-4" />
-              {bajandoCompras ? "Preparando Excel… (~1 min)" : "Compras (Excel)"}
-            </Button>
-            <Button variant="outline" onClick={descargarTraslados} disabled={sel.length < 2 || bajando}
-              title="Qué pasar de una tienda a otra antes de comprar (solo entre las tiendas marcadas)">
-              <Download className="h-4 w-4" />
-              {bajando ? "Preparando Excel…" : "Traslados (Excel)"}
-            </Button>
-          </div>
-          {!valido && (
-            <p className="mt-2 text-xs text-danger">
-              {sel.length === 0 ? "Elige al menos una tienda." : "El máximo debe ser mayor o igual al mínimo."}
-            </p>
-          )}
-        </div>
-      </div>
+          {modo === "periodo" ? <PeriodoSection /> : modo === "surtido" ? <SurtidoSection /> : <TemporadaSection />}
+        </>
+      ) : (
+        <DescargasSection onAbrir={setAbierto} />
+      )}
+      <PanelReporte reporte={reporte} onClose={() => setAbierto(null)} />
     </div>
   );
 }

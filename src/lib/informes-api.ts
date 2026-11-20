@@ -510,3 +510,49 @@ export const abrirMananasPdf = (officeId: number | null, semanas = 8) => {
 
 /** El mismo informe en Excel, con el detalle por producto y por tienda. */
 export const campanaJuguetesExcelUrl = () => `${API_BASE_URL}/informes/campana-juguetes/excel`;
+
+// ── Catálogo de productos (con fotos de Cloudinary) ─────────────────────────
+
+export interface CatalogoCategoria {
+  departamento: string;
+  categoria: string;
+  productos: number;
+  con_foto: number;
+}
+
+export interface CatalogoDepartamento {
+  departamento: string;
+  productos: number;
+  con_foto: number;
+  categorias: CatalogoCategoria[];
+}
+
+export interface CatalogoOpciones {
+  productos: number;
+  con_foto: number;
+  departamentos: CatalogoDepartamento[];
+}
+
+export const getCatalogoOpciones = (signal?: AbortSignal) =>
+  request<CatalogoOpciones>("/informes/catalogo/opciones", { signal });
+
+export interface ParamsCatalogo {
+  departamento: string | null;
+  categoria: string | null;
+  soloConStock: boolean;
+  soloConFoto: boolean;
+  officeId: number | null;
+}
+
+/** PDF del catálogo: foto, precio con IGV y disponibilidad, 12 productos por página.
+ *  `officeId` null = stock de todas las tiendas; con valor = solo el de esa tienda. */
+export const abrirCatalogoPdf = (p: ParamsCatalogo) => {
+  const qs = new URLSearchParams({
+    solo_con_stock: String(p.soloConStock),
+    solo_con_foto: String(p.soloConFoto),
+  });
+  if (p.departamento) qs.set("departamento", p.departamento);
+  if (p.categoria) qs.set("categoria", p.categoria);
+  if (p.officeId != null) qs.set("office_id", String(p.officeId));
+  return abrirInformePdf(`/informes/catalogo/html?${qs}`);
+};
