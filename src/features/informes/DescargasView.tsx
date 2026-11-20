@@ -1,6 +1,7 @@
 "use client";
 
 import { useState, type ComponentType, type ReactNode } from "react";
+import Link from "next/link";
 import {
   BookImage, ChevronRight, Download, FileText, Gift, PackageX, Repeat, ShoppingCart, Sparkles, Store, Sunrise,
   CalendarCheck, Wallet,
@@ -304,7 +305,10 @@ function PanelCatalogo() {
     <>
       <SucursalNota />
       {opciones.data && (
-        <p className="mb-5 text-xs text-muted">{opciones.data.con_foto} de {opciones.data.productos} productos activos tienen foto.</p>
+        <p className="mb-5 text-xs text-muted">
+          {opciones.data.con_foto} de {opciones.data.productos} productos activos tienen foto ·{" "}
+          <Link href="/catalogo-fotos" className="text-primary hover:underline">Subir fotos</Link>
+        </p>
       )}
       <Seccion titulo="Qué productos">
         <div className="grid gap-2">
@@ -375,8 +379,8 @@ export const REPORTES: Reporte[] = [
     resumen: "Qué pasa antes de la 1 pm y cómo vender más.",
     detalle: "Cuánto entra antes de la 1 pm, si falta gente o ticket, a qué hora llega el primer cliente, qué mañana es la más floja y cuánto se ganaría, qué se compra temprano, agotados de la mañana y un plan por tienda." },
   { id: "catalogo", grupo: "Catálogo", titulo: "Catálogo de productos", icon: BookImage, salidas: ["PDF"], Panel: PanelCatalogo,
-    resumen: "Foto, precio y disponibilidad, 12 por página.",
-    detalle: "Foto, precio con IGV y si está disponible, 12 productos por página y agrupados por categoría. Siempre con los precios y el stock de hoy." },
+    resumen: "Fotos, colores, precio y disponibilidad, 9 por página.",
+    detalle: "Fotos (la principal grande y hasta 2 chicas), los colores en que viene, precio con IGV y si está disponible. 9 productos por página, agrupados por categoría. Siempre con los precios y el stock de hoy." },
 ];
 
 const GRUPOS: { grupo: Grupo; desc: string }[] = [

@@ -7,6 +7,7 @@ import {
   Boxes,
   Truck,
   FileText,
+  Images,
   type LucideIcon,
 } from "lucide-react";
 import type { UserRole } from "@/lib/api";
@@ -36,6 +37,7 @@ export const NAV_GROUPS: NavGroup[] = [
     title: "Catálogo & Stock",
     items: [
       { href: "/centro-catalogo", label: "Centro de Catálogo", icon: PackageSearch },
+      { href: "/catalogo-fotos", label: "Fotos del catálogo", icon: Images },
       { href: "/inventario-excel", label: "Inventario & Depuración", icon: Boxes },
       { href: "/traslados", label: "Traslados", icon: Truck },
       { href: "/taxonomia", label: "Taxonomía & Clasificación", icon: FolderTree },
