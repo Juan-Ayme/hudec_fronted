@@ -7,6 +7,7 @@ import { Button } from "@/components/ui/button";
 import { toast } from "@/lib/toast";
 import { cn } from "@/lib/utils";
 import { quitarFondo } from "@/lib/fotos-api";
+import { quitarFondoLocal, quitarFondoLocalDisponible } from "@/lib/quitar-fondo-local";
 
 /**
  * Editor antes de subir: recortar (libre o cuadrado), girar, quitar el fondo (en el backend
@@ -173,13 +174,23 @@ function EditorUna({ archivo, n, total, fondoDisponible, onSiguiente, onCancelar
   const hacerSinFondo = async () => {
     if (sinFondo) { setUsarSinFondo(!usarSinFondo); return; }
     if (!archivo) return;
-    setOcupado("Quitando el fondo… (unos segundos)");
+    setOcupado("Quitando el fondo…");
     try {
-      const blob = await quitarFondo(archivo);
+      let blob: Blob;
+      try {
+        // En este navegador (gratis, sin servidor). La primera vez baja el modelo.
+        blob = await quitarFondoLocal(archivo, setOcupado);
+      } catch (local) {
+        console.warn("Quitar fondo en el navegador falló:", local);
+        // Respaldo: el backend con rembg, solo si lo tiene instalado.
+        if (!fondoDisponible) throw local;
+        setOcupado("Quitando el fondo en el servidor…");
+        blob = await quitarFondo(archivo);
+      }
       setSinFondo(URL.createObjectURL(blob));
       setUsarSinFondo(true);
     } catch (e) {
-      toast.error(e instanceof Error ? e.message : "No se pudo quitar el fondo");
+      toast.error(e instanceof Error ? `No se pudo quitar el fondo: ${e.message}` : "No se pudo quitar el fondo");
     } finally {
       setOcupado(null);
     }
@@ -253,8 +264,8 @@ function EditorUna({ archivo, n, total, fondoDisponible, onSiguiente, onCancelar
 
         {/* Herramientas */}
         <div className="flex flex-wrap items-center gap-2 border-b border-white/10 px-4 py-2.5">
-          <button type="button" className={chip(usarSinFondo)} disabled={!!ocupado || !fondoDisponible} onClick={hacerSinFondo}
-            title={fondoDisponible ? "Quitar el fondo (en tu PC, gratis)" : "Quitar fondo no está instalado en el backend"}>
+          <button type="button" className={chip(usarSinFondo)} disabled={!!ocupado || !(quitarFondoLocalDisponible() || fondoDisponible)} onClick={hacerSinFondo}
+            title="Quitar el fondo en tu navegador (gratis; la primera vez baja el modelo de IA)">
             <Eraser className="h-3.5 w-3.5" /> {usarSinFondo ? "Sin fondo ✓" : "Quitar fondo"}
           </button>
           {usarSinFondo && (
