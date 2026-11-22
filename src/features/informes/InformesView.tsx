@@ -155,7 +155,7 @@ function TemporadaSection() {
               <FileText className="h-4 w-4" /> {abriendo ? "Generando…" : "PDF para gerencia"}
             </Button>
             <Button size="sm" variant="outline" className="gap-1.5 rounded-full"
-              onClick={() => downloadExcelFile(informeTemporadaExcelUrl(clave, officeId), `Informe_${clave}${officeId != null ? `_suc${officeId}` : ""}.xlsx`).catch(console.error)}>
+              onClick={() => downloadExcelFile(informeTemporadaExcelUrl(clave, officeId), `Informe_${clave}${officeId != null ? `_suc${officeId}` : ""}.xlsx`).catch(() => toast.error("No se pudo descargar el Excel"))}>
               <Download className="h-4 w-4" /> Excel
             </Button>
             <Button size="sm" variant="outline" className="gap-1.5 rounded-full"
@@ -286,7 +286,7 @@ function ListaSkus({ filas, vacio, conFecha }: { filas: SkuTemporada[]; vacio: s
   return (
     <div className="divide-y divide-white/5">
       {filas.map((s) => {
-        const r = RIESGO_UI[s.riesgo];
+        const r = RIESGO_UI[s.riesgo] ?? RIESGO_UI.sin_venta;
         return (
           <div key={s.sku} className="flex items-center justify-between gap-3 py-2 text-sm">
             <div className="min-w-0">

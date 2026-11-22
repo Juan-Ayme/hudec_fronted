@@ -94,7 +94,7 @@ function Chip({ on, onClick, children }: { on: boolean; onClick: () => void; chi
 
 function TiendasPicker({ t, nota }: { t: ReturnType<typeof useTiendas>; nota?: ReactNode }) {
   return (
-    <Seccion titulo="Tiendas" nota={nota}>
+    <Seccion titulo="Tiendas" nota={t.cargando ? undefined : nota}>
       {t.cargando ? <span className="text-xs text-muted">Cargando tiendas…</span> : (
         <div className="flex flex-wrap gap-2">
           {t.lista.map((x) => <Chip key={x.id} on={t.sel.includes(x.id)} onClick={() => t.toggle(x.id)}>{x.nombre}</Chip>)}
@@ -145,10 +145,12 @@ function Pdf({ onClick, busy, disabled, children = "Generar PDF", tarda }: {
   );
 }
 
-function Excel({ onClick, busy, disabled, children }: { onClick: () => void; busy: boolean; disabled?: boolean; children: ReactNode }) {
+function Excel({ onClick, busy, disabled, children, tarda }: {
+  onClick: () => void; busy: boolean; disabled?: boolean; children: ReactNode; tarda?: string;
+}) {
   return (
     <Button variant="outline" onClick={onClick} disabled={busy || disabled}>
-      <Download className="h-4 w-4" /> {busy ? "Preparando Excel…" : children}
+      <Download className="h-4 w-4" /> {busy ? `Preparando Excel…${tarda ? ` (${tarda})` : ""}` : children}
     </Button>
   );
 }
@@ -190,17 +192,16 @@ function PanelCompras() {
 
 function PanelTraslados() {
   const t = useTiendas();
-  const [min, setMin] = useState(20000);
-  const [max, setMax] = useState(25000);
   const { busy, run } = useAccion();
-  const ok = t.sel.length >= 2 && max >= min;
+  const ok = t.sel.length >= 2;
   return (
     <>
-      <TiendasPicker t={t} nota={t.sel.length < 2 ? "Marca dos o más tiendas: los traslados son entre las tiendas marcadas." : undefined} />
-      <Presupuesto min={min} max={max} setMin={setMin} setMax={setMax} />
+      <TiendasPicker t={t} nota={t.sel.length < 2
+        ? <span className="text-warning">Marca dos o más tiendas: los traslados son solo entre las tiendas marcadas.</span>
+        : "Solo se traslada entre las tiendas marcadas (deja fuera las de otra región)."} />
       <Acciones>
-        <Excel busy={busy === "xls"} disabled={!ok}
-          onClick={() => run("xls", () => downloadExcelFile(trasladosExcelUrl(t.sel, min, max), "traslados_entre_tiendas.xlsx"), "No se pudo descargar el Excel")}>
+        <Excel busy={busy === "xls"} disabled={!ok} tarda="~1 min"
+          onClick={() => run("xls", () => downloadExcelFile(trasladosExcelUrl(t.sel), "traslados_entre_tiendas.xlsx"), "No se pudo descargar el Excel")}>
           Traslados (Excel)
         </Excel>
       </Acciones>
@@ -365,7 +366,7 @@ export const REPORTES: Reporte[] = [
     detalle: "Stock que no se vende en 90 días, que dura más de 6 meses o que se frenó (+45 días sin venderse), y lo lento que no conviene recomprar. Qué trasladar a otra tienda (allá sí se vende), qué probar donde nunca lo tuvieron, qué promocionar, qué rematar y qué guardar para su campaña." },
   { id: "traslados", grupo: "Stock", titulo: "Traslados entre tiendas", icon: Repeat, salidas: ["Excel"], Panel: PanelTraslados,
     resumen: "Qué pasar de una tienda a otra antes de comprar.",
-    detalle: "Qué productos mover entre las tiendas marcadas antes de comprar: lo que sobra en una y falta en otra." },
+    detalle: "Una lista ordenada por ruta con el motivo de cada traslado: urgente (se acaba en una semana), falta en una tienda (en 0 y la otra tiene), Navidad (lo que no se vende antes del 24/12), estancado y probar. Avisa cuando hay que confirmar en tienda que las unidades estén." },
   { id: "cierre", grupo: "Ventas y tiendas", titulo: "Cierre del mes pasado", icon: CalendarCheck, salidas: ["PDF"], Panel: PanelCierreMes,
     resumen: "Cómo nos fue, qué bajó, qué rebajar y qué rematar.",
     detalle: "Cómo nos fue, cómo se movió cada categoría y por qué bajó, quiebres, qué rebajar y qué rematar." },

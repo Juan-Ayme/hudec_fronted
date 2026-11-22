@@ -467,14 +467,10 @@ export const comprasExcelUrl = (oficinas: number[], presMin: number, presMax: nu
   return `${API_BASE_URL}/informes/compras/excel?${qs.toString()}`;
 };
 
-/** Excel de traslados entre las tiendas elegidas (regla de 14 días, igual que el informe de compras). */
-export const trasladosExcelUrl = (oficinas: number[], presMin: number, presMax: number) => {
-  const qs = new URLSearchParams();
-  oficinas.forEach((o) => qs.append("oficinas", String(o)));
-  qs.set("pres_min", String(presMin));
-  qs.set("pres_max", String(presMax));
-  return `${API_BASE_URL}/informes/traslados/excel?${qs.toString()}`;
-};
+/** Excel de traslados entre las tiendas elegidas. Sin presupuesto: las hojas de "nivelar" y "repartir
+ *  la compra" usan el presupuesto guardado de la empresa (el backend lo completa si no viene). */
+export const trasladosExcelUrl = (oficinas: number[]) =>
+  `${API_BASE_URL}/informes/traslados/excel?${qsTiendas(oficinas)}`;
 
 /** Mes en curso + compras: avance, categorías que bajan y presupuesto de compra. */
 export const abrirMesCursoPdf = (officeId: number | null) =>

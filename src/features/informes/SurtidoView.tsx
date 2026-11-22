@@ -4,6 +4,7 @@ import { useState } from "react";
 import { Download, FileJson, Flame, PackageX, ShoppingCart, Snowflake, TrendingUp, Wallet } from "lucide-react";
 import { Card } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
+import { toast } from "@/lib/toast";
 import { KpiStat } from "@/components/ui/kpi-stat";
 import { ErrorState, LoadingState } from "@/components/ui/states";
 import { downloadExcelFile } from "@/lib/api";
@@ -80,7 +81,7 @@ export function SurtidoSection() {
           <div className="ml-auto flex gap-2">
             <Button size="sm" variant="outline" className="gap-1.5 rounded-full"
               onClick={() => downloadExcelFile(informeSurtidoExcelUrl(params),
-                `Surtido_${d.meta.ventana.desde}_a_${d.meta.ventana.hasta}.xlsx`).catch(console.error)}>
+                `Surtido_${d.meta.ventana.desde}_a_${d.meta.ventana.hasta}.xlsx`).catch(() => toast.error("No se pudo descargar el Excel"))}>
               <Download className="h-4 w-4" /> Excel
             </Button>
             <Button size="sm" variant="outline" className="gap-1.5 rounded-full"
