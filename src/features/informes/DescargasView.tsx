@@ -9,7 +9,7 @@ import {
 import { Button } from "@/components/ui/button";
 import { Drawer } from "@/components/ui/drawer";
 import { useSucursal } from "@/components/sucursal-context";
-import { downloadExcelFile } from "@/lib/api";
+import { downloadExcelFile, yaAvisado } from "@/lib/api";
 import { toast } from "@/lib/toast";
 import { cn } from "@/lib/utils";
 import { useBIQuery } from "@/features/bi/shared";
@@ -27,9 +27,13 @@ import {
   comprasExcelUrl,
   estancadosExcelUrl,
   getCatalogoOpciones,
+  getReglasInformes,
   getTiendasCompras,
+  reglasInformesKey,
   trasladosExcelUrl,
   type CatalogoOpciones,
+  type PresupuestoCompra,
+  type ReglasInformes,
   type TiendaCompras,
 } from "@/lib/informes-api";
 
@@ -49,7 +53,7 @@ function useAccion() {
     try {
       await fn();
     } catch (e) {
-      toast.error(e instanceof Error ? e.message : error);
+      if (!yaAvisado(e)) toast.error(e instanceof Error ? e.message : error);   // el Excel ya avisa solo
     } finally {
       setBusy(null);
     }
@@ -104,16 +108,37 @@ function TiendasPicker({ t, nota }: { t: ReturnType<typeof useTiendas>; nota?: R
   );
 }
 
-function Presupuesto({ min, max, setMin, setMax }: { min: number; max: number; setMin: (n: number) => void; setMax: (n: number) => void }) {
+type Pres = { min: number; max: number };
+const soles = (n: number) => `S/ ${n.toLocaleString("es-PE")}`;
+
+/** Presupuesto del pedido. Arranca con el de la empresa (Configuración → Reglas de informes);
+ *  si se cambia aquí, vale solo para este informe. `propio` null = el de la empresa. */
+function Presupuesto({ propio, empresa, cargando, onChange }: {
+  propio: Pres | null; empresa: Pres | null; cargando: boolean; onChange: (p: Pres | null) => void;
+}) {
   const input = "mt-1 block w-full rounded-lg border border-white/10 bg-white/[0.04] px-2 py-1.5 text-sm text-fg";
+  const valor = propio ?? empresa;
+  const set = (k: keyof Pres, v: string) => {
+    const n = Number(v);
+    onChange({ ...(valor ?? { min: 0, max: 0 }), [k]: Number.isFinite(n) && n >= 0 ? n : 0 });
+  };
+  const nota = propio && propio.max < propio.min
+    ? <span className="text-danger">El máximo debe ser mayor o igual al mínimo.</span>
+    : propio
+      ? <>Solo para este informe{empresa ? ` · el de la empresa es ${soles(empresa.min)} a ${soles(empresa.max)}` : ""} ·{" "}
+          <button type="button" onClick={() => onChange(null)} className="text-primary hover:underline">usar el de la empresa</button></>
+      : cargando ? "Cargando el presupuesto de la empresa…"
+        : <>El de la empresa · se cambia en <Link href="/configuracion?tab=reglas" className="text-primary hover:underline">Configuración → Reglas de informes</Link></>;
   return (
-    <Seccion titulo="Presupuesto (S/)" nota={max < min ? <span className="text-danger">El máximo debe ser mayor o igual al mínimo.</span> : undefined}>
+    <Seccion titulo="Presupuesto (S/)" nota={nota}>
       <div className="grid grid-cols-2 gap-3">
         <label className="text-xs text-muted">Mínimo
-          <input type="number" min={0} step={1000} value={min} onChange={(e) => setMin(Number(e.target.value))} className={input} />
+          <input type="number" min={0} step={1000} value={valor?.min ?? ""} placeholder="de la empresa"
+                 onChange={(e) => set("min", e.target.value)} className={input} />
         </label>
         <label className="text-xs text-muted">Máximo
-          <input type="number" min={0} step={1000} value={max} onChange={(e) => setMax(Number(e.target.value))} className={input} />
+          <input type="number" min={0} step={1000} value={valor?.max ?? ""} placeholder="de la empresa"
+                 onChange={(e) => set("max", e.target.value)} className={input} />
         </label>
       </div>
     </Seccion>
@@ -168,21 +193,28 @@ function SucursalNota() {
 
 function PanelCompras() {
   const t = useTiendas();
-  const [min, setMin] = useState(20000);
-  const [max, setMax] = useState(25000);
+  const reglas = useBIQuery<ReglasInformes>({
+    queryKey: reglasInformesKey,
+    queryFn: ({ signal }) => getReglasInformes(signal),
+  });
+  const r = reglas.data?.reglas;
+  const empresa: Pres | null = r ? { min: Number(r.compras_presupuesto_min), max: Number(r.compras_presupuesto_max) } : null;
+  // null = el presupuesto guardado de la empresa: no se manda y el backend lo completa.
+  const [propio, setPropio] = useState<Pres | null>(null);
+  const pres: PresupuestoCompra = propio;
   const { busy, run } = useAccion();
-  const ok = t.sel.length > 0 && min >= 0 && max >= min;
+  const ok = t.sel.length > 0 && (!propio || propio.max >= propio.min);
   return (
     <>
       <TiendasPicker t={t} nota={t.sel.length === 0 ? <span className="text-danger">Elige al menos una tienda.</span> : undefined} />
-      <Presupuesto min={min} max={max} setMin={setMin} setMax={setMax} />
+      <Presupuesto propio={propio} empresa={empresa} cargando={reglas.isLoading} onChange={setPropio} />
       <Acciones>
-        <Pdf busy={busy === "pdf"} disabled={!ok} tarda="~1 min" onClick={() => run("pdf", () => abrirComprasPdf(t.sel, min, max))} />
-        <Button variant="outline" disabled={!ok || busy === "rapido"} onClick={() => run("rapido", () => abrirComprasRapidoPdf(t.sel, min, max))}>
+        <Pdf busy={busy === "pdf"} disabled={!ok} tarda="~1 min" onClick={() => run("pdf", () => abrirComprasPdf(t.sel, pres))} />
+        <Button variant="outline" disabled={!ok || busy === "rapido"} onClick={() => run("rapido", () => abrirComprasRapidoPdf(t.sel, pres))}>
           <FileText className="h-4 w-4" /> {busy === "rapido" ? "Generando… (~1 min)" : "Lista rápida (PDF, sin gráficos)"}
         </Button>
         <Excel busy={busy === "xls"} disabled={!ok}
-          onClick={() => run("xls", () => downloadExcelFile(comprasExcelUrl(t.sel, min, max), "compras_esta_semana.xlsx"), "No se pudo descargar el Excel")}>
+          onClick={() => run("xls", () => downloadExcelFile(comprasExcelUrl(t.sel, pres), "compras_esta_semana.xlsx"))}>
           Compras para el proveedor (Excel)
         </Excel>
       </Acciones>
@@ -201,7 +233,7 @@ function PanelTraslados() {
         : "Solo se traslada entre las tiendas marcadas (deja fuera las de otra región)."} />
       <Acciones>
         <Excel busy={busy === "xls"} disabled={!ok} tarda="~1 min"
-          onClick={() => run("xls", () => downloadExcelFile(trasladosExcelUrl(t.sel), "traslados_entre_tiendas.xlsx"), "No se pudo descargar el Excel")}>
+          onClick={() => run("xls", () => downloadExcelFile(trasladosExcelUrl(t.sel), "traslados_entre_tiendas.xlsx"))}>
           Traslados (Excel)
         </Excel>
       </Acciones>
@@ -219,7 +251,7 @@ function PanelEstancados() {
       <Acciones>
         <Pdf busy={busy === "pdf"} disabled={!ok} tarda="~20 s" onClick={() => run("pdf", () => abrirEstancadosPdf(t.sel))} />
         <Excel busy={busy === "xls"} disabled={!ok}
-          onClick={() => run("xls", () => downloadExcelFile(estancadosExcelUrl(t.sel), "productos_estancados.xlsx"), "No se pudo descargar el Excel")}>
+          onClick={() => run("xls", () => downloadExcelFile(estancadosExcelUrl(t.sel), "productos_estancados.xlsx"))}>
           Detalle (Excel)
         </Excel>
       </Acciones>
@@ -233,7 +265,7 @@ function PanelCampana() {
     <Acciones>
       <Pdf busy={busy === "pdf"} tarda="~1 min" onClick={() => run("pdf", abrirCampanaJuguetesPdf)} />
       <Excel busy={busy === "xls"}
-        onClick={() => run("xls", () => downloadExcelFile(campanaJuguetesExcelUrl(), "campana_juguetes.xlsx"), "No se pudo descargar el Excel")}>
+        onClick={() => run("xls", () => downloadExcelFile(campanaJuguetesExcelUrl(), "campana_juguetes.xlsx"))}>
         Detalle por producto y tienda (Excel)
       </Excel>
     </Acciones>

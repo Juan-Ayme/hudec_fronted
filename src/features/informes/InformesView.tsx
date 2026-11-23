@@ -155,7 +155,7 @@ function TemporadaSection() {
               <FileText className="h-4 w-4" /> {abriendo ? "Generando…" : "PDF para gerencia"}
             </Button>
             <Button size="sm" variant="outline" className="gap-1.5 rounded-full"
-              onClick={() => downloadExcelFile(informeTemporadaExcelUrl(clave, officeId), `Informe_${clave}${officeId != null ? `_suc${officeId}` : ""}.xlsx`).catch(() => toast.error("No se pudo descargar el Excel"))}>
+              onClick={() => downloadExcelFile(informeTemporadaExcelUrl(clave, officeId), `Informe_${clave}${officeId != null ? `_suc${officeId}` : ""}.xlsx`).catch(() => { /* downloadExcelFile ya avisó */ })}>
               <Download className="h-4 w-4" /> Excel
             </Button>
             <Button size="sm" variant="outline" className="gap-1.5 rounded-full"

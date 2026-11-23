@@ -17,6 +17,9 @@ export function useBulkDeactivate() {
   const [isExecuting, setIsExecuting] = useState(false);
   const [result, setResult] = useState<BulkDeactivateResponse | null>(null);
   const [error, setError] = useState<string | null>(null);
+  // Qué se simuló por última vez (lista + "forzar con stock"). La baja real solo se habilita
+  // si coincide con lo que hay ahora: no se puede desactivar algo que no se revisó antes.
+  const [simulado, setSimulado] = useState<string | null>(null);
 
   // Parsea y deduplica los SKUs introducidos por el usuario
   const parsedSkus = useMemo(() => {
@@ -28,6 +31,9 @@ export function useBulkDeactivate() {
     // Elimina duplicados conservando el orden de aparición
     return Array.from(new Set(tokens));
   }, [rawInput]);
+
+  const firmaActual = JSON.stringify([parsedSkus, forzarConStock]);
+  const simulacionVigente = simulado !== null && simulado === firmaActual;
 
   const simulate = useCallback(async () => {
     if (parsedSkus.length === 0) {
@@ -44,6 +50,7 @@ export function useBulkDeactivate() {
         forzar_con_stock: forzarConStock,
       });
       setResult(res);
+      setSimulado(JSON.stringify([parsedSkus, forzarConStock]));
       toast.info(
         `🔍 Simulación completada: ${res.totals.to_deactivate} listos para desactivar, ${res.totals.blocked_by_stock} con stock bloqueados.`,
       );
@@ -74,6 +81,7 @@ export function useBulkDeactivate() {
         forzar_con_stock: forzarConStock,
       });
       setResult(res);
+      setSimulado(null);   // ya se ejecutó: otra baja necesita otra simulación
       const count =
         res.totals.deactivated ??
         res.totals.to_deactivate ??
@@ -109,6 +117,7 @@ export function useBulkDeactivate() {
     setForzarConStock(false);
     setResult(null);
     setError(null);
+    setSimulado(null);
   }, []);
 
   return {
@@ -121,6 +130,7 @@ export function useBulkDeactivate() {
     isExecuting,
     result,
     error,
+    simulacionVigente,
     simulate,
     execute,
     resetAll,

@@ -135,7 +135,16 @@ async function abrirInformePdf(path: string): Promise<void> {
   const res = await fetch(`${API_BASE_URL}${path}`, { credentials: "include", headers });
   if (!res.ok) {
     win?.close();
-    throw new ApiError(res.status, `No se pudo generar el informe (error ${res.status}).`);
+    // El backend explica el motivo en `detail` (p.ej. "No hay ventas de juguetes en la campaña pasada").
+    let motivo = "";
+    try {
+      const j = JSON.parse(await res.text());
+      const d = j?.detail;
+      motivo = typeof d === "string" ? d : typeof d?.mensaje === "string" ? d.mensaje : "";
+    } catch {
+      /* respuesta sin JSON */
+    }
+    throw new ApiError(res.status, motivo || `No se pudo generar el informe (error ${res.status}).`);
   }
   const html = await res.text();
   const url = URL.createObjectURL(new Blob([html], { type: "text/html" }));
@@ -422,6 +431,29 @@ export const informeSurtidoExcelUrl = (p: ParamsSurtido) =>
 export const abrirCierreMesPdf = (officeId: number | null) =>
   abrirInformePdf(`/informes/cierre-mes/html${officeId != null ? `?office_id=${officeId}` : ""}`);
 
+// ── Reglas de los informes (por empresa) ────────────────────────────────────
+// Presupuesto de compra, departamentos que no entran, hora de fin de la mañana…
+// Viven en el backend (`/config/informes-reglas`); lo que falta toma el default.
+
+export type ValorRegla = number | string | string[] | Record<string, string | string[]>;
+
+export interface ReglasInformes {
+  reglas: Record<string, ValorRegla>;
+  defaults: Record<string, ValorRegla>;
+  descripciones: Record<string, string>;
+}
+
+export const reglasInformesKey = ["informes", "reglas"] as const;
+
+export const getReglasInformes = (signal?: AbortSignal) =>
+  request<ReglasInformes>("/config/informes-reglas", { signal });
+
+export const guardarReglasInformes = (reglas: Record<string, ValorRegla>) =>
+  request<{ ok: boolean; reglas: Record<string, ValorRegla> }>("/config/informes-reglas", {
+    method: "PUT",
+    body: { reglas },
+  });
+
 /** Tiendas que se pueden elegir para "¿Qué compramos esta semana?". */
 export interface TiendaCompras {
   id: number;
@@ -431,14 +463,22 @@ export interface TiendaCompras {
 export const getTiendasCompras = (signal?: AbortSignal) =>
   request<TiendaCompras[]>("/informes/compras/tiendas", { signal });
 
-/** "¿Qué compramos esta semana?": qué comprar en las tiendas elegidas, dentro del presupuesto. */
-export const abrirComprasPdf = (oficinas: number[], presMin: number, presMax: number) => {
+/** Presupuesto de un pedido de compras. `null` = el guardado de la empresa (lo pone el backend). */
+export type PresupuestoCompra = { min: number; max: number } | null;
+
+const qsCompras = (oficinas: number[], pres: PresupuestoCompra) => {
   const qs = new URLSearchParams();
   oficinas.forEach((o) => qs.append("oficinas", String(o)));
-  qs.set("pres_min", String(presMin));
-  qs.set("pres_max", String(presMax));
-  return abrirInformePdf(`/informes/compras/html?${qs.toString()}`);
+  if (pres) {
+    qs.set("pres_min", String(pres.min));
+    qs.set("pres_max", String(pres.max));
+  }
+  return qs.toString();
 };
+
+/** "¿Qué compramos esta semana?": qué comprar en las tiendas elegidas, dentro del presupuesto. */
+export const abrirComprasPdf = (oficinas: number[], pres: PresupuestoCompra) =>
+  abrirInformePdf(`/informes/compras/html?${qsCompras(oficinas, pres)}`);
 
 /** Productos estancados en las tiendas elegidas: trasladar, probar en otra tienda, promoción, rematar o guardar. */
 const qsTiendas = (oficinas: number[]) => {
@@ -450,22 +490,12 @@ export const abrirEstancadosPdf = (oficinas: number[]) => abrirInformePdf(`/info
 export const estancadosExcelUrl = (oficinas: number[]) => `${API_BASE_URL}/informes/estancados/excel?${qsTiendas(oficinas)}`;
 
 /** Lista de compra rápida en PDF: Urgente › Reponer › Consumo, por categoría › subcategoría › SKU. */
-export const abrirComprasRapidoPdf = (oficinas: number[], presMin: number, presMax: number) => {
-  const qs = new URLSearchParams();
-  oficinas.forEach((o) => qs.append("oficinas", String(o)));
-  qs.set("pres_min", String(presMin));
-  qs.set("pres_max", String(presMax));
-  return abrirInformePdf(`/informes/compras/rapido/html?${qs.toString()}`);
-};
+export const abrirComprasRapidoPdf = (oficinas: number[], pres: PresupuestoCompra) =>
+  abrirInformePdf(`/informes/compras/rapido/html?${qsCompras(oficinas, pres)}`);
 
 /** "¿Qué compramos esta semana?" en Excel: lista de compra por producto, resumen y diagnóstico. */
-export const comprasExcelUrl = (oficinas: number[], presMin: number, presMax: number) => {
-  const qs = new URLSearchParams();
-  oficinas.forEach((o) => qs.append("oficinas", String(o)));
-  qs.set("pres_min", String(presMin));
-  qs.set("pres_max", String(presMax));
-  return `${API_BASE_URL}/informes/compras/excel?${qs.toString()}`;
-};
+export const comprasExcelUrl = (oficinas: number[], pres: PresupuestoCompra) =>
+  `${API_BASE_URL}/informes/compras/excel?${qsCompras(oficinas, pres)}`;
 
 /** Excel de traslados entre las tiendas elegidas. Sin presupuesto: las hojas de "nivelar" y "repartir
  *  la compra" usan el presupuesto guardado de la empresa (el backend lo completa si no viene). */

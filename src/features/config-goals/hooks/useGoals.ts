@@ -4,7 +4,10 @@ import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
 import { getSalesVsGoal, setGoals } from "@/lib/api";
 
 export function currentMonth(): string {
-  return new Date().toISOString().slice(0, 7);
+  // Mes local (Lima). Con toISOString() era el de UTC: el último día del mes, desde las
+  // 7 pm, la pantalla de metas ya mostraba el mes siguiente.
+  const d = new Date();
+  return `${d.getFullYear()}-${String(d.getMonth() + 1).padStart(2, "0")}`;
 }
 
 /**

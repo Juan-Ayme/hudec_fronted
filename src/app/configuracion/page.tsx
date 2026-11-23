@@ -10,6 +10,7 @@ import {
   ShieldCheck,
   DollarSign,
   Users,
+  FileText,
 } from "lucide-react";
 import { PageHeader } from "@/components/ui/page-header";
 import { Tabs, type TabItem } from "@/components/ui/tabs";
@@ -21,10 +22,12 @@ import { DepartmentsPanel } from "@/features/config-departments/components/Depar
 import { CompanyPanel } from "@/features/config-company/components/CompanyPanel";
 import { BackupsPanel } from "@/features/config-backups/components/BackupsPanel";
 import { UsuariosView } from "@/features/usuarios/components/UsuariosView";
+import { ReglasInformesPanel } from "@/features/config-reglas/components/ReglasInformesPanel";
 
 type ConfigTab =
   | "departments"
   | "company"
+  | "reglas"
   | "goals"
   | "targets"
   | "costos"
@@ -40,6 +43,7 @@ function ConfiguracionContent() {
   const items: TabItem<ConfigTab>[] = [
     { id: "departments", label: "Departamentos", icon: EyeOff },
     { id: "company", label: "Empresa", icon: Building2 },
+    { id: "reglas", label: "Reglas de informes", icon: FileText },
     { id: "goals", label: "Metas", icon: Target },
     { id: "targets", label: "Category targets", icon: ShieldCheck },
     { id: "costos", label: "Costos & Auditoría", icon: DollarSign },
@@ -72,6 +76,7 @@ function ConfiguracionContent() {
 
       {tab === "departments" && <DepartmentsPanel />}
       {tab === "company" && <CompanyPanel />}
+      {tab === "reglas" && <ReglasInformesPanel />}
       {tab === "goals" && <GoalsPanel />}
       {tab === "targets" && <CategoryTargetsPanel />}
       {tab === "costos" && <VariantCostsPanel />}

@@ -157,7 +157,7 @@ export function PeriodoSection() {
             </Button>
             <Button size="sm" variant="outline" className="gap-1.5 rounded-full"
               onClick={() => downloadExcelFile(informePeriodoExcelUrl(params),
-                `Informe_${params.desde}_a_${params.hasta}${officeId != null ? `_suc${officeId}` : ""}.xlsx`).catch(() => toast.error("No se pudo descargar el Excel"))}>
+                `Informe_${params.desde}_a_${params.hasta}${officeId != null ? `_suc${officeId}` : ""}.xlsx`).catch(() => { /* downloadExcelFile ya avisó */ })}>
               <Download className="h-4 w-4" /> Excel
             </Button>
             <Button size="sm" variant="outline" className="gap-1.5 rounded-full"

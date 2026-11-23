@@ -14,6 +14,7 @@ import { Card, CardBody, CardHeader } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Badge } from "@/components/ui/badge";
+import { Dialog } from "@/components/ui/dialog";
 import { money, num, pct } from "@/lib/format";
 import { cn } from "@/lib/utils";
 import type { CategoryTarget, CategoryTargetPatch, TargetRol } from "@/lib/bi-types";
@@ -28,6 +29,7 @@ export function CategoryTargetsPanel() {
   const [officeFilter, setOfficeFilter] = useState<string>("todos");
   const [rolFilter, setRolFilter] = useState<string>("todos");
   const [editing, setEditing] = useState<CategoryTarget | null>(null);
+  const [borrando, setBorrando] = useState<CategoryTarget | null>(null);   // confirmar antes de eliminar
 
   const parsedOffice = officeFilter === "todos" ? null : Number(officeFilter);
   const { list, update, remove } = useCategoryTargets(parsedOffice);
@@ -165,12 +167,7 @@ export function CategoryTargetsPanel() {
                             <Pencil className="h-3.5 w-3.5" />
                           </button>
                           <button
-                            onClick={() =>
-                              remove.mutate({
-                                category_id: t.category_id,
-                                office_id: t.bsale_office_id,
-                              })
-                            }
+                            onClick={() => setBorrando(t)}
                             className="rounded p-1 text-muted hover:bg-surface-3 hover:text-danger"
                             title="Eliminar"
                             disabled={remove.isPending}
@@ -187,6 +184,25 @@ export function CategoryTargetsPanel() {
           </>
         )}
       </Card>
+
+      <Dialog
+        open={!!borrando}
+        onClose={() => !remove.isPending && setBorrando(null)}
+        title="¿Eliminar esta meta?"
+        description={borrando ? `${borrando.categoria} · ${borrando.sucursal}. Se borran su meta mensual, su rol y sus umbrales.` : undefined}
+        footer={
+          <>
+            <Button variant="ghost" onClick={() => setBorrando(null)} disabled={remove.isPending}>Cancelar</Button>
+            <Button variant="danger" loading={remove.isPending}
+              onClick={() => borrando && remove.mutate(
+                { category_id: borrando.category_id, office_id: borrando.bsale_office_id },
+                { onSettled: () => setBorrando(null) },
+              )}>
+              Sí, eliminar
+            </Button>
+          </>
+        }
+      />
 
       {editing && (
         <EditTargetDialog

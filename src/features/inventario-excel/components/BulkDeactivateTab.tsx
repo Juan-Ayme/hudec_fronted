@@ -43,6 +43,7 @@ export function BulkDeactivateTab() {
     simulate,
     execute,
     resetAll,
+    simulacionVigente,
   } = useBulkDeactivate();
 
   const { activeRole } = useCompany();
@@ -257,8 +258,9 @@ export function BulkDeactivateTab() {
                   size="md"
                   className="flex-1"
                   loading={isExecuting}
-                  disabled={parsedSkus.length === 0 || isSimulating || !isAdmin}
-                  title={!isAdmin ? "Requiere permisos de Administrador" : undefined}
+                  disabled={parsedSkus.length === 0 || isSimulating || !isAdmin || !simulacionVigente}
+                  title={!isAdmin ? "Requiere permisos de Administrador"
+                    : !simulacionVigente ? "Primero simula esta misma lista (con la misma opción de forzar)" : undefined}
                   onClick={() => setConfirmModalOpen(true)}
                 >
                   {isAdmin ? <Zap className="h-4 w-4" /> : <Lock className="h-4 w-4" />}

@@ -23,7 +23,6 @@ export function useSync() {
   const qc = useQueryClient();
   const [days, setDays] = useState(7);
   const [skipDocs, setSkipDocs] = useState(false);
-  const [skipStock, setSkipStock] = useState(false);
   const [incrMsg, setIncrMsg] = useState<{ kind: "ok" | "err"; text: string } | null>(
     null,
   );
@@ -104,7 +103,8 @@ export function useSync() {
       triggerFullSync({
         days,
         skip_documents: skipDocs,
-        skip_stock_snapshot: skipStock,
+        // El sync ya no guarda fotos de stock (stock_history) salvo que se pida a mano por CLI.
+        skip_stock_snapshot: true,
       }),
     onSuccess: () => {
       qc.invalidateQueries({ queryKey: ["sync-tasks"] });
@@ -138,8 +138,6 @@ export function useSync() {
     setDays,
     skipDocs,
     setSkipDocs,
-    skipStock,
-    setSkipStock,
     incrMsg,
     tasks,
     activeTask,

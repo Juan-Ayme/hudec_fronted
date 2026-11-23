@@ -6,7 +6,7 @@ import {
   QueryClientProvider,
   type QueryClientConfig,
 } from "@tanstack/react-query";
-import { ApiError } from "@/lib/api";
+import { reintentar } from "@/features/bi/shared/useBIQuery";
 import { SucursalProvider } from "@/components/sucursal-context";
 import { AuthProvider } from "@/components/auth-context";
 import { CompanyProvider } from "@/components/company-context";
@@ -16,14 +16,10 @@ const config: QueryClientConfig = {
     queries: {
       staleTime: 300_000, // 5 min
       refetchOnWindowFocus: false,
-      retry: (failureCount, error) => {
-        // No reintentar si la API no responde o devuelve 4xx.
-        if (error instanceof ApiError) {
-          if (error.status === 0 || (error.status >= 400 && error.status < 500))
-            return false;
-        }
-        return failureCount < 2;
-      },
+      // Una sola vez y solo ante 502/503/504 (ver `reintentar`): un 4xx no cambia
+      // y un 500 o un corte de tiempo en un informe pesado solo multiplica la carga.
+      retry: reintentar,
+      retryDelay: 3000,
     },
   },
 };

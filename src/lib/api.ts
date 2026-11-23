@@ -885,6 +885,10 @@ export function matrixExcelUrl(
  * (siempre que CORS tenga allow_credentials=True y SameSite=None+Secure).
  * Una vez recibido el blob, creamos un Object URL local para descargarlo.
  */
+/** true si `downloadExcelFile` ya mostró el error (para no repetir el aviso). */
+export const yaAvisado = (e: unknown): boolean =>
+  !!e && typeof e === "object" && (e as { avisado?: boolean }).avisado === true;
+
 export async function downloadExcelFile(
   url: string,
   fallbackFilename = "reporte.xlsx",
@@ -946,6 +950,8 @@ export async function downloadExcelFile(
       id: toastId,
       description: message,
     });
+    // Ya se avisó aquí: quien llama no debe mostrar otro toast (ver `yaAvisado`).
+    if (err && typeof err === "object") (err as { avisado?: boolean }).avisado = true;
     throw err;
   }
 }

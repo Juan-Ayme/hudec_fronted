@@ -55,6 +55,13 @@ const ESTADO_UI: Record<string, { label: string; tone: "success" | "warning" | "
   omitido: { label: "En cero", tone: "neutral" },
 };
 
+/** Copia de las cantidades por destino con los destinos `omitir` en 0. */
+function sinDestinos(c: Record<string, number>, omitir: number[]): Record<string, number> {
+  const out = { ...c };
+  for (const d of omitir) if (String(d) in out) out[String(d)] = 0;
+  return out;
+}
+
 function nuevoRequestId(): string {
   if (typeof crypto !== "undefined" && "randomUUID" in crypto) return crypto.randomUUID();
   return `${Date.now()}-${Math.random().toString(36).slice(2, 12)}`;
@@ -102,6 +109,9 @@ export function TrasladosView() {
   const [requestId, setRequestId] = useState("");
   const [confirmar, setConfirmar] = useState(false);
   const [resultado, setResultado] = useState<ResultadoEmision | null>(null);
+  // Destinos que YA se emitieron desde este pegado (una emisión que se detuvo a medias).
+  // Sus columnas quedan en 0 aunque se vuelva a revisar el stock: así no se duplican en BSale.
+  const [yaEmitidos, setYaEmitidos] = useState<{ origen: number; destinos: number[] } | null>(null);
 
   const sucursalesQ = useQuery({
     queryKey: trasladosKeys.sucursales,
@@ -120,13 +130,20 @@ export function TrasladosView() {
 
   const firmaActual = `${origenId}|${destinoId}|${texto}`;
   const desactualizado = validacion !== null && firma !== firmaActual;
+  const emitidosAqui = yaEmitidos && yaEmitidos.origen === origenId ? yaEmitidos.destinos : [];
 
   const validar = useMutation({
     mutationFn: () => validarTraslado({ origen_id: origenId!, destino_id: destinoId, texto }),
     onSuccess: (v) => {
       setValidacion(v);
       setFirma(firmaActual);
-      setCant(Object.fromEntries(v.lineas.map((l) => [l.sku, { ...l.cantidades }])));
+      const omitir = yaEmitidos && yaEmitidos.origen === origenId ? yaEmitidos.destinos : [];
+      setCant(Object.fromEntries(v.lineas.map((l) => [l.sku, sinDestinos(l.cantidades, omitir)])));
+      if (omitir.length) {
+        toast.warning(`No se vuelve a enviar a ${omitir.map(nombre).join(", ")}: ya se emitió.`, {
+          description: "Esas columnas quedan en 0. Si de verdad quieres otro traslado ahí, pulsa Limpiar y pega de nuevo.",
+        });
+      }
       setQuitados(new Set());
       setRequestId(nuevoRequestId());
       setResultado(null);
@@ -183,8 +200,20 @@ export function TrasladosView() {
         toast.success(`${r.emitidos.length} traslado(s) creados en BSale`);
         setValidacion(null);
         setTexto("");
+        setYaEmitidos(null);
       } else {
         toast.error(`Se detuvo en ${r.error?.destino}: revisa el resultado.`);
+        if (r.emitidos.length && origenId != null) {
+          // Lo emitido sale de la tabla y el reintento va con otro request_id: con el mismo, el
+          // backend devolvería este mismo resultado y nunca emitiría los pendientes.
+          const hechos = r.emitidos.map((e) => e.destino_id);
+          setYaEmitidos((prev) => ({
+            origen: origenId,
+            destinos: [...new Set([...(prev?.origen === origenId ? prev.destinos : []), ...hechos])],
+          }));
+          setCant((prev) => Object.fromEntries(Object.entries(prev).map(([sku, c]) => [sku, sinDestinos(c, hechos)])));
+          setRequestId(nuevoRequestId());
+        }
       }
     },
     onError: (e) => {
@@ -309,6 +338,7 @@ export function TrasladosView() {
                   setTexto("");
                   setValidacion(null);
                   setResultado(null);
+                  setYaEmitidos(null);
                 }}
               >
                 <X className="h-4 w-4" /> Limpiar
@@ -366,7 +396,9 @@ export function TrasladosView() {
             subtitle={
               desactualizado
                 ? "Cambiaste el origen, el destino o lo pegado: vuelve a presionar «Revisar stock»."
-                : "Stock leído de BSale en este momento. Puedes corregir cantidades antes de emitir."
+                : yaEmitidos && yaEmitidos.origen === origenId
+                  ? `Ya se emitió a ${yaEmitidos.destinos.map(nombre).join(", ")}: esas columnas quedan en 0 para no duplicar. Emite lo que falta.`
+                  : "Stock leído de BSale en este momento. Puedes corregir cantidades antes de emitir."
             }
             action={
               <div className="flex flex-wrap gap-2">
@@ -431,7 +463,8 @@ export function TrasladosView() {
                                 aria-label={`Cantidad de ${f.sku} para ${nombre(d)}`}
                                 value={f.cantidades[String(d)] ?? 0}
                                 onChange={(e) => setCantidad(f.sku, String(d), e.target.value)}
-                                disabled={f.variant_id === null}
+                                disabled={f.variant_id === null || emitidosAqui.includes(d)}
+                                title={emitidosAqui.includes(d) ? "Ya se emitió a esta tienda" : undefined}
                                 className="h-8 w-20 rounded-lg border border-border/40 bg-surface-2/40 px-2 text-right text-body text-fg focus:border-primary/50 focus:outline-none"
                               />
                             </td>
