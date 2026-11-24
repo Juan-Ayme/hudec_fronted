@@ -36,9 +36,9 @@ export function AtributosView() {
   for (const d of defs.data?.definitions ?? []) nombres[d.code] = d.name;
   const nombre = (code: string) => nombres[code] ?? code;
 
-  const descargar = async () => {
+  const descargar = async (conProductos: boolean) => {
     try {
-      await bajarPlantillaDriver();
+      await bajarPlantillaDriver(conProductos);
     } catch (e) {
       if (!yaAvisado(e)) throw e;
     }
@@ -124,15 +124,24 @@ export function AtributosView() {
         <CardBody className="space-y-5">
           <Paso n={1} titulo="Bajar la plantilla">
             <p className="text-caption text-muted">
-              Es el driver de compras de siempre con columnas nuevas (marca, licencia, público,
-              temporada…) y listas para elegir. La fila 2 es de ayuda: los productos van{" "}
-              <strong>desde la fila 3</strong>. Cada fila necesita el <strong>SKU</strong> o el{" "}
-              <strong>código de barras</strong>. Si pones proveedor, costo (C/U) y fecha, también se
-              guarda el proveedor de cada producto.
+              <strong>Con mis productos</strong>: trae todos los productos activos, los más vendidos
+              arriba, con lo que ya se sabe de cada uno. Lo que está en <em>gris cursiva</em> lo adivinó
+              el sistema por el nombre: corrígelo o complétalo. Lo que dejes igual no se toca.
             </p>
-            <Button variant="secondary" onClick={descargar}>
-              <FileSpreadsheet className="h-4 w-4" /> Bajar plantilla
-            </Button>
+            <p className="text-caption text-muted">
+              <strong>Vacía</strong>: el driver de compras de siempre para mercadería nueva. Los
+              productos van <strong>desde la fila 3</strong> (la 2 es de ayuda) y cada fila necesita el{" "}
+              <strong>SKU</strong> o el <strong>código de barras</strong>. Si pones proveedor, costo
+              (C/U) y fecha, también se guarda el proveedor.
+            </p>
+            <div className="flex flex-wrap gap-2">
+              <Button variant="secondary" onClick={() => descargar(true)}>
+                <FileSpreadsheet className="h-4 w-4" /> Con mis productos
+              </Button>
+              <Button variant="ghost" onClick={() => descargar(false)}>
+                <FileSpreadsheet className="h-4 w-4" /> Vacía
+              </Button>
+            </div>
           </Paso>
 
           <Paso n={2} titulo="Elegir el Excel lleno y probarlo">
@@ -262,6 +271,13 @@ function Resultado({ r, nombre }: { r: ImportDriverResult; nombre: (code: string
         <Aviso tone="warning">
           El archivo no tiene columnas de atributos ni de proveedor. Usa la plantilla del paso 1.
         </Aviso>
+      )}
+
+      {(s.sin_cambio ?? 0) > 0 && (
+        <p className="text-caption text-muted">
+          <strong className="text-fg">{num(s.sin_cambio)}</strong> dato(s) vienen igual que ya están
+          guardados: no se tocan.
+        </p>
       )}
 
       {porAtributo.length > 0 && (

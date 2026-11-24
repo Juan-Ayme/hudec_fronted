@@ -44,6 +44,8 @@ export interface ImportDriverResult {
     relaciones_proveedor: number;
     atributos_escritos: number;
     atributos_bloqueados_por_manual: number;
+    /** Valores iguales a los que ya estaban: no se reescriben. */
+    sin_cambio?: number;
   };
   atributos_por_codigo: Record<string, number>;
   proveedores_nuevos: string[];
@@ -70,9 +72,13 @@ export const getAtributoDefs = (signal?: AbortSignal) =>
 export const getCoberturaAtributos = (signal?: AbortSignal) =>
   request<CoberturaAtributos>("/attributes/coverage", { signal });
 
-/** Plantilla del driver con listas desplegables (taxonomía vigente de la empresa). */
-export const bajarPlantillaDriver = () =>
-  downloadExcelFile(`${API_BASE_URL}/attributes/driver-template`, "driver_compras.xlsx");
+/** Plantilla del driver con listas desplegables (taxonomía vigente de la empresa).
+ * `conProductos`: una fila por producto activo con sus atributos actuales. */
+export const bajarPlantillaDriver = (conProductos = false) =>
+  downloadExcelFile(
+    `${API_BASE_URL}/attributes/driver-template${conProductos ? "?con_productos=true" : ""}`,
+    conProductos ? "atributos_productos.xlsx" : "driver_compras.xlsx",
+  );
 
 /** Sube el driver. Con `dryRun` el backend solo informa qué haría, sin guardar. */
 export async function subirDriver(file: File, dryRun: boolean): Promise<ImportDriverResult> {
