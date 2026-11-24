@@ -66,7 +66,7 @@ export function CategoryTargetsPanel() {
               {list.data.total} categorías cargadas
             </span>
           }
-          subtitle="Metas mensuales, roles (motor / fijo / complemento / upsell) y umbrales de SKUs por categoría-sucursal. Alimenta el bloque 80/20 de /salud-catalogo y el desglose de presupuesto de /plan-mes."
+          subtitle="Metas mensuales, roles (motor / fijo / complemento / upsell) y umbrales de SKUs por categoría-sucursal."
         />
 
         {isEmpty ? (
