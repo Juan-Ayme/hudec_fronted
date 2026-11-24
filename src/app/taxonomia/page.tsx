@@ -2,14 +2,15 @@
 
 import { Suspense } from "react";
 import { useRouter, useSearchParams } from "next/navigation";
-import { FolderTree, Tags, ClipboardCheck } from "lucide-react";
+import { FolderTree, Tags, ClipboardCheck, ListChecks } from "lucide-react";
 import { Tabs, type TabItem } from "@/components/ui/tabs";
 import { useCompany } from "@/components/company-context";
 import { TaxonomiaView } from "@/features/taxonomia/components/TaxonomiaView";
 import { ProductTypesView } from "@/features/product-types/components/ProductTypesView";
 import { AuditoriasView } from "@/features/auditorias/components/AuditoriasView";
+import { AtributosView } from "@/features/atributos/components/AtributosView";
 
-type TaxonomiaTab = "arbol" | "tipologias" | "auditoria";
+type TaxonomiaTab = "arbol" | "tipologias" | "auditoria" | "atributos";
 
 function TaxonomiaContent() {
   const router = useRouter();
@@ -23,6 +24,7 @@ function TaxonomiaContent() {
         { id: "arbol", label: "Árbol de Taxonomía", icon: FolderTree },
         { id: "tipologias", label: "Tipologías BSale", icon: Tags },
         { id: "auditoria", label: "Auditoría de Clasificación", icon: ClipboardCheck },
+        { id: "atributos", label: "Atributos", icon: ListChecks },
       ];
 
   const rawTab = searchParams.get("tab");
@@ -43,6 +45,7 @@ function TaxonomiaContent() {
       {tab === "arbol" && <TaxonomiaView />}
       {tab === "tipologias" && <ProductTypesView />}
       {tab === "auditoria" && <AuditoriasView />}
+      {tab === "atributos" && <AtributosView />}
     </div>
   );
 }
