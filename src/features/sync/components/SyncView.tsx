@@ -1,5 +1,6 @@
 "use client";
 
+import { useState } from "react";
 import {
   AlertTriangle,
   CheckCircle2,
@@ -18,6 +19,7 @@ import { Card, CardHeader, CardBody } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { Input, Field } from "@/components/ui/input";
 import { Badge } from "@/components/ui/badge";
+import { Dialog } from "@/components/ui/dialog";
 
 import { HealthBanner } from "@/components/sync/health-banner";
 import { ActiveMonitor } from "@/components/sync/active-monitor";
@@ -32,14 +34,16 @@ import { MiniStat } from "./MiniStat";
 import { TaskList } from "./TaskList";
 import { DataQualityList } from "./DataQualityList";
 
+/** Una sync de más de un mes descarga mucho de BSale y ocupa la base varios minutos: se confirma. */
+const DIAS_SIN_CONFIRMAR = 31;
+
 export function SyncView() {
+  const [confirmarFull, setConfirmarFull] = useState(false);
   const {
     days,
     setDays,
     skipDocs,
     setSkipDocs,
-    skipStock,
-    setSkipStock,
     incrMsg,
     tasks,
     activeTask,
@@ -92,7 +96,7 @@ export function SyncView() {
             { label: "Duración aprox.", value: "1 – 15 min" },
             {
               label: "Fases",
-              value: `${10 - (skipDocs ? 2 : 0) - (skipStock ? 1 : 0)} entidades`,
+              value: `${9 - (skipDocs ? 2 : 0)} entidades`,
             },
           ]}
           action={
@@ -113,15 +117,10 @@ export function SyncView() {
                   checked={skipDocs}
                   onChange={setSkipDocs}
                 />
-                <Toggle
-                  label="Omitir snapshot de stock"
-                  checked={skipStock}
-                  onChange={setSkipStock}
-                />
               </div>
               <Button
                 variant="secondary"
-                onClick={() => fullMut.mutate()}
+                onClick={() => (days > DIAS_SIN_CONFIRMAR ? setConfirmarFull(true) : fullMut.mutate())}
                 loading={fullMut.isPending}
               >
                 <RefreshCw className="h-4 w-4" /> Encolar sync completa
@@ -274,6 +273,18 @@ export function SyncView() {
           />
         </CardBody>
       </Card>
+      <Dialog
+        open={confirmarFull}
+        onClose={() => setConfirmarFull(false)}
+        title={`¿Sincronizar ${days} días?`}
+        description="Es mucho más que el sync diario (7 días): descarga todo ese periodo de BSale y puede tardar 15 minutos o más, ocupando la base mientras tanto."
+        footer={
+          <>
+            <Button variant="ghost" onClick={() => setConfirmarFull(false)}>Cancelar</Button>
+            <Button onClick={() => { setConfirmarFull(false); fullMut.mutate(); }}>Sí, encolar</Button>
+          </>
+        }
+      />
     </div>
   );
 }

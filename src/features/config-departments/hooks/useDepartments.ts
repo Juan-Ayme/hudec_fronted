@@ -20,15 +20,20 @@ export function useDepartments() {
     mutationFn: (body: {
       excluded_departments: number[];
       seasonal_departments: number[];
+      informes_excluded_departments: number[];
     }) =>
       setExclusions({
         excluded_departments: body.excluded_departments,
         excluded_categories: cfg.data?.excluded_categories ?? [],
         seasonal_departments: body.seasonal_departments,
+        informes_excluded_departments: body.informes_excluded_departments,
       }),
     onSuccess: () => {
       qc.invalidateQueries({
-        predicate: (q) => String(q.queryKey[0]).startsWith("matrix"),
+        predicate: (q) => {
+          const k = String(q.queryKey[0]);
+          return k.startsWith("matrix") || k.startsWith("informe");
+        },
       });
       qc.invalidateQueries({ queryKey: ["config-exclusions"] });
     },

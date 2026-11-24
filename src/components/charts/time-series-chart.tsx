@@ -1,5 +1,6 @@
 "use client";
 
+import type { ComponentProps } from "react";
 import {
   Area,
   AreaChart,
@@ -8,7 +9,12 @@ import {
   Tooltip,
   XAxis,
   YAxis,
+  type TooltipContentProps,
 } from "recharts";
+import type {
+  NameType,
+  ValueType,
+} from "recharts/types/component/DefaultTooltipContent";
 import {
   AXIS_PROPS,
   CHART_COLORS,
@@ -16,6 +22,13 @@ import {
   GRID_PROPS,
   useMounted,
 } from "./common";
+
+/** Estado que Recharts pasa a onClick del chart (solo lo que usamos). */
+interface ChartClickState {
+  activePayload?: { payload?: unknown }[];
+  activeLabel?: unknown;
+  activeTooltipIndex?: unknown;
+}
 
 export interface SeriesDef {
   key: string;
@@ -44,13 +57,13 @@ export function TimeSeriesChart<T>({
 }) {
   const mounted = useMounted();
 
-  const resolveItem = (state: any): T | null => {
+  const resolveItem = (state: ChartClickState | null | undefined): T | null => {
     if (!state) return null;
     if (state.activePayload && state.activePayload.length > 0 && state.activePayload[0].payload) {
       return state.activePayload[0].payload as T;
     }
     if (state.activeLabel !== undefined && state.activeLabel !== null) {
-      const found = data.find((item: any) => String(item[xKey]) === String(state.activeLabel));
+      const found = data.find((item) => String((item as Record<string, unknown>)[xKey]) === String(state.activeLabel));
       if (found) return found as T;
     }
     if (typeof state.activeTooltipIndex === "number" && data[state.activeTooltipIndex]) {
@@ -59,7 +72,7 @@ export function TimeSeriesChart<T>({
     return null;
   };
 
-  const handleChartClick = (state: any) => {
+  const handleChartClick = (state: ChartClickState | null | undefined) => {
     if (!onClick) return;
     const item = resolveItem(state);
     if (item) {
@@ -105,11 +118,13 @@ export function TimeSeriesChart<T>({
         />
         <YAxis {...AXIS_PROPS} width={64} tickFormatter={yTickFormatter as (v: string) => string} />
         <Tooltip
-          content={(props: any) => {
-            const item = props.payload && props.payload.length > 0 ? (props.payload[0].payload as T) : null;
+          content={(props: TooltipContentProps<ValueType, NameType>) => {
+            const item = props.payload && props.payload.length > 0 ? ((props.payload[0] as { payload?: unknown }).payload as T) : null;
             return (
               <ChartTooltip
-                {...props}
+                active={props.active}
+                payload={props.payload as unknown as ComponentProps<typeof ChartTooltip>["payload"]}
+                label={props.label as string | number | undefined}
                 formatter={valueFormatter}
                 onClick={onClick && item ? () => onClick(item) : undefined}
               />
@@ -134,9 +149,10 @@ export function TimeSeriesChart<T>({
                 strokeWidth: 3,
                 stroke: "var(--color-bg)",
                 fill: color,
-                onClick: (_: any, event: any) => {
-                  if (event && event.payload && onClick) {
-                    onClick(event.payload as T);
+                onClick: (_: unknown, event: unknown) => {
+                  const payload = (event as { payload?: unknown } | null)?.payload;
+                  if (payload && onClick) {
+                    onClick(payload as T);
                   }
                 },
               }}

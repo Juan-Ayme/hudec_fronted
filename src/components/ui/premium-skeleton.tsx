@@ -239,40 +239,40 @@ export function WorkingPeopleScene() {
 /**
  * Smart resolver for SVG Scene component based on variant or keyword detection
  */
-function resolveSceneComponent(variant: LoaderVariant, messages: string[]) {
+function renderScene(variant: LoaderVariant, messages: string[]) {
   if (variant !== "auto") {
     switch (variant) {
       case "neural":
-        return NeuralNetworkScene;
+        return <NeuralNetworkScene />;
       case "growth":
-        return GrowthTrendScene;
+        return <GrowthTrendScene />;
       case "database":
-        return DatabaseSyncScene;
+        return <DatabaseSyncScene />;
       case "radar":
-        return RadarScannerScene;
+        return <RadarScannerScene />;
       case "people":
-        return WorkingPeopleScene;
+        return <WorkingPeopleScene />;
       case "analytics":
       default:
-        return AnalyticsPulseScene;
+        return <AnalyticsPulseScene />;
     }
   }
 
   // Automatic selection based on text context
   const fullText = (messages || []).join(" ").toLowerCase();
   if (fullText.includes("anomalía") || fullText.includes("código") || fullText.includes("verific") || fullText.includes("audit")) {
-    return RadarScannerScene;
+    return <RadarScannerScene />;
   }
   if (fullText.includes("usuario") || fullText.includes("permiso") || fullText.includes("rol") || fullText.includes("red")) {
-    return NeuralNetworkScene;
+    return <NeuralNetworkScene />;
   }
   if (fullText.includes("ventas") || fullText.includes("ticket") || fullText.includes("rotación") || fullText.includes("crecimient")) {
-    return GrowthTrendScene;
+    return <GrowthTrendScene />;
   }
   if (fullText.includes("stock") || fullText.includes("catálogo") || fullText.includes("compra") || fullText.includes("artículo")) {
-    return DatabaseSyncScene;
+    return <DatabaseSyncScene />;
   }
-  return AnalyticsPulseScene;
+  return <AnalyticsPulseScene />;
 }
 
 export function PremiumLoaderOverlay({
@@ -297,7 +297,7 @@ export function PremiumLoaderOverlay({
   }, [messages]);
 
   const activeMessage = messages[loadingMsgIdx] || "Procesando...";
-  const SceneComponent = resolveSceneComponent(variant, messages);
+  const scene = renderScene(variant, messages);
 
   // Layout styling based on position prop (Defaults to "bottom")
   const positionClasses = {
@@ -321,7 +321,7 @@ export function PremiumLoaderOverlay({
 
         {/* SVG Graphic Scene */}
         <div className="flex-shrink-0 flex items-center justify-center">
-          <SceneComponent />
+          {scene}
         </div>
 
         {/* Content Info */}

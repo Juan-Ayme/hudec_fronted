@@ -1,17 +1,13 @@
 import {
   LayoutDashboard,
   FolderTree,
-  Tags,
-  ShieldCheck,
   RefreshCw,
-  Activity,
-  CalendarClock,
-  Gauge,
   PackageSearch,
   Settings,
-  Users,
-  History,
-  CircleDollarSign,
+  Boxes,
+  Truck,
+  FileText,
+  Images,
   type LucideIcon,
 } from "lucide-react";
 import type { UserRole } from "@/lib/api";
@@ -29,43 +25,29 @@ export interface NavGroup {
 
 export const NAV_GROUPS: NavGroup[] = [
   {
-    title: "Análisis",
+    // Lo que gerencia necesita para decidir: informes con la conclusión
+    // arriba, PDF con gráficos, Excel con el detalle y el vistazo ejecutivo.
+    title: "Decidir",
     items: [
+      { href: "/informes", label: "Informes", icon: FileText },
       { href: "/", label: "Resumen Ejecutivo", icon: LayoutDashboard },
-      // ENLACES COMENTADOS (2026-06-20) — apuntan a páginas que no existen en src/app/.
-      // Reactivar cuando se creen las páginas correspondientes.
-      // { href: "/stock", label: "Stock", icon: Boxes },
-      // { href: "/ventas", label: "Ventas", icon: Receipt },
-      // Fusión de Análisis de Ventas + Gestión de Compras (árbol + pestañas).
+    ],
+  },
+  {
+    title: "Catálogo & Stock",
+    items: [
       { href: "/centro-catalogo", label: "Centro de Catálogo", icon: PackageSearch },
+      { href: "/catalogo-fotos", label: "Fotos del catálogo", icon: Images },
+      { href: "/inventario-excel", label: "Inventario & Depuración", icon: Boxes },
+      { href: "/traslados", label: "Traslados", icon: Truck },
+      { href: "/taxonomia", label: "Taxonomía & Clasificación", icon: FolderTree },
     ],
   },
   {
-    title: "Catálogo",
+    title: "Sistema",
     items: [
-      { href: "/taxonomia", label: "Estructura de Catálogo", icon: FolderTree },
-      { href: "/product-types", label: "Tipologías de Producto", icon: Tags },
-    ],
-  },
-  {
-    title: "BI",
-    items: [
-      { href: "/graficos", label: "Gráficos Avanzados", icon: Activity },
-      { href: "/pulso", label: "Pulso Operativo", icon: Activity },
-      { href: "/diagnostico", label: "Diagnóstico Inteligente", icon: Gauge },
-      { href: "/salud-catalogo", label: "Auditoría de Salud", icon: ShieldCheck },
-      { href: "/plan-mes", label: "Planificación Estratégica", icon: CalendarClock },
-      { href: "/rotacion-historica", label: "Análisis de Rotación", icon: History },
-    ],
-  },
-  {
-    title: "Operaciones",
-    items: [
-      { href: "/auditorias", label: "Auditorías", icon: ShieldCheck },
-      { href: "/auditoria-costos", label: "Auditoría de Costos", icon: CircleDollarSign },
-      { href: "/sync", label: "Sincronización", icon: RefreshCw },
-      { href: "/configuracion", label: "Configuración", icon: Settings },
-      { href: "/usuarios", label: "Usuarios", icon: Users },
+      { href: "/sync", label: "Sincronización BSale", icon: RefreshCw },
+      { href: "/configuracion", label: "Configuración & Admin", icon: Settings },
     ],
   },
 ];
@@ -73,7 +55,12 @@ export const NAV_GROUPS: NavGroup[] = [
 export const ALL_NAV_ITEMS: NavItem[] = NAV_GROUPS.flatMap((g) => g.items);
 
 /** Rutas que ve un `viewer` (encargado de tienda). El resto queda oculto. */
-const VIEWER_HREFS = new Set<string>(["/", "/centro-catalogo", "/pulso", "/taxonomia"]);
+const VIEWER_HREFS = new Set<string>([
+  "/informes",
+  "/",
+  "/centro-catalogo",
+  "/taxonomia",
+]);
 
 /** Grupos de navegación visibles según el rol en la empresa activa.
  *  viewer → solo las vistas operativas de su tienda; admin/operador → todo. */

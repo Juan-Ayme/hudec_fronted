@@ -1,10 +1,8 @@
 "use client";
 
-import { useMemo, useRef, useState, useEffect, useCallback } from "react";
+import { useMemo, useRef, useState, useEffect } from "react";
 import {
   ChevronRight,
-  ChevronsDownUp,
-  ChevronsUpDown,
   FolderOpen,
   Layers,
   Search,
@@ -221,7 +219,6 @@ export function UnifiedTree({
   selection,
   onSelect,
   search,
-  totalSkus,
   hasMatrix,
 }: {
   tree: UnifiedNode[];
@@ -302,19 +299,6 @@ export function UnifiedTree({
     }
   }
 
-  /* ── Mejora 5: Controles colapsar/expandir ───────────────────────────── */
-  const collapseAll = useCallback(() => {
-    setExpandedDeptos(new Set());
-    setExpandedCats(new Set());
-  }, []);
-
-  const expandAll = useCallback(() => {
-    setExpandedDeptos(new Set(tree.map((d) => d.name)));
-    setExpandedCats(new Set(
-      tree.flatMap((d) => d.children.map((c) => `${d.name}::${c.name}`)),
-    ));
-  }, [tree]);
-
   const toggleDepto = (name: string) => {
     setExpandedDeptos((prev) => {
       const next = new Set(prev);
@@ -363,18 +347,21 @@ export function UnifiedTree({
 
   const isRootSel = !selection.dept && !selection.cat && !selection.subcat;
 
-  // Track whether this is the first match we've rendered (for auto-scroll ref)
-  let firstMatchAssigned = false;
-  const getFirstMatchRef = (nodeName: string) => {
-    if (isSearching && searchMatches.has(nodeName) && !firstMatchAssigned) {
-      firstMatchAssigned = true;
-      return firstMatchRef;
+  // Primer match en orden de render (depto → cat → subcat): recibe el ref de auto-scroll.
+  const firstMatchKey = useMemo(() => {
+    if (!isSearching) return null;
+    for (const d of tree) {
+      if (searchMatches.has(d.name)) return d.name;
+      for (const c of d.children) {
+        if (searchMatches.has(c.name)) return `${d.name}::${c.name}`;
+        for (const sc of c.children) {
+          if (searchMatches.has(sc.name)) return `${d.name}::${c.name}::${sc.name}`;
+        }
+      }
     }
-    return undefined;
-  };
-
-  /* ── Mejora 4: Vista Grid en root ──────────────────────────────────── */
-  const showGrid = isRootSel && !isSearching && tree.length > 0;
+    return null;
+  }, [isSearching, tree, searchMatches]);
+  const getFirstMatchRef = (key: string) => (key === firstMatchKey ? firstMatchRef : undefined);
 
   return (
     <div>
@@ -430,12 +417,12 @@ export function UnifiedTree({
 
             const renderCategories = () => (
               <ul className={cn("flex flex-col gap-0.5", !isDrillDown && "ml-3.5 mt-1 mb-2 animate-tree-expand overflow-hidden border-l border-white/10 pl-2")}>
-                {dept.children.map((cat, catIdx) => {
+                {dept.children.map((cat) => {
                   const catKey = `${dept.name}::${cat.name}`;
                   const isCatSel = selection.cat === cat.name;
                   const isCatExpanded = expandedCats.has(catKey);
                   const isCatMatch = isSearching && searchMatches.has(cat.name);
-                  const catRef = getFirstMatchRef(cat.name);
+                  const catRef = getFirstMatchRef(`${dept.name}::${cat.name}`);
 
                   return (
                     <li key={cat.name} id={`cat-node-${cat.name}`}>
@@ -483,7 +470,7 @@ export function UnifiedTree({
                           {cat.children.map((subcat) => {
                             const isSubcatSel = isCatSel && selection.subcat === subcat.name;
                             const isSubcatMatch = isSearching && searchMatches.has(subcat.name);
-                            const subcatRef = getFirstMatchRef(subcat.name);
+                            const subcatRef = getFirstMatchRef(`${dept.name}::${cat.name}::${subcat.name}`);
 
                             return (
                               <li key={subcat.name}>

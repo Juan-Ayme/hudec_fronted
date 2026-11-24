@@ -15,6 +15,9 @@ import { getStockValuation, ApiError } from "@/lib/api";
 import { cn } from "@/lib/utils";
 import { useCompany } from "./company-context";
 
+/** Referencia estable: evita que `allowed` cambie en cada render. */
+const NO_OFFICES: number[] = [];
+
 /* ────────────────────────────────────────────────────────────
  * Selector global de sucursal para la sección Análisis.
  *
@@ -78,7 +81,7 @@ export function SucursalProvider({ children }: { children: ReactNode }) {
   // disparen queries con officeId=null (datos consolidados) en el primer
   // render, antes de que el useEffect del SucursalSelector lo corrija.
   const { activeCompany } = useCompany();
-  const allowed = activeCompany?.allowed_office_ids ?? [];
+  const allowed = activeCompany?.allowed_office_ids ?? NO_OFFICES;
   const isRestricted = allowed.length > 0;
 
   const safeState = useMemo(() => {
@@ -139,7 +142,7 @@ export function SucursalSelector() {
   // Acceso por sucursal: si la empresa activa tiene sucursales permitidas,
   // el selector solo ofrece esas y nunca "Todas las tiendas".
   const { activeCompany } = useCompany();
-  const allowed = activeCompany?.allowed_office_ids ?? [];
+  const allowed = activeCompany?.allowed_office_ids ?? NO_OFFICES;
   const restricted = allowed.length > 0;
 
   const sucursales = valuation.data?.por_sucursal ?? [];

@@ -1,26 +1,30 @@
 // Cliente HTTP tipado para la API KAWII/HUDEC.
 import type {
   AuditResponse,
-  Category,
   ComprasCatalogoResponse,
   DataQualityIssue,
-  Department,
   FixNamingResponse,
   Health,
   Kpis,
-  MatrixModule,
   MatrixResponse,
-  ProductDetail,
   ProductType,
   ProductTypesResponse,
-  RotacionHistoricaResponse,
+  ProductTypesWorkspaceResponse,
+  PullProductTypesResponse,
+  BulkMapProductTypesPayload,
+  BulkMapProductTypesResponse,
+  BulkDeleteProductTypesPayload,
+  BulkDeleteProductTypesResponse,
+  MergeProductTypesPayload,
+  MergeProductTypesResponse,
+  BulkChangeProductTypePayload,
+  BulkChangeProductTypeResponse,
   SalesByCategory,
   SalesByDay,
   DailySalesDetail,
   SalesByDepartment,
   SkuHistory,
   SalesVsGoal,
-  GoalsResponse,
   TicketAnatomy,
   SalesByOffice,
   StockValuation,
@@ -112,7 +116,7 @@ export async function request<T>(path: string, opts: RequestOptions = {}): Promi
       //   con `allow_credentials=True` (ya está en app/main.py).
       credentials: "include",
     });
-  } catch (err) {
+  } catch {
     throw new ApiError(
       0,
       `No se pudo conectar con la API (${API_BASE_URL}). ¿Está corriendo el backend?`,
@@ -153,7 +157,15 @@ export interface ExclusionsResponse {
   excluded_departments: number[];
   excluded_categories: number[];
   seasonal_departments: number[];
-  departments: { id: number; name: string; excluded: boolean; seasonal: boolean }[];
+  /** Departamentos fuera de los informes (/informes/*), p.ej. Librería fuera de campaña escolar. */
+  informes_excluded_departments: number[];
+  departments: {
+    id: number;
+    name: string;
+    excluded: boolean;
+    seasonal: boolean;
+    informes_excluded: boolean;
+  }[];
 }
 
 export const getExclusions = (signal?: AbortSignal) =>
@@ -163,39 +175,11 @@ export const setExclusions = (body: {
   excluded_departments: number[];
   excluded_categories: number[];
   seasonal_departments: number[];
+  informes_excluded_departments?: number[];
 }) =>
   request<Record<string, unknown>>("/config/exclusions", {
     method: "PUT",
     body,
-  });
-
-// Umbrales de clasificación (ventanas, tendencia, XYZ, velocidad, cobertura, …).
-// El backend devuelve los valores vigentes + los defaults + la metadata de
-// secciones para que el frontend renderice el form sin duplicar la lista.
-export interface ThresholdField {
-  key: string;
-  label: string;
-  help: string;
-}
-export interface ThresholdSection {
-  key: string;
-  title: string;
-  description: string;
-  fields: ThresholdField[];
-}
-export interface ThresholdsResponse {
-  thresholds: Record<string, number>;
-  defaults: Record<string, number>;
-  sections: ThresholdSection[];
-}
-
-export const getThresholds = (signal?: AbortSignal) =>
-  request<ThresholdsResponse>("/config/thresholds", { signal });
-
-export const setThresholds = (thresholds: Record<string, number>) =>
-  request<Record<string, unknown>>("/config/thresholds", {
-    method: "PUT",
-    body: { thresholds },
   });
 
 // Configuración por empresa (marca + IDs operativos de BSale).
@@ -556,10 +540,6 @@ export const getTopProducts = (
 
 // ─────────────── Tablero Semanal (5 KPIs de gerencia) ───────────────
 
-/** Metas de venta configuradas (manual), keyed por mes. */
-export const getGoals = (signal?: AbortSignal) =>
-  request<GoalsResponse>("/analytics/goals", { signal });
-
 export const getSalesVsGoal = (
   month: string,
   office_id?: number | null,
@@ -610,16 +590,6 @@ export const getPrecioCostoPorSucursal = (sku: string, signal?: AbortSignal) =>
     { signal },
   );
 
-/** URL para descargar el Informe Diario (mes en curso, 3 pestañas). */
-export function dailyReportExcelUrl(
-  params: { office_id?: number | null } = {},
-): string {
-  const sp = new URLSearchParams();
-  if (params.office_id != null) sp.set("office_id", String(params.office_id));
-  const qs = sp.toString();
-  return `${API_BASE_URL}/analytics/daily-report/excel${qs ? `?${qs}` : ""}`;
-}
-
 /** URL para descargar Compras & Catálogo (2 pestañas: quiebres reales + venta por categoría). */
 export function comprasCatalogoExcelUrl(
   params: { days?: number; office_id?: number | null } = {},
@@ -629,19 +599,6 @@ export function comprasCatalogoExcelUrl(
   if (params.office_id != null) sp.set("office_id", String(params.office_id));
   const qs = sp.toString();
   return `${API_BASE_URL}/analytics/compras-catalogo/excel${qs ? `?${qs}` : ""}`;
-}
-
-/** Informes Gerenciales — 3 Excel separados en lenguaje simple (Tablero). */
-export type ReporteGerencialTipo = "por-agotarse" | "estancados" | "rotacion";
-
-export function reporteGerencialExcelUrl(
-  tipo: ReporteGerencialTipo,
-  params: { office_id?: number | null } = {},
-): string {
-  const sp = new URLSearchParams();
-  if (params.office_id != null) sp.set("office_id", String(params.office_id));
-  const qs = sp.toString();
-  return `${API_BASE_URL}/analytics/reporte-gerencial/${tipo}/excel${qs ? `?${qs}` : ""}`;
 }
 
 /** Dashboard de Compras Inteligente — KPIs + distribución + lista de SKUs en quiebre real.
@@ -735,49 +692,6 @@ export const listPurchaseDecisions = (
     signal,
   });
 
-/** Rotación histórica — productos que vendieron en una ventana arbitraria.
- *  `from`/`to` en formato "YYYY-MM-DD" (inclusivos). Alimenta /rotacion-historica. */
-export const getRotacionHistorica = (
-  fromIso: string,
-  toIso: string,
-  office_id?: number | null,
-  signal?: AbortSignal,
-) =>
-  request<RotacionHistoricaResponse>("/analytics/rotacion-historica", {
-    query: { from: fromIso, to: toIso, office_id: office_id ?? undefined },
-    signal,
-  });
-
-// ─────────────────────── Productos ──────────────────────
-export interface ProductFilters {
-  q?: string;
-  department?: string;
-  category?: string;
-  subcategory?: string;
-  mapped_only?: boolean;
-  override_only?: boolean;
-  unmapped_only?: boolean;
-  product_type_id?: number;
-  limit?: number;
-  offset?: number;
-}
-
-
-
-export const getProduct = (id: number, signal?: AbortSignal) =>
-  request<ProductDetail>(`/products/${id}`, { signal });
-
-export const setProductSubcategory = (
-  id: number,
-  subcategory_id: number | null,
-) =>
-  request<Record<string, unknown>>(`/products/${id}/subcategory`, {
-    method: "PATCH",
-    query: subcategory_id === null ? {} : { subcategory_id },
-  });
-
-
-
 // ───────────────────────── Stock ────────────────────────
 // Único endpoint vivo tras el cleanup: lo usa el Dashboard (DonutChart) Y el
 // selector global de sucursal (`sucursal-context.tsx`). El endpoint se movió
@@ -785,6 +699,139 @@ export const setProductSubcategory = (
 export const getStockValuation = (signal?: AbortSignal) =>
   request<StockValuation>("/stock/valuation", { signal });
 
+// ───────────────── Inventario Excel Export ──────────────
+export interface InventarioExcelParams {
+  office_id?: number | null;
+  only_with_stock?: boolean;
+  include_inactive?: boolean;
+  department?: string;
+  category?: string;
+  subcategory?: string;
+  q?: string;
+}
+
+export interface InventarioExcelResult {
+  blob: Blob;
+  filename: string;
+  totalRows: number;
+}
+
+/**
+ * Descarga el reporte de inventario consolidado en formato Excel (.xlsx).
+ * El endpoint devuelve un stream binario — no JSON — por lo que no usamos
+ * el helper `request<T>` genérico sino fetch directo.
+ */
+export async function downloadInventarioExcel(
+  params: InventarioExcelParams = {},
+  signal?: AbortSignal,
+): Promise<InventarioExcelResult> {
+  const query = buildQuery({
+    office_id: params.office_id ?? undefined,
+    only_with_stock: params.only_with_stock ?? undefined,
+    include_inactive: params.include_inactive ?? undefined,
+    department: params.department || undefined,
+    category: params.category || undefined,
+    subcategory: params.subcategory || undefined,
+    q: params.q || undefined,
+  });
+
+  const url = `${API_BASE_URL}/stock/inventario/excel${query}`;
+
+  const headers: Record<string, string> = {};
+  const companyId = readActiveCompanyId();
+  if (companyId !== null) headers["X-Company-Id"] = String(companyId);
+
+  let res: Response;
+  try {
+    res = await fetch(url, {
+      method: "GET",
+      headers,
+      credentials: "include",
+      signal,
+    });
+  } catch {
+    throw new ApiError(
+      0,
+      "No se pudo conectar con la API para descargar el Excel.",
+    );
+  }
+
+  if (!res.ok) {
+    // Intentar leer detalle del error como JSON
+    let detail: unknown;
+    try {
+      detail = await res.json();
+    } catch {
+      detail = await res.text().catch(() => null);
+    }
+    const msg =
+      typeof detail === "object" && detail && "detail" in detail
+        ? String((detail as { detail: unknown }).detail)
+        : `Error ${res.status} al generar el inventario`;
+    throw new ApiError(res.status, msg, detail);
+  }
+
+  const blob = await res.blob();
+  const disposition = res.headers.get("Content-Disposition") || "";
+  const filenameMatch = disposition.match(/filename="?([^";\n]+)"?/);
+  const filename = filenameMatch?.[1] || `Inventario_${new Date().toISOString().slice(0, 10)}.xlsx`;
+  const totalRows = parseInt(res.headers.get("X-Total-Rows") || "0", 10);
+
+  return { blob, filename, totalRows };
+}
+
+// ─────────────── Desactivación Masiva de SKUs ────────────
+export interface BulkDeactivateRequest {
+  skus: string[];
+  dry_run?: boolean;
+  forzar_con_stock?: boolean;
+}
+
+export interface BulkDeactivateItem {
+  bsale_variant_id?: number;
+  bsale_product_id?: number;
+  code: string;
+  product_name?: string;
+  stock?: number;
+  reason?: string;
+  error?: string;
+}
+
+export interface BulkDeactivateTotals {
+  received: number;
+  to_deactivate?: number;
+  deactivated?: number;
+  failed?: number;
+  parent_products_to_deactivate?: number;
+  parent_products_deactivated?: number;
+  blocked_by_stock: number;
+  already_inactive: number;
+  not_found: number;
+}
+
+export interface BulkDeactivateResponse {
+  ok: boolean;
+  dry_run: boolean;
+  forzar_con_stock: boolean;
+  timestamp?: string;
+  totals: BulkDeactivateTotals;
+  to_deactivate?: BulkDeactivateItem[];
+  deactivated?: BulkDeactivateItem[];
+  failed?: BulkDeactivateItem[];
+  blocked_by_stock: BulkDeactivateItem[];
+  already_inactive: (BulkDeactivateItem | string)[];
+  not_found: string[];
+}
+
+export const bulkDeactivateProducts = (
+  body: BulkDeactivateRequest,
+  signal?: AbortSignal,
+) =>
+  request<BulkDeactivateResponse>("/products/bulk-deactivate", {
+    method: "POST",
+    body,
+    signal,
+  });
 
 
 // ─────────────────────── Matrices ──────────────────────
@@ -802,12 +849,6 @@ export interface MatrixFilters {
   limit?: number;
   offset?: number;
 }
-
-export const getMatrixModules = (signal?: AbortSignal) =>
-  request<{ modules: MatrixModule[]; endpoints_especiales: Record<string, string> }>(
-    "/matrix/",
-    { signal },
-  );
 
 export const getMatrix = (
   moduleId: string,
@@ -844,6 +885,10 @@ export function matrixExcelUrl(
  * (siempre que CORS tenga allow_credentials=True y SameSite=None+Secure).
  * Una vez recibido el blob, creamos un Object URL local para descargarlo.
  */
+/** true si `downloadExcelFile` ya mostró el error (para no repetir el aviso). */
+export const yaAvisado = (e: unknown): boolean =>
+  !!e && typeof e === "object" && (e as { avisado?: boolean }).avisado === true;
+
 export async function downloadExcelFile(
   url: string,
   fallbackFilename = "reporte.xlsx",
@@ -905,6 +950,8 @@ export async function downloadExcelFile(
       id: toastId,
       description: message,
     });
+    // Ya se avisó aquí: quien llama no debe mostrar otro toast (ver `yaAvisado`).
+    if (err && typeof err === "object") (err as { avisado?: boolean }).avisado = true;
     throw err;
   }
 }
@@ -912,15 +959,6 @@ export async function downloadExcelFile(
 // ─────────────────────── Taxonomía ──────────────────────
 export const getTaxonomyTree = (signal?: AbortSignal) =>
   request<TaxonomyTree>("/taxonomy/tree", { signal });
-
-export const getDepartments = (signal?: AbortSignal) =>
-  request<Department[]>("/taxonomy/departments", { signal });
-
-export const getCategories = (department_id?: number, signal?: AbortSignal) =>
-  request<Category[]>("/taxonomy/categories", {
-    query: { department_id },
-    signal,
-  });
 
 export const getSubcategories = (category_id?: number, signal?: AbortSignal) =>
   request<Subcategory[]>("/taxonomy/subcategories", {
@@ -1040,6 +1078,41 @@ export const deleteProductType = (id: number, force = false) =>
 
 export const resyncProductType = (id: number) =>
   request(`/bsale/product-types/${id}/resync`, { method: "POST" });
+
+// ── Reclasificación & Workspace de Product Types (BSale + BD) ──
+export const getProductTypesWorkspace = (signal?: AbortSignal) =>
+  request<ProductTypesWorkspaceResponse>("/bsale/product-types/workspace", {
+    signal,
+  });
+
+export const pullProductTypesFromBsale = () =>
+  request<PullProductTypesResponse>("/bsale/product-types/pull", {
+    method: "POST",
+  });
+
+export const bulkMapProductTypes = (payload: BulkMapProductTypesPayload) =>
+  request<BulkMapProductTypesResponse>("/bsale/product-types/bulk-map", {
+    method: "POST",
+    body: payload,
+  });
+
+export const bulkDeleteProductTypes = (payload: BulkDeleteProductTypesPayload) =>
+  request<BulkDeleteProductTypesResponse>("/bsale/product-types/bulk-delete", {
+    method: "POST",
+    body: payload,
+  });
+
+export const mergeProductTypes = (payload: MergeProductTypesPayload) =>
+  request<MergeProductTypesResponse>("/bsale/product-types/merge", {
+    method: "POST",
+    body: payload,
+  });
+
+export const bulkChangeProductType = (payload: BulkChangeProductTypePayload) =>
+  request<BulkChangeProductTypeResponse>("/products/bulk-change-type", {
+    method: "POST",
+    body: payload,
+  });
 
 // ─────────────────────── Auditorías ─────────────────────
 export const getAudits = (signal?: AbortSignal) =>

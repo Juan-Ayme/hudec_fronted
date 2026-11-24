@@ -35,7 +35,7 @@ export function RendimientoPanel({
   rows,
   allRows,
   selection,
-  sucursalName,
+  officeId,
   isLoading,
   isError,
   error,
@@ -49,6 +49,8 @@ export function RendimientoPanel({
   allRows: Row[];
   selection: Selection;
   sucursalName: string | null;
+  /** Sucursal del selector global (null = todas); filtra el gráfico del detalle. */
+  officeId: number | null;
   isLoading: boolean;
   isError: boolean;
   error?: unknown;
@@ -365,7 +367,7 @@ export function RendimientoPanel({
         row={selectedSku || {}}
         open={!!selectedSku}
         onClose={() => setSelectedSku(null)}
-        sucursalName={sucursalName}
+        officeId={officeId}
         similares={selectedSimilares}
         onOpenSimilar={openSimilarSku}
       />

@@ -2,11 +2,8 @@
 
 import { useMemo, useState } from "react";
 import {
-  AlertTriangle,
-  Building2,
   Filter,
   Pencil,
-  RotateCcw,
   Save,
   Sparkles,
   Trash2,
@@ -17,6 +14,7 @@ import { Card, CardBody, CardHeader } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Badge } from "@/components/ui/badge";
+import { Dialog } from "@/components/ui/dialog";
 import { money, num, pct } from "@/lib/format";
 import { cn } from "@/lib/utils";
 import type { CategoryTarget, CategoryTargetPatch, TargetRol } from "@/lib/bi-types";
@@ -25,17 +23,16 @@ import { useCategoryTargets } from "../hooks/useCategoryTargets";
 
 /**
  * Panel admin para /configuracion?tab=targets. Lista los category_targets
- * cargados, permite editar campos inline vía dialog, eliminar filas y hacer
- * reset con force del bootstrap.
+ * cargados, permite editar campos inline vía dialog y eliminar filas.
  */
 export function CategoryTargetsPanel() {
   const [officeFilter, setOfficeFilter] = useState<string>("todos");
   const [rolFilter, setRolFilter] = useState<string>("todos");
   const [editing, setEditing] = useState<CategoryTarget | null>(null);
-  const [confirmReset, setConfirmReset] = useState(false);
+  const [borrando, setBorrando] = useState<CategoryTarget | null>(null);   // confirmar antes de eliminar
 
   const parsedOffice = officeFilter === "todos" ? null : Number(officeFilter);
-  const { list, update, remove, reset } = useCategoryTargets(parsedOffice);
+  const { list, update, remove } = useCategoryTargets(parsedOffice);
 
   const offices = useMemo(() => {
     if (!list.data) return [];
@@ -70,24 +67,13 @@ export function CategoryTargetsPanel() {
             </span>
           }
           subtitle="Metas mensuales, roles (motor / fijo / complemento / upsell) y umbrales de SKUs por categoría-sucursal. Alimenta el bloque 80/20 de /salud-catalogo y el desglose de presupuesto de /plan-mes."
-          action={
-            <Button
-              variant="outline"
-              className="border-danger/40 text-danger hover:bg-danger/10"
-              onClick={() => setConfirmReset(true)}
-              disabled={reset.isPending}
-            >
-              <RotateCcw className="h-3.5 w-3.5" aria-hidden="true" />
-              Reset con force
-            </Button>
-          }
         />
 
         {isEmpty ? (
           <CardBody>
             <EmptyState
               title="No hay category targets cargados"
-              hint="Andá a /salud-catalogo para correr el bootstrap. Analiza los últimos 90 días y sugiere metas por categoría/sucursal."
+              hint="Aún no se han registrado metas por categoría para esta selección."
             />
           </CardBody>
         ) : (
@@ -181,12 +167,7 @@ export function CategoryTargetsPanel() {
                             <Pencil className="h-3.5 w-3.5" />
                           </button>
                           <button
-                            onClick={() =>
-                              remove.mutate({
-                                category_id: t.category_id,
-                                office_id: t.bsale_office_id,
-                              })
-                            }
+                            onClick={() => setBorrando(t)}
                             className="rounded p-1 text-muted hover:bg-surface-3 hover:text-danger"
                             title="Eliminar"
                             disabled={remove.isPending}
@@ -204,6 +185,25 @@ export function CategoryTargetsPanel() {
         )}
       </Card>
 
+      <Dialog
+        open={!!borrando}
+        onClose={() => !remove.isPending && setBorrando(null)}
+        title="¿Eliminar esta meta?"
+        description={borrando ? `${borrando.categoria} · ${borrando.sucursal}. Se borran su meta mensual, su rol y sus umbrales.` : undefined}
+        footer={
+          <>
+            <Button variant="ghost" onClick={() => setBorrando(null)} disabled={remove.isPending}>Cancelar</Button>
+            <Button variant="danger" loading={remove.isPending}
+              onClick={() => borrando && remove.mutate(
+                { category_id: borrando.category_id, office_id: borrando.bsale_office_id },
+                { onSettled: () => setBorrando(null) },
+              )}>
+              Sí, eliminar
+            </Button>
+          </>
+        }
+      />
+
       {editing && (
         <EditTargetDialog
           target={editing}
@@ -219,18 +219,6 @@ export function CategoryTargetsPanel() {
             )
           }
           saving={update.isPending}
-        />
-      )}
-
-      {confirmReset && (
-        <ConfirmResetDialog
-          onCancel={() => setConfirmReset(false)}
-          onConfirm={() =>
-            reset.mutate(true, {
-              onSuccess: () => setConfirmReset(false),
-            })
-          }
-          loading={reset.isPending}
         />
       )}
     </div>
@@ -408,57 +396,6 @@ function NumField({
           "h-8 font-mono text-caption tabular-nums",
         )}
       />
-    </div>
-  );
-}
-
-function ConfirmResetDialog({
-  onCancel,
-  onConfirm,
-  loading,
-}: {
-  onCancel: () => void;
-  onConfirm: () => void;
-  loading: boolean;
-}) {
-  return (
-    <div
-      role="dialog"
-      className="fixed inset-0 z-50 flex items-center justify-center bg-black/60 p-4 backdrop-blur-sm"
-      onClick={onCancel}
-    >
-      <Card className="w-full max-w-md" onClick={(e) => e.stopPropagation()}>
-        <CardBody className="flex flex-col gap-3">
-          <div className="flex items-start gap-3">
-            <span className="flex h-9 w-9 shrink-0 items-center justify-center rounded-full bg-danger/15 text-danger">
-              <AlertTriangle className="h-5 w-5" aria-hidden="true" />
-            </span>
-            <div>
-              <h3 className="text-body font-bold text-fg">
-                Reset con <code className="rounded bg-surface-3 px-1 py-0.5 font-mono">force=true</code>
-              </h3>
-              <p className="mt-1 text-caption text-muted">
-                Esto BORRA TODOS los category_targets actuales y los recarga
-                desde cero según el análisis del backend. Cualquier edición
-                manual previa se pierde. ¿Continuar?
-              </p>
-            </div>
-          </div>
-          <div className="mt-2 flex justify-end gap-2">
-            <Button variant="ghost" onClick={onCancel} disabled={loading}>
-              Cancelar
-            </Button>
-            <Button
-              onClick={onConfirm}
-              loading={loading}
-              className="bg-danger text-white hover:bg-danger/90"
-            >
-              <Building2 className="h-4 w-4" aria-hidden="true" />
-              Sí, borrar y recargar
-            </Button>
-          </div>
-        </CardBody>
-      </Card>
     </div>
   );
 }

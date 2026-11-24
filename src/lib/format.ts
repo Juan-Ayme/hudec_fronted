@@ -92,21 +92,3 @@ export function dayLabel(v: unknown): string {
   if (Number.isNaN(d.getTime())) return String(v);
   return d.toLocaleDateString("es-PE", { day: "2-digit", month: "short" });
 }
-
-/** Heurística: ¿esta columna/clave representa dinero? */
-export function looksLikeMoney(key: string): boolean {
-  return /valor|soles|ventas|monto|capital|costo|precio|total.*amount|s\/|revenue|gmroi/i.test(
-    key,
-  );
-}
-
-/** Formato genérico de celda para tablas dinámicas (matrices). */
-export function autoCell(key: string, value: unknown): string {
-  if (value === null || value === undefined || value === "") return "—";
-  if (typeof value === "boolean") return value ? "Sí" : "No";
-  if (typeof value === "number") {
-    if (looksLikeMoney(key)) return money(value);
-    return Number.isInteger(value) ? num(value) : num2(value);
-  }
-  return String(value);
-}

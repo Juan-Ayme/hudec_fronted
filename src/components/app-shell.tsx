@@ -12,7 +12,7 @@ import { Toaster } from "./ui/toaster";
 import { useAuth } from "./auth-context";
 import { cn } from "@/lib/utils";
 import { useQuery } from "@tanstack/react-query";
-import { getStockValuation, ApiError } from "@/lib/api";
+import { getStockValuation } from "@/lib/api";
 
 function isActive(pathname: string, href: string): boolean {
   if (href === "/") return pathname === "/";
@@ -30,23 +30,27 @@ function NavLinks({
   const { activeRole } = useCompany();
   // Navegación acotada por rol: un viewer solo ve las vistas de su tienda.
   const groups = navGroupsForRole(activeRole);
-  const [expandedGroups, setExpandedGroups] = useState<Set<string>>(() => {
-    const initial = new Set<string>();
-    // Por defecto expandir el grupo que contiene la ruta actual
-    for (const g of groups) {
-      if (g.items.some(i => isActive(pathname, i.href))) {
-        initial.add(g.title);
-      }
+  const [collapsedGroups, setCollapsedGroups] = useState<Set<string>>(
+    () => new Set(),
+  );
+
+  // Asegura que al navegar a otra ruta, su grupo nunca quede contraído
+  // (ajuste de estado durante el render al cambiar la ruta, sin efecto).
+  const [prevPathname, setPrevPathname] = useState(pathname);
+  if (pathname !== prevPathname) {
+    setPrevPathname(pathname);
+    const activeTitles = groups
+      .filter((g) => g.items.some((i) => isActive(pathname, i.href)))
+      .map((g) => g.title);
+    if (activeTitles.some((t) => collapsedGroups.has(t))) {
+      const next = new Set(collapsedGroups);
+      activeTitles.forEach((t) => next.delete(t));
+      setCollapsedGroups(next);
     }
-    // Si no hay ninguno activo, expandimos el primero
-    if (initial.size === 0 && groups.length > 0) {
-      initial.add(groups[0].title);
-    }
-    return initial;
-  });
+  }
 
   const toggleGroup = (title: string) => {
-    setExpandedGroups((prev) => {
+    setCollapsedGroups((prev) => {
       const next = new Set(prev);
       if (next.has(title)) next.delete(title);
       else next.add(title);
@@ -55,14 +59,13 @@ function NavLinks({
   };
 
   return (
-    <nav className={cn("flex flex-col", collapsed ? "gap-2" : "gap-3")}>
+    <nav className={cn("flex flex-col", collapsed ? "gap-1.5" : "gap-3")}>
       {groups.map((group) => {
-        const isExpanded = expandedGroups.has(group.title);
+        const isExpanded = !collapsedGroups.has(group.title);
         
         if (collapsed) {
-          if (!isExpanded) return null;
           return (
-            <ul key={group.title} className="flex flex-col gap-1 mb-2">
+            <ul key={group.title} className="flex flex-col gap-1 mb-2 pb-2 border-b border-white/[0.06] last:border-0 last:mb-0 last:pb-0">
               {group.items.map((item) => {
                 const active = isActive(pathname, item.href);
                 const Icon = item.icon;

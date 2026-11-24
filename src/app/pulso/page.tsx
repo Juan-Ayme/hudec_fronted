@@ -1,7 +1,5 @@
-"use client";
+import { redirect } from "next/navigation";
 
-import { PulsoView } from "@/features/pulso/components/PulsoView";
-
-export default function PulsoPage() {
-  return <PulsoView />;
+export default function PulsoRedirectPage() {
+  redirect("/informes");
 }

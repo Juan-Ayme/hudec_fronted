@@ -6,20 +6,22 @@ import {
   getKpis,
   getSalesByDay,
   getSalesByDepartment,
+  getSalesByCategory,
   getSalesByOffice,
   getStockValuation,
   getTopProducts,
+  getTicketAnatomy,
 } from "@/lib/api";
 import { useSucursal } from "@/components/sucursal-context";
 
 /**
- * Hook del dashboard raíz (`/`): rango de días + sucursal activa + las 6
- * queries de analítica que alimentan el bento grid, más el flag agregado de
- * loading para el skeleton inicial.
+ * Hook del dashboard raíz (`/`): rango de días + sucursal activa + las queries
+ * de analítica que alimentan el resumen ejecutivo y sus gráficos.
  */
 export function useDashboard() {
   const [days, setDays] = useState(30);
   const { officeId } = useSucursal();
+  const anatomyDays = Math.min(days, 180);
 
   const kpis = useQuery({
     queryKey: ["kpis", days, officeId],
@@ -33,6 +35,10 @@ export function useDashboard() {
     queryKey: ["sales-by-department", days, officeId],
     queryFn: ({ signal }) => getSalesByDepartment(days, signal, officeId),
   });
+  const byCategory = useQuery({
+    queryKey: ["sales-by-category", days, officeId],
+    queryFn: ({ signal }) => getSalesByCategory(days, signal, officeId),
+  });
   const byOffice = useQuery({
     queryKey: ["sales-by-office", days],
     queryFn: ({ signal }) => getSalesByOffice(days, signal),
@@ -44,6 +50,11 @@ export function useDashboard() {
   const top = useQuery({
     queryKey: ["top-products", days, officeId],
     queryFn: ({ signal }) => getTopProducts(days, 10, signal, officeId),
+  });
+  const ticketAnatomy = useQuery({
+    queryKey: ["ticket-anatomy", anatomyDays, officeId],
+    queryFn: ({ signal }) =>
+      getTicketAnatomy(anatomyDays, "previous_period", signal, officeId),
   });
 
   const isAnyLoading =
@@ -61,9 +72,12 @@ export function useDashboard() {
     kpis,
     byDay,
     byDept,
+    byCategory,
     byOffice,
     valuation,
     top,
+    ticketAnatomy,
+    anat: ticketAnatomy.data?.delta_pct,
     isAnyLoading,
   };
 }

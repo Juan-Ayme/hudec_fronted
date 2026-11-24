@@ -120,8 +120,6 @@ export function Pagination({
   offset: number;
   onChange: (offset: number) => void;
 }) {
-  const from = total === 0 ? 0 : offset + 1;
-  const to = Math.min(offset + limit, total);
   const canPrev = offset > 0;
   const canNext = offset + limit < total;
 

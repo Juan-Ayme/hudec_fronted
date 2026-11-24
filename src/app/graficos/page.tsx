@@ -1,7 +1,5 @@
-"use client";
+import { redirect } from "next/navigation";
 
-import { GraficosView } from "@/features/graficos/components/GraficosView";
-
-export default function GraficosPage() {
-  return <GraficosView />;
+export default function GraficosRedirectPage() {
+  redirect("/");
 }
