@@ -8,7 +8,8 @@ import { toast } from "@/lib/toast";
 import { cn } from "@/lib/utils";
 import {
   fotosQueryKeys,
-  guardarColor,
+  guardarColores,
+  MAX_COLORES,
   hacerPrincipal,
   quitarFotoSku,
   subirFotoSku,
@@ -39,32 +40,54 @@ export function TarjetaSku({ s, puedeEditar, maxFotos, fondoDisponible }: {
   const [vista, setVista] = useState(1);          // qué foto se ve grande (solo en pantalla)
   const [editando, setEditando] = useState<{ archivos: File[]; posicion: number; camara: boolean } | null>(null);
   const [visor, setVisor] = useState<number | null>(null);   // posición con la que se abre el visor
-  // Color mientras se elige en el selector; se guarda al cerrarlo (no en cada movimiento).
+  // Colores de muestra (un SKU surtido puede tener varios). Un solo selector nativo sirve para
+  // cambiar cualquiera (editIdx = su posición) o agregar uno (editIdx = largo de la lista).
+  // Mientras se elige se ve en vivo; se guarda al cerrarlo (no en cada movimiento).
+  const colores = s.colores ?? (s.color ? [s.color] : []);
   const [colorEnCurso, setColorEnCurso] = useState<string | null>(null);
-  const colorVisible = colorEnCurso ?? s.color;
+  const [editando_c, setEditandoC] = useState<number | null>(null);   // qué color se está eligiendo
+  const editIdx = useRef<number | null>(null);                          // lo mismo, para el evento nativo
+  const coloresRef = useRef(colores);
+  const coloresVisibles = colorEnCurso !== null && editando_c !== null
+    ? Object.assign([...colores], { [editando_c]: colorEnCurso })
+    : colores;
   const selectorColor = useRef<HTMLInputElement>(null);
-  const colorGuardado = s.color;
   const variantId = s.variant_id;
+  const guardarLista = (lista: string[]) => {
+    setOcupado("Guardando…");
+    guardarColores(variantId, lista)
+      .then(() => qc.invalidateQueries({ queryKey: fotosQueryKeys.all }))
+      .catch((err) => toast.error(err instanceof Error ? err.message : "No se pudo guardar el color"))
+      .finally(() => { setOcupado(null); setColorEnCurso(null); setEditandoC(null); editIdx.current = null; });
+  };
+  const guardarListaRef = useRef(guardarLista);
+  useEffect(() => { coloresRef.current = colores; guardarListaRef.current = guardarLista; });
   // El evento nativo "change" del selector llega al cerrarlo (React onChange llega en cada movimiento).
   useEffect(() => {
     const el = selectorColor.current;
     if (!el) return;
     const alCerrar = () => {
-      const valor = el.value;
-      if (valor.toLowerCase() === (colorGuardado ?? "").toLowerCase()) {
-        setColorEnCurso(null);
+      const i = editIdx.current, valor = el.value.toLowerCase(), actual = coloresRef.current;
+      if (i === null || valor === (actual[i] ?? "").toLowerCase()) {
+        setColorEnCurso(null); setEditandoC(null); editIdx.current = null;
         return;
       }
-      setOcupado("Guardando…");
-      guardarColor(variantId, valor)
-        .then(() => qc.invalidateQueries({ queryKey: fotosQueryKeys.all }))
-        .catch((err) => toast.error(err instanceof Error ? err.message : "No se pudo guardar el color"))
-        .finally(() => { setOcupado(null); setColorEnCurso(null); });
+      const lista = [...actual];
+      lista[i] = valor;
+      guardarListaRef.current(lista.filter((c, k) => lista.indexOf(c) === k));   // sin repetir
     };
     el.addEventListener("change", alCerrar);
     return () => el.removeEventListener("change", alCerrar);
     // puedeEditar: el selector recién aparece cuando se confirma el permiso; hay que engancharlo entonces.
-  }, [colorGuardado, variantId, qc, puedeEditar]);
+  }, [puedeEditar]);
+  const abrirColor = (i: number) => {
+    const el = selectorColor.current;
+    if (!el) return;
+    editIdx.current = i;
+    setEditandoC(i);
+    el.value = colores[i] ?? colores[colores.length - 1] ?? "#cccccc";
+    try { el.showPicker(); } catch { el.click(); }
+  };
 
   const correr = async (msg: string, fn: () => Promise<unknown>, ok?: string) => {
     setOcupado(msg);
@@ -248,31 +271,36 @@ export function TarjetaSku({ s, puedeEditar, maxFotos, fondoDisponible }: {
       <p className="mt-2 line-clamp-2 text-xs font-semibold text-fg" title={s.nombre}>{s.nombre}</p>
       <p className="mt-0.5 text-[11px] text-muted">SKU {s.sku ?? "—"} · stock {num(s.stock)}</p>
 
-      {/* Color de muestra: cualquier tono. Sale como círculo en el catálogo si el producto tiene 2 o más. */}
-      <div className="mt-auto flex items-center gap-2 pt-2">
-        {puedeEditar ? (
-          <label className="flex min-w-0 flex-1 cursor-pointer items-center gap-2 rounded-lg border border-white/10 px-2 py-1 text-xs text-muted hover:text-fg"
-            title="Elegir el color de este SKU">
-            <span className="relative h-5 w-5 shrink-0 overflow-hidden rounded-full border border-white/30"
-              style={{ background: colorVisible ?? "transparent" }}>
-              {!colorVisible && <Palette className="absolute inset-0 m-auto h-3 w-3" />}
-              <input ref={selectorColor} type="color" aria-label="Color del SKU" disabled={!!ocupado}
-                value={colorVisible ?? "#cccccc"}
-                onChange={(ev) => setColorEnCurso(ev.target.value)}
-                className="absolute inset-0 h-full w-full cursor-pointer opacity-0" />
-            </span>
-            <span className="truncate">{colorVisible ? colorVisible.toUpperCase() : "Elegir color"}</span>
-          </label>
-        ) : (
-          <span className="flex items-center gap-2 text-xs text-muted">
-            <span className="h-4 w-4 rounded-full border border-white/30" style={{ background: s.color ?? "transparent" }} />
-            {s.color ? s.color.toUpperCase() : "Sin color"}
+      {/* Colores de muestra: cualquier tono, uno o varios (SKU surtido). Salen como círculos en el catálogo. */}
+      <div className="relative mt-auto flex flex-wrap items-center gap-1.5 pt-2">
+        {coloresVisibles.map((c, i) => (
+          <span key={i} className="group/c relative">
+            <button type="button" disabled={!puedeEditar || !!ocupado} onClick={() => abrirColor(i)}
+              title={puedeEditar ? `${c.toUpperCase()} · tocar para cambiarlo` : c.toUpperCase()}
+              aria-label={`Color ${i + 1}: ${c}`}
+              className="block h-6 w-6 rounded-full border border-white/30 enabled:hover:scale-110" style={{ background: c }} />
+            {puedeEditar && !ocupado && (
+              <button type="button" title="Quitar este color" aria-label={`Quitar el color ${c}`}
+                onClick={() => guardarLista(colores.filter((_, k) => k !== i))}
+                className="absolute -right-1 -top-1 hidden h-3.5 w-3.5 items-center justify-center rounded-full bg-black/80 text-white group-hover/c:flex [@media(hover:none)]:flex">
+                <X className="h-2.5 w-2.5" />
+              </button>
+            )}
           </span>
+        ))}
+        {puedeEditar && coloresVisibles.length < MAX_COLORES && (
+          <button type="button" disabled={!!ocupado} onClick={() => abrirColor(colores.length)}
+            title="Agregar un color (si el SKU viene en varios colores, agrega cada uno)"
+            className="flex h-6 items-center gap-1 rounded-full border border-dashed border-white/25 px-2 text-[11px] text-muted hover:border-primary hover:text-fg disabled:opacity-40">
+            {colores.length ? <Plus className="h-3 w-3" /> : <Palette className="h-3 w-3" />}
+            {colores.length ? "Color" : "Elegir color"}
+          </button>
         )}
-        {puedeEditar && s.color && (
-          <button type="button" title="Quitar color" aria-label="Quitar color" disabled={!!ocupado}
-            onClick={() => void correr("Guardando…", () => guardarColor(s.variant_id, null))}
-            className="rounded p-1 text-muted hover:bg-white/10 hover:text-fg"><X className="h-3.5 w-3.5" /></button>
+        {!puedeEditar && !colores.length && <span className="text-xs text-muted">Sin color</span>}
+        {puedeEditar && (
+          <input ref={selectorColor} type="color" aria-hidden tabIndex={-1} defaultValue="#cccccc"
+            onChange={(ev) => setColorEnCurso(ev.target.value)}
+            className="pointer-events-none absolute bottom-0 left-0 h-6 w-6 opacity-0" />
         )}
       </div>
     </div>
