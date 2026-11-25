@@ -2,7 +2,7 @@
 
 import { useEffect, useRef, useState } from "react";
 import { useQueryClient } from "@tanstack/react-query";
-import { ImageOff, Loader2, Maximize2, Palette, Plus, RefreshCw, Star, Trash2, X } from "lucide-react";
+import { Camera, ImageOff, Loader2, Maximize2, Palette, Plus, RefreshCw, Star, Trash2, X } from "lucide-react";
 import { num } from "@/lib/format";
 import { toast } from "@/lib/toast";
 import { cn } from "@/lib/utils";
@@ -10,7 +10,6 @@ import {
   fotosQueryKeys,
   guardarColor,
   hacerPrincipal,
-  MAX_FOTO_MB,
   quitarFotoSku,
   subirFotoSku,
   TIPOS_FOTO,
@@ -18,6 +17,9 @@ import {
 } from "@/lib/fotos-api";
 import { EditorFoto } from "./EditorFoto";
 import { VisorFotos } from "./VisorFotos";
+
+/** Tope del archivo original (antes del editor). Lo que se sube sale achicado y bajo MAX_FOTO_MB. */
+const MAX_ORIGINAL_MB = 40;
 
 /**
  * Tarjeta de un SKU: foto grande + sus 4 posiciones (★ = principal) + color.
@@ -30,11 +32,12 @@ export function TarjetaSku({ s, puedeEditar, maxFotos, fondoDisponible }: {
 }) {
   const qc = useQueryClient();
   const input = useRef<HTMLInputElement>(null);
+  const camara = useRef<HTMLInputElement>(null);      // mismo selector, pero abre la cámara trasera
   const destino = useRef(1);
   const [ocupado, setOcupado] = useState<string | null>(null);
   const [arrastrando, setArrastrando] = useState(false);
   const [vista, setVista] = useState(1);          // qué foto se ve grande (solo en pantalla)
-  const [editando, setEditando] = useState<{ archivos: File[]; posicion: number } | null>(null);
+  const [editando, setEditando] = useState<{ archivos: File[]; posicion: number; camara: boolean } | null>(null);
   const [visor, setVisor] = useState<number | null>(null);   // posición con la que se abre el visor
   // Color mientras se elige en el selector; se guarda al cerrarlo (no en cada movimiento).
   const [colorEnCurso, setColorEnCurso] = useState<string | null>(null);
@@ -74,6 +77,7 @@ export function TarjetaSku({ s, puedeEditar, maxFotos, fondoDisponible }: {
     } finally {
       setOcupado(null);
       if (input.current) input.current.value = "";
+      if (camara.current) camara.current.value = "";
     }
   };
 
@@ -81,18 +85,21 @@ export function TarjetaSku({ s, puedeEditar, maxFotos, fondoDisponible }: {
   const lleno = fotos.length >= maxFotos;
   const grande = fotos.find((f) => f.posicion === vista) ?? fotos[0];
 
-  const subir = (files: FileList | null | undefined, posicion: number) => {
+  const subir = (files: FileList | null | undefined, posicion: number, desdeCamara = false) => {
     const lista = Array.from(files ?? []);
+    if (camara.current) camara.current.value = "";
     if (!lista.length) return;
-    if (lista.some((f) => !TIPOS_FOTO.includes(f.type) || f.size > MAX_FOTO_MB * 1024 * 1024)) {
-      toast.error(`Solo JPG, PNG o WEBP de hasta ${MAX_FOTO_MB} MB.`);
+    // El tope de MAX_FOTO_MB vale para lo que se sube; el editor achica a 2000 px y convierte,
+    // así que aquí se acepta el original grande (fotos de celular de 48-50 MP).
+    if (lista.some((f) => !TIPOS_FOTO.includes(f.type) || f.size > MAX_ORIGINAL_MB * 1024 * 1024)) {
+      toast.error(`Solo JPG, PNG o WEBP de hasta ${MAX_ORIGINAL_MB} MB.`);
       return;
     }
     // Varias a la vez: llenan desde la posición pedida hacia adelante, sin pasar el máximo.
     const usar = lista.slice(0, Math.max(1, maxFotos - posicion + 1));
     if (lista.length > usar.length) toast.error(`Solo caben ${maxFotos} fotos por SKU: se suben ${usar.length}.`);
     if (input.current) input.current.value = "";
-    setEditando({ archivos: usar, posicion });           // primero el editor; sube al guardar
+    setEditando({ archivos: usar, posicion, camara: desdeCamara });   // primero el editor; sube al guardar
   };
   const subirEditadas = (listas: File[], posicion: number) => {
     setEditando(null);
@@ -103,6 +110,11 @@ export function TarjetaSku({ s, puedeEditar, maxFotos, fondoDisponible }: {
   const elegir = (posicion: number) => {
     destino.current = posicion;
     input.current?.click();
+  };
+  // Abre la cámara (en PC sin cámara, el navegador muestra el selector de archivos).
+  const tomarFoto = (posicion: number) => {
+    destino.current = posicion;
+    camara.current?.click();
   };
 
   return (
@@ -123,10 +135,15 @@ export function TarjetaSku({ s, puedeEditar, maxFotos, fondoDisponible }: {
       {editando && (
         <EditorFoto archivos={editando.archivos} fondoDisponible={fondoDisponible}
           onCancelar={() => setEditando(null)}
+          onRepetir={editando.camara ? () => { const pos = editando.posicion; setEditando(null); tomarFoto(pos); } : undefined}
           onListo={(listas) => subirEditadas(listas, editando.posicion)} />
       )}
       <input ref={input} type="file" multiple accept={TIPOS_FOTO.join(",")} className="hidden"
         onChange={(ev) => subir(ev.target.files, destino.current)} />
+      {/* capture: en el celular abre directo la cámara trasera. accept con tipos concretos hace que
+          el iPhone entregue JPEG (no HEIC). */}
+      <input ref={camara} type="file" accept={TIPOS_FOTO.join(",")} capture="environment" className="hidden"
+        onChange={(ev) => subir(ev.target.files, destino.current, true)} />
 
       {/* Foto grande */}
       <div className={cn("relative flex aspect-square items-center justify-center overflow-hidden rounded-xl",
@@ -142,11 +159,20 @@ export function TarjetaSku({ s, puedeEditar, maxFotos, fondoDisponible }: {
             </span>
           </button>
         ) : (
-          <button type="button" disabled={!puedeEditar} onClick={() => elegir(1)}
-            className="flex flex-col items-center gap-1 px-2 text-center text-xs text-faint enabled:hover:text-fg">
+          <div className="flex flex-col items-center gap-2 px-2 text-center text-xs text-faint">
             <ImageOff className="h-8 w-8" />
-            {puedeEditar ? `Arrastra hasta ${maxFotos} fotos o haz clic` : "Sin foto"}
-          </button>
+            {puedeEditar ? (
+              <>
+                <button type="button" disabled={!!ocupado} onClick={() => tomarFoto(1)}
+                  className="flex items-center gap-1.5 rounded-full bg-primary px-3 py-1.5 font-medium text-white hover:bg-primary/85 disabled:opacity-40">
+                  <Camera className="h-4 w-4" /> Tomar foto
+                </button>
+                <button type="button" disabled={!!ocupado} onClick={() => elegir(1)} className="hover:text-fg hover:underline">
+                  o elegir archivo (hasta {maxFotos})
+                </button>
+              </>
+            ) : "Sin foto"}
+          </div>
         )}
         {grande && grande.posicion === 1 && fotos.length > 1 && (
           <span className="absolute left-1.5 top-1.5 flex items-center gap-1 rounded-full bg-black/60 px-2 py-0.5 text-[10px] text-yellow-300">
@@ -186,7 +212,8 @@ export function TarjetaSku({ s, puedeEditar, maxFotos, fondoDisponible }: {
                 </button>
                 {pos === 1 && <Star className="pointer-events-none absolute left-0.5 top-0.5 h-3 w-3 fill-yellow-300 text-yellow-300" />}
                 {puedeEditar && !ocupado && (
-                  <div className="absolute inset-x-0 bottom-0 flex justify-center gap-0.5 bg-black/60 py-0.5 opacity-0 transition-opacity focus-within:opacity-100 group-hover:opacity-100">
+                  // En el celular no hay "pasar el mouse": los botones se ven siempre.
+                  <div className="absolute inset-x-0 bottom-0 flex justify-center gap-0.5 bg-black/60 py-0.5 opacity-0 transition-opacity focus-within:opacity-100 group-hover:opacity-100 [@media(hover:none)]:opacity-100">
                     {pos !== 1 && (
                       <button type="button" title="Hacer principal" aria-label="Hacer principal"
                         onClick={() => { setVista(1); void correr("Guardando…", () => hacerPrincipal(s.variant_id, pos), "Foto principal cambiada"); }}
@@ -194,6 +221,8 @@ export function TarjetaSku({ s, puedeEditar, maxFotos, fondoDisponible }: {
                     )}
                     <button type="button" title="Cambiar foto" aria-label="Cambiar foto" onClick={() => elegir(pos)}
                       className="rounded p-0.5 text-white hover:bg-white/20"><RefreshCw className="h-3 w-3" /></button>
+                    <button type="button" title="Sustituir con una foto nueva" aria-label="Sustituir con una foto nueva" onClick={() => tomarFoto(pos)}
+                      className="rounded p-0.5 text-white hover:bg-white/20"><Camera className="h-3 w-3" /></button>
                     <button type="button" title="Quitar foto" aria-label="Quitar foto"
                       onClick={() => {
                         if (!window.confirm(`¿Quitar la foto ${pos} de "${s.nombre}"? Se borra también de Cloudinary.`)) return;
@@ -207,6 +236,13 @@ export function TarjetaSku({ s, puedeEditar, maxFotos, fondoDisponible }: {
             );
           })}
         </div>
+      )}
+
+      {puedeEditar && !lleno && fotos.length > 0 && (
+        <button type="button" disabled={!!ocupado} onClick={() => tomarFoto(fotos.length + 1)}
+          className="mt-2 flex items-center justify-center gap-1.5 rounded-lg border border-white/15 py-1.5 text-xs text-muted hover:border-primary hover:text-primary disabled:opacity-40">
+          <Camera className="h-3.5 w-3.5" /> Tomar foto
+        </button>
       )}
 
       <p className="mt-2 line-clamp-2 text-xs font-semibold text-fg" title={s.nombre}>{s.nombre}</p>

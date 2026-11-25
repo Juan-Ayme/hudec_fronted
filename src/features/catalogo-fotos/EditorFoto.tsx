@@ -2,11 +2,11 @@
 
 import { useCallback, useEffect, useRef, useState } from "react";
 import { createPortal } from "react-dom";
-import { Crop, Eraser, Loader2, Maximize, RotateCw, Square, Undo2, X } from "lucide-react";
+import { Camera, Crop, Eraser, Loader2, Maximize, RotateCw, Square, Undo2, X } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { toast } from "@/lib/toast";
 import { cn } from "@/lib/utils";
-import { quitarFondo } from "@/lib/fotos-api";
+import { MAX_FOTO_MB, quitarFondo } from "@/lib/fotos-api";
 import { quitarFondoLocal, quitarFondoLocalDisponible } from "@/lib/quitar-fondo-local";
 
 /**
@@ -70,11 +70,13 @@ async function cajaProducto(url: string): Promise<Rect | null> {
   return r;
 }
 
-export function EditorFoto({ archivos, fondoDisponible, onListo, onCancelar }: {
+export function EditorFoto({ archivos, fondoDisponible, onListo, onCancelar, onRepetir }: {
   archivos: File[];
   fondoDisponible: boolean;
   onListo: (salida: File[]) => void;
   onCancelar: () => void;
+  /** Foto sacada con la cámara: descarta esta y vuelve a abrir la cámara. */
+  onRepetir?: () => void;
 }) {
   const [idx, setIdx] = useState(0);
   const [hechos, setHechos] = useState<File[]>([]);
@@ -87,12 +89,13 @@ export function EditorFoto({ archivos, fondoDisponible, onListo, onCancelar }: {
   };
   // key: cada foto arranca con el editor limpio
   return <EditorUna key={idx} archivo={archivo} n={idx + 1} total={archivos.length}
-    fondoDisponible={fondoDisponible} onSiguiente={siguiente} onCancelar={onCancelar} />;
+    fondoDisponible={fondoDisponible} onSiguiente={siguiente} onCancelar={onCancelar}
+    onRepetir={archivos.length === 1 ? onRepetir : undefined} />;
 }
 
-function EditorUna({ archivo, n, total, fondoDisponible, onSiguiente, onCancelar }: {
+function EditorUna({ archivo, n, total, fondoDisponible, onSiguiente, onCancelar, onRepetir }: {
   archivo: File; n: number; total: number; fondoDisponible: boolean;
-  onSiguiente: (f: File) => void; onCancelar: () => void;
+  onSiguiente: (f: File) => void; onCancelar: () => void; onRepetir?: () => void;
 }) {
   // Estado de la foto en edición
   // Data URL (no object URL): en desarrollo React monta dos veces y un revoke en la limpieza
@@ -293,7 +296,8 @@ function EditorUna({ archivo, n, total, fondoDisponible, onSiguiente, onCancelar
         <div className="relative flex min-h-[300px] flex-1 items-center justify-center overflow-hidden p-6"
           style={{ background: "repeating-conic-gradient(#2a2f3a 0 25%, #222731 0 50%) 0 0 / 20px 20px" }}>
           {trabajo && (
-            <div ref={caja} className="relative inline-block select-none" onPointerMove={mover} onPointerUp={soltar} onPointerCancel={soltar}>
+            // touch-none: en el celular el dedo mueve el recorte en vez de desplazar la página
+            <div ref={caja} className="relative inline-block touch-none select-none" onPointerMove={mover} onPointerUp={soltar} onPointerCancel={soltar}>
               {/* eslint-disable-next-line @next/next/no-img-element -- imagen local en edición */}
               <img src={trabajo} alt="" draggable={false} onLoad={(e) => setNat({ w: e.currentTarget.naturalWidth, h: e.currentTarget.naturalHeight })}
                 className={cn("block max-h-[55vh] max-w-full", usarSinFondo && blanco && "bg-white")} />
@@ -330,8 +334,15 @@ function EditorUna({ archivo, n, total, fondoDisponible, onSiguiente, onCancelar
           <span className="mr-auto flex items-center gap-1.5 text-xs text-muted">
             <Crop className="h-3.5 w-3.5" /> {Math.round(rect.w * nat.w)} × {Math.round(rect.h * nat.h)} px
           </span>
-          <Button variant="ghost" disabled={!!ocupado} onClick={onCancelar}>Cancelar</Button>
-          <Button variant="outline" disabled={!!ocupado} onClick={() => onSiguiente(archivo)} title="Sube la foto tal cual, sin cambios">
+          <Button variant="ghost" disabled={!!ocupado} onClick={onCancelar}>{onRepetir ? "Descartar" : "Cancelar"}</Button>
+          {onRepetir && (
+            <Button variant="outline" disabled={!!ocupado} onClick={onRepetir} title="Descarta esta foto y abre la cámara otra vez">
+              <Camera className="mr-1.5 h-4 w-4" /> Tomar otra
+            </Button>
+          )}
+          {/* Si el original pasa el tope de subida (foto de celular grande), se achica sin otros cambios. */}
+          <Button variant="outline" disabled={!!ocupado} title="Sube la foto tal cual, sin cambios"
+            onClick={() => (archivo.size > MAX_FOTO_MB * 1024 * 1024 ? void guardar() : onSiguiente(archivo))}>
             Subir sin editar
           </Button>
           <Button disabled={!!ocupado || !trabajo} onClick={guardar}>
