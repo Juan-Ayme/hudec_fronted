@@ -23,9 +23,14 @@ export interface SkuFoto {
   fotos: FotoSku[];
   url: string | null;
   thumb_url: string | null;
-  /** Color de muestra elegido, "#rrggbb", o null. */
+  /** Primer color de muestra, "#rrggbb", o null. */
   color: string | null;
+  /** Todos los colores de muestra, en orden (SKU surtido: varios). */
+  colores?: string[];
 }
+
+/** Máximo de colores de muestra por SKU (igual que el backend). */
+export const MAX_COLORES = 12;
 
 export interface ListaSkusFoto {
   total: number;
@@ -118,6 +123,10 @@ export const hacerPrincipal = (variantId: number, posicion: number) =>
 /** Color de muestra del SKU ("#rrggbb", cualquier tono); null = quitarlo. */
 export const guardarColor = (variantId: number, color: string | null) =>
   enviar("PUT", `${variantId}/color`, { color });
+
+/** Varios colores de muestra del SKU, en orden; [] = quitarlos todos. */
+export const guardarColores = (variantId: number, colores: string[]) =>
+  enviar("PUT", `${variantId}/color`, { colores });
 
 /** Quita el fondo en el backend (local, rembg). Devuelve un PNG transparente; no guarda nada. */
 export async function quitarFondo(file: Blob): Promise<Blob> {
