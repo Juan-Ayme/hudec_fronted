@@ -5,6 +5,7 @@ import { createPortal } from "react-dom";
 import { ChevronLeft, ChevronRight, ExternalLink, Loader2, Star, X, ZoomIn, ZoomOut } from "lucide-react";
 import { cn } from "@/lib/utils";
 import type { FotoSku } from "@/lib/fotos-api";
+import { FONDO_TRANSPARENTE } from "./fondo";
 
 /**
  * Visor a pantalla completa de las fotos de un SKU: la foto en alta resolución (Cloudinary,
@@ -101,8 +102,8 @@ export function VisorFotos({ fotos, inicio, titulo, sku, onCerrar }: {
           onWheel={(e) => { apuntar(e); setZoom(e.deltaY < 0); }}>
           {/* eslint-disable-next-line @next/next/no-img-element -- foto de Cloudinary en alta resolución */}
           <img key={grande} src={grande} alt={titulo} draggable={false} onLoad={() => setCargada(grande)}
-            className="max-h-full max-w-full select-none rounded-lg bg-white object-contain shadow-2xl transition-transform duration-200 ease-out"
-            style={{ transform: zoom ? `scale(${ZOOM})` : "none", transformOrigin: `${origen.x}% ${origen.y}%` }} />
+            className="max-h-full max-w-full select-none rounded-lg object-contain shadow-2xl transition-transform duration-200 ease-out"
+            style={{ ...FONDO_TRANSPARENTE, transform: zoom ? `scale(${ZOOM})` : "none", transformOrigin: `${origen.x}% ${origen.y}%` }} />
           {cargada !== grande && (
             <Loader2 className="pointer-events-none absolute h-8 w-8 animate-spin text-white/70" />
           )}
@@ -118,8 +119,8 @@ export function VisorFotos({ fotos, inicio, titulo, sku, onCerrar }: {
         <div className="flex justify-center gap-2 pb-4" onClick={(e) => e.stopPropagation()}>
           {fotos.map((x, k) => (
             <button key={x.posicion} type="button" onClick={() => { setI(k); setZoom(false); }} aria-label={`Ver foto ${k + 1}`}
-              className={cn("h-14 w-14 overflow-hidden rounded-lg bg-white ring-2 transition-opacity",
-                k === i ? "ring-primary" : "opacity-60 ring-transparent hover:opacity-100")}>
+              className={cn("h-14 w-14 overflow-hidden rounded-lg ring-2 transition-opacity",
+                k === i ? "ring-primary" : "opacity-60 ring-transparent hover:opacity-100")} style={FONDO_TRANSPARENTE}>
               {/* eslint-disable-next-line @next/next/no-img-element -- miniatura de Cloudinary */}
               <img src={x.thumb_url} alt="" className="h-full w-full object-contain" />
             </button>
