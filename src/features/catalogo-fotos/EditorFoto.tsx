@@ -111,7 +111,7 @@ function EditorUna({ archivo, n, total, fondoDisponible, onSiguiente, onCancelar
   }, [archivo]);
   const [sinFondo, setSinFondo] = useState<string | null>(null);
   const [usarSinFondo, setUsarSinFondo] = useState(false);
-  const [blanco, setBlanco] = useState(true);
+  const [blanco, setBlanco] = useState(false);   // sin fondo: transparente por defecto
   const [grados, setGrados] = useState(0);
   const [trabajo, setTrabajo] = useState<string | null>(null);      // imagen girada que se muestra
   const [rect, setRect] = useState<Rect>(TODO);

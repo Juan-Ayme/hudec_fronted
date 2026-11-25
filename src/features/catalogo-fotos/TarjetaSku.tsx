@@ -17,6 +17,7 @@ import {
   type SkuFoto,
 } from "@/lib/fotos-api";
 import { EditorFoto } from "./EditorFoto";
+import { FONDO_TRANSPARENTE } from "./fondo";
 import { VisorFotos } from "./VisorFotos";
 
 /** Tope del archivo original (antes del editor). Lo que se sube sale achicado y bajo MAX_FOTO_MB. */
@@ -40,53 +41,25 @@ export function TarjetaSku({ s, puedeEditar, maxFotos, fondoDisponible }: {
   const [vista, setVista] = useState(1);          // qué foto se ve grande (solo en pantalla)
   const [editando, setEditando] = useState<{ archivos: File[]; posicion: number; camara: boolean } | null>(null);
   const [visor, setVisor] = useState<number | null>(null);   // posición con la que se abre el visor
-  // Colores de muestra (un SKU surtido puede tener varios). Un solo selector nativo sirve para
-  // cambiar cualquiera (editIdx = su posición) o agregar uno (editIdx = largo de la lista).
-  // Mientras se elige se ve en vivo; se guarda al cerrarlo (no en cada movimiento).
+  // Colores de muestra (un SKU surtido puede tener varios). Cada círculo y el "+ Color" llevan
+  // su propio selector nativo encima (se toca el selector real: en el celular un selector
+  // oculto abierto por código no siempre se abre). Mientras se elige se ve en vivo.
   const colores = s.colores ?? (s.color ? [s.color] : []);
-  const [colorEnCurso, setColorEnCurso] = useState<string | null>(null);
-  const [editando_c, setEditandoC] = useState<number | null>(null);   // qué color se está eligiendo
-  const editIdx = useRef<number | null>(null);                          // lo mismo, para el evento nativo
-  const coloresRef = useRef(colores);
-  const coloresVisibles = colorEnCurso !== null && editando_c !== null
-    ? Object.assign([...colores], { [editando_c]: colorEnCurso })
-    : colores;
-  const selectorColor = useRef<HTMLInputElement>(null);
+  const [enVivo, setEnVivo] = useState<{ i: number; c: string } | null>(null);
+  const coloresVisibles = enVivo ? Object.assign([...colores], { [enVivo.i]: enVivo.c }) : colores;
   const variantId = s.variant_id;
   const guardarLista = (lista: string[]) => {
     setOcupado("Guardando…");
-    guardarColores(variantId, lista)
+    guardarColores(variantId, lista.filter((c, k) => lista.indexOf(c) === k))   // sin repetir
       .then(() => qc.invalidateQueries({ queryKey: fotosQueryKeys.all }))
       .catch((err) => toast.error(err instanceof Error ? err.message : "No se pudo guardar el color"))
-      .finally(() => { setOcupado(null); setColorEnCurso(null); setEditandoC(null); editIdx.current = null; });
+      .finally(() => { setOcupado(null); setEnVivo(null); });
   };
-  const guardarListaRef = useRef(guardarLista);
-  useEffect(() => { coloresRef.current = colores; guardarListaRef.current = guardarLista; });
-  // El evento nativo "change" del selector llega al cerrarlo (React onChange llega en cada movimiento).
-  useEffect(() => {
-    const el = selectorColor.current;
-    if (!el) return;
-    const alCerrar = () => {
-      const i = editIdx.current, valor = el.value.toLowerCase(), actual = coloresRef.current;
-      if (i === null || valor === (actual[i] ?? "").toLowerCase()) {
-        setColorEnCurso(null); setEditandoC(null); editIdx.current = null;
-        return;
-      }
-      const lista = [...actual];
-      lista[i] = valor;
-      guardarListaRef.current(lista.filter((c, k) => lista.indexOf(c) === k));   // sin repetir
-    };
-    el.addEventListener("change", alCerrar);
-    return () => el.removeEventListener("change", alCerrar);
-    // puedeEditar: el selector recién aparece cuando se confirma el permiso; hay que engancharlo entonces.
-  }, [puedeEditar]);
-  const abrirColor = (i: number) => {
-    const el = selectorColor.current;
-    if (!el) return;
-    editIdx.current = i;
-    setEditandoC(i);
-    el.value = colores[i] ?? colores[colores.length - 1] ?? "#cccccc";
-    try { el.showPicker(); } catch { el.click(); }
+  const elegido = (i: number, c: string) => {
+    if (c.toLowerCase() === (colores[i] ?? "").toLowerCase()) { setEnVivo(null); return; }
+    const lista = [...colores];
+    lista[i] = c.toLowerCase();
+    guardarLista(lista);
   };
 
   const correr = async (msg: string, fn: () => Promise<unknown>, ok?: string) => {
@@ -170,7 +143,8 @@ export function TarjetaSku({ s, puedeEditar, maxFotos, fondoDisponible }: {
 
       {/* Foto grande */}
       <div className={cn("relative flex aspect-square items-center justify-center overflow-hidden rounded-xl",
-        grande ? "bg-white" : "border border-dashed border-white/15 bg-white/[0.02]")}>
+        grande ? "" : "border border-dashed border-white/15 bg-white/[0.02]")}
+        style={grande ? FONDO_TRANSPARENTE : undefined}>
         {grande ? (
           <button type="button" onClick={() => setVisor(grande.posicion)} title="Ver en grande"
             aria-label={`Ver en grande las fotos de ${s.nombre}`}
@@ -227,8 +201,8 @@ export function TarjetaSku({ s, puedeEditar, maxFotos, fondoDisponible }: {
               );
             }
             return (
-              <div key={pos} className={cn("group relative aspect-square overflow-hidden rounded-lg bg-white ring-2",
-                vista === pos ? "ring-primary" : "ring-transparent")}>
+              <div key={pos} className={cn("group relative aspect-square overflow-hidden rounded-lg ring-2",
+                vista === pos ? "ring-primary" : "ring-transparent")} style={FONDO_TRANSPARENTE}>
                 <button type="button" onClick={() => setVista(pos)} className="h-full w-full" aria-label={`Ver foto ${pos}`}>
                   {/* eslint-disable-next-line @next/next/no-img-element -- miniatura de Cloudinary */}
                   <img src={f.thumb_url} alt="" loading="lazy" className="h-full w-full object-contain" />
@@ -275,34 +249,59 @@ export function TarjetaSku({ s, puedeEditar, maxFotos, fondoDisponible }: {
       <div className="relative mt-auto flex flex-wrap items-center gap-1.5 pt-2">
         {coloresVisibles.map((c, i) => (
           <span key={i} className="group/c relative">
-            <button type="button" disabled={!puedeEditar || !!ocupado} onClick={() => abrirColor(i)}
-              title={puedeEditar ? `${c.toUpperCase()} · tocar para cambiarlo` : c.toUpperCase()}
-              aria-label={`Color ${i + 1}: ${c}`}
-              className="block h-6 w-6 rounded-full border border-white/30 enabled:hover:scale-110" style={{ background: c }} />
+            <span className="block h-7 w-7 rounded-full border border-white/30" style={{ background: c }} />
+            {puedeEditar && (
+              <SelectorColor key={colores[i]} valor={c} disabled={!!ocupado} etiqueta={`Cambiar el color ${i + 1} (${c})`}
+                onVivo={(v) => setEnVivo({ i, c: v })} onListo={(v) => elegido(i, v)} />
+            )}
             {puedeEditar && !ocupado && (
               <button type="button" title="Quitar este color" aria-label={`Quitar el color ${c}`}
                 onClick={() => guardarLista(colores.filter((_, k) => k !== i))}
-                className="absolute -right-1 -top-1 hidden h-3.5 w-3.5 items-center justify-center rounded-full bg-black/80 text-white group-hover/c:flex [@media(hover:none)]:flex">
+                className="absolute -right-1.5 -top-1.5 z-10 hidden h-4 w-4 items-center justify-center rounded-full bg-black/80 text-white group-hover/c:flex [@media(hover:none)]:flex">
                 <X className="h-2.5 w-2.5" />
               </button>
             )}
           </span>
         ))}
         {puedeEditar && coloresVisibles.length < MAX_COLORES && (
-          <button type="button" disabled={!!ocupado} onClick={() => abrirColor(colores.length)}
-            title="Agregar un color (si el SKU viene en varios colores, agrega cada uno)"
-            className="flex h-6 items-center gap-1 rounded-full border border-dashed border-white/25 px-2 text-[11px] text-muted hover:border-primary hover:text-fg disabled:opacity-40">
-            {colores.length ? <Plus className="h-3 w-3" /> : <Palette className="h-3 w-3" />}
+          <span className={cn("relative flex h-7 items-center gap-1 rounded-full border border-dashed border-white/25 px-2.5 text-xs text-muted hover:border-primary hover:text-fg",
+            ocupado && "opacity-40")}>
+            {colores.length ? <Plus className="h-3.5 w-3.5" /> : <Palette className="h-3.5 w-3.5" />}
             {colores.length ? "Color" : "Elegir color"}
-          </button>
+            {/* key: tras guardar, un selector nuevo (vacío) para el siguiente color */}
+            <SelectorColor key={colores.length} valor={colores[colores.length - 1] ?? "#cccccc"} disabled={!!ocupado}
+              etiqueta="Agregar un color" onVivo={(v) => setEnVivo({ i: colores.length, c: v })}
+              onListo={(v) => elegido(colores.length, v)} />
+          </span>
         )}
         {!puedeEditar && !colores.length && <span className="text-xs text-muted">Sin color</span>}
-        {puedeEditar && (
-          <input ref={selectorColor} type="color" aria-hidden tabIndex={-1} defaultValue="#cccccc"
-            onChange={(ev) => setColorEnCurso(ev.target.value)}
-            className="pointer-events-none absolute bottom-0 left-0 h-6 w-6 opacity-0" />
-        )}
       </div>
     </div>
+  );
+}
+
+/**
+ * Selector de color nativo, invisible y encima de lo que se ve (un círculo o "+ Color"):
+ * el dedo o el mouse tocan el selector real. `onVivo` llega mientras se mueve; `onListo`, al
+ * cerrarlo (evento nativo "change"; React onChange llega en cada movimiento).
+ */
+function SelectorColor({ valor, disabled, etiqueta, onVivo, onListo }: {
+  valor: string; disabled: boolean; etiqueta: string;
+  onVivo: (c: string) => void; onListo: (c: string) => void;
+}) {
+  const ref = useRef<HTMLInputElement>(null);
+  const listo = useRef(onListo);
+  useEffect(() => { listo.current = onListo; });
+  useEffect(() => {
+    const el = ref.current;
+    if (!el) return;
+    const alCerrar = () => listo.current(el.value);
+    el.addEventListener("change", alCerrar);
+    return () => el.removeEventListener("change", alCerrar);
+  }, []);
+  return (
+    <input ref={ref} type="color" aria-label={etiqueta} title={etiqueta} disabled={disabled}
+      defaultValue={valor} onChange={(ev) => onVivo(ev.target.value)}
+      className="absolute inset-0 h-full w-full cursor-pointer rounded-full opacity-0 disabled:cursor-default" />
   );
 }
