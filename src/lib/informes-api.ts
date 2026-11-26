@@ -516,6 +516,21 @@ export const abrirCampanaJuguetesPdf = () => abrirInformePdf("/informes/campana-
  *  tiendas, por tienda y por categoría), lo que más se vende ahora, qué comprar y los juguetes nuevos. */
 export const abrirCampanaAvancePdf = () => abrirInformePdf("/informes/campana-juguetes/completo/html");
 
+/** Un departamento con venta en la campaña de Navidad pasada (1-nov al 31-dic) o en esta. */
+export interface DepartamentoCampana {
+  departamento: string;
+  campana_ly: number;
+  venta_ty: number;
+}
+
+export const getDepartamentosCampana = (signal?: AbortSignal) =>
+  request<DepartamentoCampana[]>("/informes/campana-navidad/departamentos", { signal });
+
+/** "¿Cómo va la campaña de Navidad?" en un departamento: venta frente al año pasado, por semana y por
+ *  tienda, todas sus (sub)categorías, los más vendidos con el stock de cada tienda y lo que se acaba. */
+export const abrirAvanceDepartamentoPdf = (departamento: string) =>
+  abrirInformePdf(`/informes/campana-navidad/departamento/html?${new URLSearchParams({ departamento })}`);
+
 /**
  * "¿Cómo funciona cada tienda?": días, horas, departamentos, stock y agotados por tienda.
  * `officeId` null = todas las tiendas comparadas lado a lado; con valor = solo esa tienda,
