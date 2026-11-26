@@ -14,6 +14,7 @@ import { toast } from "@/lib/toast";
 import { cn } from "@/lib/utils";
 import { useBIQuery } from "@/features/bi/shared";
 import {
+  abrirCampanaAvancePdf,
   abrirCampanaJuguetesPdf,
   abrirCatalogoPdf,
   abrirCierreMesPdf,
@@ -263,7 +264,12 @@ function PanelCampana() {
   const { busy, run } = useAccion();
   return (
     <Acciones>
-      <Pdf busy={busy === "pdf"} tarda="~1 min" onClick={() => run("pdf", abrirCampanaJuguetesPdf)} />
+      <Pdf busy={busy === "avance"} tarda="~1 min" onClick={() => run("avance", abrirCampanaAvancePdf)}>
+        Cómo va la campaña por tienda (PDF)
+      </Pdf>
+      <Pdf busy={busy === "pdf"} tarda="~1 min" onClick={() => run("pdf", abrirCampanaJuguetesPdf)}>
+        Plan de compra (PDF)
+      </Pdf>
       <Excel busy={busy === "xls"}
         onClick={() => run("xls", () => downloadExcelFile(campanaJuguetesExcelUrl(), "campana_juguetes.xlsx"))}>
         Detalle por producto y tienda (Excel)
@@ -391,8 +397,8 @@ export const REPORTES: Reporte[] = [
     resumen: "Qué se agotó y cuánto pedir, dentro del presupuesto.",
     detalle: "Qué productos se agotaron y cuánto pedir en las tiendas elegidas, dentro del presupuesto. Sin Navidad ni juguetes." },
   { id: "campana", grupo: "Comprar", titulo: "Campaña de juguetes", icon: Gift, salidas: ["PDF", "Excel"], Panel: PanelCampana,
-    resumen: "Cuánto capital y qué juguetes comprar para Navidad.",
-    detalle: "Cuánto capital poner en cada nivel de costo y qué juguetes comprar por categoría y subcategoría, en dos compras: ahora y la reserva de diciembre. Con el reparto por tienda." },
+    resumen: "Cómo va la venta de juguetes por tienda y qué comprar para Navidad.",
+    detalle: "Cómo va la venta de juguetes desde el 1 de noviembre frente al año pasado (total, mismas tiendas, por tienda y por categoría) y lo que más se vende ahora. Además, cuánto capital poner en cada nivel de costo y qué juguetes comprar por categoría y subcategoría, en dos compras: ahora y la reserva de diciembre. Con el reparto por tienda." },
   { id: "estancados", grupo: "Stock", titulo: "Productos estancados", icon: PackageX, salidas: ["PDF", "Excel"], Panel: PanelEstancados,
     resumen: "Lo que no se vende: trasladar, promocionar o rematar.",
     detalle: "Stock que no se vende en 90 días, que dura más de 6 meses o que se frenó (+45 días sin venderse), y lo lento que no conviene recomprar. Qué trasladar a otra tienda (allá sí se vende), qué probar donde nunca lo tuvieron, qué promocionar, qué rematar y qué guardar para su campaña." },

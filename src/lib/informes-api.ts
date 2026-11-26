@@ -512,6 +512,10 @@ export const abrirMesCursoPdf = (officeId: number | null) =>
  *  subcategoría, en dos compras. Usa las tiendas de la empresa que ve el usuario. */
 export const abrirCampanaJuguetesPdf = () => abrirInformePdf("/informes/campana-juguetes/html");
 
+/** "¿Cómo va la campaña?": venta de juguetes desde el 1-nov frente al año pasado (total, mismas
+ *  tiendas, por tienda y por categoría), lo que más se vende ahora, qué comprar y los juguetes nuevos. */
+export const abrirCampanaAvancePdf = () => abrirInformePdf("/informes/campana-juguetes/completo/html");
+
 /**
  * "¿Cómo funciona cada tienda?": días, horas, departamentos, stock y agotados por tienda.
  * `officeId` null = todas las tiendas comparadas lado a lado; con valor = solo esa tienda,
