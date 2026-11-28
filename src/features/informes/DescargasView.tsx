@@ -4,7 +4,7 @@ import { useState, type ComponentType, type ReactNode } from "react";
 import Link from "next/link";
 import {
   BookImage, ChevronRight, Download, FileText, Gift, PackageX, Repeat, ShoppingCart, Sparkles, Store, Sunrise,
-  CalendarCheck, Wallet,
+  CalendarCheck, TreePine, Wallet,
 } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Drawer } from "@/components/ui/drawer";
@@ -14,6 +14,8 @@ import { toast } from "@/lib/toast";
 import { cn } from "@/lib/utils";
 import { useBIQuery } from "@/features/bi/shared";
 import {
+  abrirAvanceDepartamentoPdf,
+  abrirCampanaAvancePdf,
   abrirCampanaJuguetesPdf,
   abrirCatalogoPdf,
   abrirCierreMesPdf,
@@ -27,11 +29,13 @@ import {
   comprasExcelUrl,
   estancadosExcelUrl,
   getCatalogoOpciones,
+  getDepartamentosCampana,
   getReglasInformes,
   getTiendasCompras,
   reglasInformesKey,
   trasladosExcelUrl,
   type CatalogoOpciones,
+  type DepartamentoCampana,
   type PresupuestoCompra,
   type ReglasInformes,
   type TiendaCompras,
@@ -263,12 +267,50 @@ function PanelCampana() {
   const { busy, run } = useAccion();
   return (
     <Acciones>
-      <Pdf busy={busy === "pdf"} tarda="~1 min" onClick={() => run("pdf", abrirCampanaJuguetesPdf)} />
+      <Pdf busy={busy === "avance"} tarda="~1 min" onClick={() => run("avance", abrirCampanaAvancePdf)}>
+        Cómo va la campaña por tienda (PDF)
+      </Pdf>
+      <Pdf busy={busy === "pdf"} tarda="~1 min" onClick={() => run("pdf", abrirCampanaJuguetesPdf)}>
+        Plan de compra (PDF)
+      </Pdf>
       <Excel busy={busy === "xls"}
         onClick={() => run("xls", () => downloadExcelFile(campanaJuguetesExcelUrl(), "campana_juguetes.xlsx"))}>
         Detalle por producto y tienda (Excel)
       </Excel>
     </Acciones>
+  );
+}
+
+function PanelNavidadDepartamento() {
+  const deps = useBIQuery<DepartamentoCampana[]>({
+    queryKey: ["informes", "campana-navidad", "departamentos"],
+    queryFn: ({ signal }) => getDepartamentosCampana(signal),
+  });
+  const lista = deps.data ?? [];
+  const [elegido, setDep] = useState("");
+  // por defecto, la decoración navideña (Temporada…) o el que más vendió en la campaña pasada
+  const dep = elegido || (lista.find((d) => d.departamento.toLowerCase().startsWith("temporada")) ?? lista[0])?.departamento || "";
+  const { busy, run } = useAccion();
+  const sel = "block w-full rounded-lg border border-white/10 bg-bg px-2 py-1.5 text-sm text-fg";
+  const mil = (x: number) => `S/ ${(x / 1000).toLocaleString("es-PE", { maximumFractionDigits: 1 })} mil`;
+  return (
+    <>
+      <Seccion titulo="Departamento">
+        <select aria-label="Departamento" className={sel} value={dep} disabled={!lista.length} onChange={(e) => setDep(e.target.value)}>
+          {!lista.length && <option value="">{deps.isLoading ? "Cargando…" : "Sin departamentos con venta"}</option>}
+          {lista.map((d) => (
+            <option key={d.departamento} value={d.departamento}>
+              {d.departamento} · campaña pasada {mil(d.campana_ly)} · este año {mil(d.venta_ty)}
+            </option>
+          ))}
+        </select>
+      </Seccion>
+      <Acciones>
+        <Pdf busy={busy === "pdf"} disabled={!dep} tarda="~20 s" onClick={() => run("pdf", () => abrirAvanceDepartamentoPdf(dep))}>
+          Cómo va la campaña (PDF)
+        </Pdf>
+      </Acciones>
+    </>
   );
 }
 
@@ -391,14 +433,17 @@ export const REPORTES: Reporte[] = [
     resumen: "Qué se agotó y cuánto pedir, dentro del presupuesto.",
     detalle: "Qué productos se agotaron y cuánto pedir en las tiendas elegidas, dentro del presupuesto. Sin Navidad ni juguetes." },
   { id: "campana", grupo: "Comprar", titulo: "Campaña de juguetes", icon: Gift, salidas: ["PDF", "Excel"], Panel: PanelCampana,
-    resumen: "Cuánto capital y qué juguetes comprar para Navidad.",
-    detalle: "Cuánto capital poner en cada nivel de costo y qué juguetes comprar por categoría y subcategoría, en dos compras: ahora y la reserva de diciembre. Con el reparto por tienda." },
+    resumen: "Cómo va la venta de juguetes por tienda y qué comprar para Navidad.",
+    detalle: "Cómo va la venta de juguetes desde el 1 de noviembre frente al año pasado (total, mismas tiendas, por tienda y por categoría) y lo que más se vende ahora. Además, cuánto capital poner en cada nivel de costo y qué juguetes comprar por categoría y subcategoría, en dos compras: ahora y la reserva de diciembre. Con el reparto por tienda." },
   { id: "estancados", grupo: "Stock", titulo: "Productos estancados", icon: PackageX, salidas: ["PDF", "Excel"], Panel: PanelEstancados,
     resumen: "Lo que no se vende: trasladar, promocionar o rematar.",
     detalle: "Stock que no se vende en 90 días, que dura más de 6 meses o que se frenó (+45 días sin venderse), y lo lento que no conviene recomprar. Qué trasladar a otra tienda (allá sí se vende), qué probar donde nunca lo tuvieron, qué promocionar, qué rematar y qué guardar para su campaña." },
   { id: "traslados", grupo: "Stock", titulo: "Traslados entre tiendas", icon: Repeat, salidas: ["Excel"], Panel: PanelTraslados,
     resumen: "Qué pasar de una tienda a otra antes de comprar.",
     detalle: "Una lista ordenada por ruta con el motivo de cada traslado: urgente (se acaba en una semana), falta en una tienda (en 0 y la otra tiene), Navidad (lo que no se vende antes del 24/12), estancado y probar. Avisa cuando hay que confirmar en tienda que las unidades estén." },
+  { id: "navidad-departamento", grupo: "Ventas y tiendas", titulo: "Navidad por departamento", icon: TreePine, salidas: ["PDF"], Panel: PanelNavidadDepartamento,
+    resumen: "Cómo va la campaña en decoración navideña, fiestas u otro departamento.",
+    detalle: "Para el departamento que elijas: venta desde el 1 de noviembre frente al año pasado (total, mismas tiendas, por semana y por tienda), todas sus categorías o subcategorías, cuál se vende en cada tienda, los 15 más vendidos con lo vendido y el stock de cada tienda, y lo que se acaba antes de Navidad." },
   { id: "cierre", grupo: "Ventas y tiendas", titulo: "Cierre del mes pasado", icon: CalendarCheck, salidas: ["PDF"], Panel: PanelCierreMes,
     resumen: "Cómo nos fue, qué bajó, qué rebajar y qué rematar.",
     detalle: "Cómo nos fue, cómo se movió cada categoría y por qué bajó, quiebres, qué rebajar y qué rematar." },

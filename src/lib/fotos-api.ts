@@ -151,3 +151,68 @@ export async function quitarFondo(file: Blob): Promise<Blob> {
 
 export const TIPOS_FOTO =["image/jpeg", "image/png", "image/webp"];
 export const MAX_FOTO_MB = 10;
+
+// ── Fotos pendientes: productos que todavía no están en BSale (o sin stock) ──
+// Se suben con el código que tendrá el SKU; el sync las pega solas cuando el SKU existe y tiene stock.
+
+export interface FotoPendiente {
+  id: number;
+  /** Código en minúscula (así se compara con el SKU o el código de barras). */
+  codigo: string;
+  posicion: number;
+  url: string;
+  thumb_url: string;
+  created_at: string;
+  vence_el: string;
+  /** SKU activos que ya tienen ese código (0 = el producto aún no está en BSale). */
+  skus_con_codigo: number;
+}
+
+export interface ListaPendientes {
+  items: FotoPendiente[];
+  dias_vence: number;
+  max_fotos: number;
+  storage_configured: boolean;
+}
+
+export interface ResultadoPendiente {
+  estado: "pegada" | "pendiente";
+  mensaje: string;
+  foto?: FotoPendiente;
+  sku?: SkuFoto;
+}
+
+export const pendientesQueryKey = ["fotos", "pendientes"] as const;
+
+export const getPendientes = (signal?: AbortSignal) =>
+  request<ListaPendientes>("/product-images/pendientes", { signal });
+
+async function enviarPendiente(method: "POST" | "DELETE", ruta: string, body?: FormData) {
+  const headers: Record<string, string> = {};
+  const companyId = readActiveCompanyId();
+  if (companyId !== null) headers["X-Company-Id"] = String(companyId);
+  const res = await fetch(`${API_BASE_URL}/product-images/pendientes${ruta}`, {
+    method, headers, body, credentials: "include",
+  });
+  if (!res.ok) {
+    let detail = `Error ${res.status}`;
+    try {
+      const j = await res.json();
+      detail = j.detail ?? j.error ?? detail;
+    } catch { /* respuesta sin JSON */ }
+    throw new ApiError(res.status, typeof detail === "string" ? detail : `Error ${res.status}`);
+  }
+  return res.json();
+}
+
+/** Sube una foto por código. Si el SKU ya existe con stock, se pone directo en él. */
+export const subirPendiente = (codigo: string, file: File): Promise<ResultadoPendiente> => {
+  const fd = new FormData();
+  fd.append("codigo", codigo);
+  fd.append("file", file);
+  return enviarPendiente("POST", "", fd);
+};
+
+/** Quita una foto pendiente (también de Cloudinary). */
+export const quitarPendiente = (id: number): Promise<{ ok: boolean }> =>
+  enviarPendiente("DELETE", `/${id}`);

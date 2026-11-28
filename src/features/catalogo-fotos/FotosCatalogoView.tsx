@@ -20,6 +20,7 @@ import {
   type FiltroFoto,
   type ListaSkusFoto,
 } from "@/lib/fotos-api";
+import { FotosPendientes } from "./FotosPendientes";
 import { TarjetaSku } from "./TarjetaSku";
 
 /**
@@ -48,6 +49,8 @@ export function FotosCatalogoView() {
   const [dep, setDep] = useState("");
   const [estado, setEstado] = useState<FiltroFoto>("sin_foto");
   const [limit, setLimit] = useState(PAGINA);
+  // "nuevos": fotos de productos que aún no están en BSale (se pegan solas en el sync).
+  const [vista, setVista] = useState<"skus" | "nuevos">("skus");
   // Al cambiar un filtro se vuelve a la primera página.
   const filtros = `${q}|${dep}|${estado}`;
   const [filtrosPrev, setFiltrosPrev] = useState(filtros);
@@ -96,6 +99,19 @@ export function FotosCatalogoView() {
         </div>
       )}
 
+      <div className="mb-4 inline-flex rounded-full border border-white/10 bg-white/[0.03] p-1">
+        {([["skus", "SKU con stock"], ["nuevos", "Productos nuevos (aún no en BSale)"]] as const).map(([v, l]) => (
+          <button key={v} onClick={() => setVista(v)}
+            className={cn("rounded-full px-3 py-1 text-xs transition-colors",
+              vista === v ? "bg-primary text-white" : "text-muted hover:text-fg")}>
+            {l}
+          </button>
+        ))}
+      </div>
+
+      {vista === "nuevos" ? (
+        <FotosPendientes puedeEditar={puedeEditar && !!e?.storage_configured} fondoDisponible={!!e?.quitar_fondo} />
+      ) : (<>
       <div className="mb-4 flex flex-wrap items-center gap-2">
         <div className="relative min-w-[220px] flex-1">
           <Search className="pointer-events-none absolute left-3 top-1/2 z-10 h-4 w-4 -translate-y-1/2 text-faint" />
@@ -143,6 +159,7 @@ export function FotosCatalogoView() {
           )}
         </>
       )}
+      </>)}
     </div>
   );
 }
